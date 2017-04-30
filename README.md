@@ -293,7 +293,7 @@ Decorator reification:
 ```js
 {
   kind: "method",
-  key: fields.PrivateName("foo"),
+  key: decorators.PrivateName("foo"),
   isStatic: true,
   descriptor: {
     value: function foo() {},
@@ -321,7 +321,7 @@ Decorator reification
 ```js
 {
   kind: "field",
-  key: fields.PrivateName("foo"),
+  key: decorators.PrivateName("foo"),
   isStatic: true,
   descriptor: {
     initializer: () => bar;
@@ -350,7 +350,7 @@ Decorator reification:
 ```js
 {
   kind: "accessor",
-  key: fields.PrivateName("foo"),
+  key: decorators.PrivateName("foo"),
   isStatic: true,
   descriptor: {
     get: function foo() {},
@@ -375,12 +375,12 @@ class X {
 }
 ```
 
-Decorator reification (from the existing decorator proposal):
+Decorator reification:
 
 ```js
 {
   kind: "method",
-  key: fields.PrivateName("foo"),
+  key: decorators.PrivateName("foo"),
   isStatic: false,
   descriptor: {
     value: function foo() {},
@@ -405,12 +405,12 @@ class X {
 }
 ```
 
-Decorator reification
+Decorator reification:
 
 ```js
 {
   kind: "field",
-  key: fields.PrivateName("foo"),
+  key: decorators.PrivateName("foo"),
   isStatic: false,
   descriptor: {
     initializer: () => bar;
@@ -439,7 +439,7 @@ Decorator reification:
 ```js
 {
   kind: "accessor",
-  key: fields.PrivateName("foo"),
+  key: decorators.PrivateName("foo"),
   isStatic: false,
   descriptor: {
     get: function foo() {},
