@@ -56,7 +56,7 @@ The interface for adding a private field to an object is to add a field descript
 #### Private methods and accessors
 
 Private names can be bound to storage on the instance, to methods, or to accessors. A reference like `#x` may have any of these semantics. The choice among these semantics is final by the time the decorators have all run--an initial value is present syntactically, and it may be modified by decorators. The possible semantics are:
-- *Field*: This is similar to a data property on an instance of a JavaScript object. Instances have an internal slot which holds private state values, and 
+- *Field*: This is similar to a data property on an instance of a JavaScript object. Instances have an internal slot which holds private state values, and they can be read and written. Fields are always read/write.
 - *Method*: This is similar to a method on a prototype. References to read the private field always evaluate to the same Function, and writes result in a ReferenceError.
 - *Accessor*: This is similar to a getter/setter pair. References to read and write the private field invoke fixed functions which are set when defining the field (either syntactically or by a decorator).
 
@@ -72,7 +72,9 @@ The general trend of the feedback from most JavaScript programmers is that they 
 
 ## Changes from the existing class features proposals
 
-The only change made here is from `kind: "property"` to `kind: "accessor"` and `kind: "method"` for accessor and method definitions respectively. The reason for the change is that the same form of MemberDescriptor is used for both public methods/accessors and private methods/accessors, differing only in the type of the `key`. Using the kind `"property"` would give the misleading impression that these private things are properties, which they are not. These names are just a strawman; there's no particular reason to differentiate at this level, for one, as it's redundant with the property descriptor.
+The only change made here is from `kind: "property"` to `kind: "accessor"` and `kind: "method"` for accessor and method definitions respectively. The reason for the change is that the same form of MemberDescriptor is used for both public methods/accessors and private methods/accessors, differing only in the type of the `key`. Using the kind `"property"` would give the misleading impression that these private things are properties, which they are not.
+
+These names are just a strawman; there's no particular reason to differentiate at this level, for one, as it's redundant with the property descriptor. For everything seen here, the name could just be eliminated, as it's redundant with what's found in the property descriptor (assuming the descriptor for uninitialized fields have an `initializer: undefined` property).
 
 ## Taxonomy of possibilities and semantic sketch
 
