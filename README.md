@@ -32,17 +32,39 @@ Within this regular definition of what forms apply where, JavaScript is able to 
 
 ### Elaborated private state object model
 
-In this proposal, private methods and private accessors are supported. These have individually motivated use cases, and they help provide full orthogonality to class features.
-
-Why?
+This proposal adds private methods and accessors, both to create a full complement of orthogonality in class features, where private can be used wherever public can, as well as due to concrete use cases requested by users:
 - *Private methods*: Behavior encapsulation is an important for modularity similar to state encapsulation. Private methods provide a simple way to evolve classes towards more encapsulation--with a public method, only a name change is needed--with a public method, all that is needed is a preceding `#` to the name to make it private. A proposed complementary feature would be lexically scoped functions inside class bodies. This proposal is compatible with that, but lexically scoped functions in class bodies would change the way the receiver is passed, making it more difficult to evolve code.
 - *Private accessors*: These may be most useful in conjunction with decorators on private fields, to turn private fields into private getter/setter pairs, for example:
   - An `@observed` decorator may call a callback to update a View if a private field is used as part of a Model, in one0-way data binding.
   - A `@deprecated` decorator may print out warnings or count usages of deprecated private fields, when evolving a large class to remove usages of a field.
 
-Although private state stays with its separated object model--these are not properties, but instead private fields held separately--private methods and private fields are based on a more full-featured object model that the initial private state proposal. However, this proposal retains the property of no runtime metaprogramming for private state--metaprogramming is done at the time the class is defined, based on decorators.
+Private state is specified as segregated into a separate area on the object; it is observably the same as if there were a WeakMap with the object as keys, except for garbage collection semantics. Private state is unaffected by meta-object operations like preventExtensions, does not go through Proxy traps, cannot be accessed with the square bracket operator or `Object.defineProperty`/`Object.getOwnPropertyDescriptor`, and does not have properties like enumerability. Private state cannot be accessed outside of the class body unless something inside of the class body specifically exposes it.
 
-In this proposal, a conceptual "private prototype" holds private methods and accessors. However, there isn't really any particular prototype--instead, a particular private field identifier, if it's used for a method or accessor, always maps to the same method or accessor for all instances.`
+However, in normal usage which does not reference these runtime metaprogramming-style features, private state is analogous to public state. Additionally, for decorator metaprogramming, private state also behaves analogously. Well-written decorators will need only minimal support for private state. Even though there's no "private prototype", private methods and accessors behave analogously to something defined on the prototype, in that it is common for all instances.
+
+#### Private Names
+
+Private state is not keyed on property keys--Strings or Symbols--but instead on Private Names. Literal references like `#x` are lexically bound to a Private Name which is textually present in the definition of a class, but decorators can create new, anonymous private fields by imperatively creating Private Names and adding them to the List of fields defined for the class.
+
+To get and set the value of any field in an orthogonal way, a new built-in module `"decorators"` is created (as decorators are the only use case for metaprogramming here), with three functions exposed (the module may be used for other utilities as well, if needed):
+- `decorators.get(identifier, object)`: When `identifier` is a property key, return `object[identifer]`. When `identifier` is a private name, get the private field with that identifier, or throw a ReferenceError if it is missing. If `identifier` refers to an accessor, invoke the getter; if it refers to a method, get the method value.
+- `decorators.set(identifier, object, value)`: When `identifier` is a property key, perform `object[identifer] = value`. When `identifier` is a private name, set the private field with that identifier to the value, or throw a ReferenceError if it is missing. If `identifier` is an accessor, invoke the setter; if `identifier` is a method, throw a ReferenceError.
+- `decorators.PrivateName([name])` returns a new opaque private name, optionally with the given descriptive name. TBD whether this name is a primitive or object (likely a new primitive type); the only operations possible on it are using it as a `key` in a decorator, and passing it to `decorators.get`/`decorators.set`.
+
+The interface for adding a private field to an object is to add a field descriptor using a decorator. A particular private name may be used just once, to define a single field. With this pattern, each private field is added by exactly one class.
+
+#### Private methods and accessors
+
+Private names can be bound to storage on the instance, to methods, or to accessors. A reference like `#x` may have any of these semantics. The choice among these semantics is final by the time the decorators have all run--an initial value is present syntactically, and it may be modified by decorators. The possible semantics are:
+- *Field*: This is similar to a data property on an instance of a JavaScript object. Instances have an internal slot which holds private state values, and 
+- *Method*: This is similar to a method on a prototype. References to read the private field always evaluate to the same Function, and writes result in a ReferenceError.
+- *Accessor*: This is similar to a getter/setter pair. References to read and write the private field invoke fixed functions which are set when defining the field (either syntactically or by a decorator).
+
+With this definition, private fields do not undergo runtime changes in their semantics. For convenience, in decorators, private fields are defined using property descriptors similar to ordinary properties, though an error will be thrown if they are declared with values that cannot be represented (e.g., configurable must always be false; writable must be false for methods and true for storage).
+
+One possible specification representation for the semantics would be a write-once internal slot on Private Names, which is created just after all decorators are evaluated, which specifies which of the three categories the private name is used for, and points to the appropriate Functions if it is a method or accessor.
+
+Private methods and accessors can only be used with receivers of the appropriate type. Type checking is done similarly to private fields: instances have a single, unified List of Records mapping Private Names to values, where methods and accessors are included with the value *empty*. All private methods and accessors are added to the instance before any instance properties are, so that initializers may call methods.
 
 ### Elimination of the `own` token
 
@@ -50,7 +72,7 @@ The general trend of the feedback from most JavaScript programmers is that they 
 
 ## Changes from the existing class features proposals
 
-The only change made here is from `kind: "property"` to `kind: "behavior"` for accessor and method definitions. The reason for the change is that the same form of MemberDescriptor is used for both public methods/accessors and private methods/accessors, differing only in the type of the `key`. Using the kind `"property"` would give the misleading impression that these private things are properties, which they are not. The name `"behavior"` is just a strawman; I'd be happy to hear other suggestions.
+The only change made here is from `kind: "property"` to `kind: "accessor"` and `kind: "method"` for accessor and method definitions respectively. The reason for the change is that the same form of MemberDescriptor is used for both public methods/accessors and private methods/accessors, differing only in the type of the `key`. Using the kind `"property"` would give the misleading impression that these private things are properties, which they are not. These names are just a strawman; there's no particular reason to differentiate at this level, for one, as it's redundant with the property descriptor.
 
 ## Taxonomy of possibilities and semantic sketch
 
@@ -66,7 +88,7 @@ Ordinary JavaScript properties of the constructor.
 
 Feature of ES2015.
 
-Sample code:
+Syntax:
 
 ```js
 class X {
@@ -78,7 +100,7 @@ Decorator reification (from the existing decorator proposal):
 
 ```js
 {
-  kind: "behavior",
+  kind: "method",
   key: "foo",
   isStatic: true,
   descriptor: {
@@ -96,7 +118,7 @@ Semantics: Define this property on the constructor.
 
 In the public fields proposal
 
-Sample code:
+Syntax:
 
 ```js
 class X {
@@ -126,7 +148,7 @@ Semantics: Define this property on the constructor.
 
 Feature of ES2015.
 
-Sample code:
+Syntax:
 
 ```js
 class X {
@@ -139,7 +161,7 @@ Decorator reification (from the existing decorator proposal):
 
 ```js
 {
-  kind: "behavior",
+  kind: "accessor",
   key: "foo",
   isStatic: true,
   descriptor: {
@@ -159,7 +181,7 @@ Semantics: Define this property on the constructor.
 
 From ES2015
 
-Sample code:
+Syntax:
 
 ```js
 class X {
@@ -171,7 +193,7 @@ Decorator reification (from the existing decorator proposal):
 
 ```js
 {
-  kind: "behavior",
+  kind: "method",
   key: "foo",
   isStatic: false,
   descriptor: {
@@ -189,7 +211,7 @@ Semantics: Define the property with the above descriptor on `X`.
 
 In the public fields proposal
 
-Sample code:
+Syntax:
 
 ```js
 class X {
@@ -219,7 +241,7 @@ Semantics: Define this property on each instance, upon returning from super() or
 
 Feature of ES2015.
 
-Sample code:
+Syntax:
 
 ```js
 class X {
@@ -232,7 +254,7 @@ Decorator reification (from the existing decorator proposal):
 
 ```js
 {
-  kind: "behavior",
+  kind: "accessor",
   key: "foo",
   isStatic: false,
   descriptor: {
@@ -248,33 +270,7 @@ Semantics: Define this property on `X.prototype` with the above descriptor.
 
 ### Private
 
-Private state is specified as segregated into a separate area on the object; it is observably the same as if there were a WeakMap with the object as keys, except for garbage collection semantics. Private state is unaffected by meta-object operations like preventExtensions, does not go through Proxy traps, cannot be accessed with the square bracket operator or `Object.defineProperty`/`Object.getOwnPropertyDescriptor`, and does not have properties like enumerability. Private state cannot be accessed outside of the class body unless something inside of the class body specifically exposes it.
-
-However, in normal usage which does not reference these runtime metaprogramming-style features, private state is analogous to public state. Additionally, for decorator metaprogramming, private state also behaves analogously. Well-written decorators will need only minimal support for private state.
-
-#### Private field identifiers
-
-Private state is not keyed on property keys--Strings or Symbols--but instead on Private Field Identifiers. Literal references like `#x` are lexically bound to a Private Field Identifier which is textually present in the definition of a class, but decorators can create new, anonymous private fields by imperatively creating Private Field Identifiers and adding them to the List of fields defined for the class.
-
-To get and set the value of any field in an orthogonal way, a new built-in module `"fields"` is created, with three functions exposed:
-- `fields.get(identifier, object)`: When `identifier` is a property key, return `object[identifer]`. When `identifier` is a private field identifier, get the private field with that identifier, or throw a ReferenceError if it is missing.
-- `fields.set(identifier, object, value)`: When `identifier` is a property key, perform `object[identifer] = value`. When `identifier` is a private field identifier, set the private field with that identifier to the value, or throw a ReferenceError if it is missing.
-- `fields.PrivateFieldIdentifer([name])` returns a new opaque private field identifier, optionally with the given descriptive name.
-
-The interface for adding a private field to an object is to add a field descriptor using a decorator. A particular private field identifier may be used just once, to define a single field. With this pattern, each private field is added by exactly one class.
-
-#### Private methods and accessors
-
-Private field identifiers can be bound to storage on the instance, to methods, or to accessors. A reference like `#x` may have any of these semantics. The choice among these semantics is final by the time the decorators have all run--an initial value is present syntactically, and it may be modified by decorators. The possible semantics are:
-- *Storage*: This is similar to a data property on an instance of a JavaScript object. Instances have an internal slot which holds private state values, and 
-- *Method*: This is similar to a method on a prototype. References to read the private field always evaluate to the same Function, and writes result in a ReferenceError.
-- *Accessor*: This is similar to a getter/setter pair. References to read and write the private field invoke fixed functions which are set when defining the field (either syntactically or by a decorator).
-
-With this definition, private fields do not undergo runtime changes in their semantics. For convenience, in decorators, private fields are defined using property descriptors similar to ordinary properties, though an error will be thrown if they are declared with values that cannot be represented (e.g., configurable must always be false; writable must be false for methods and true for storage).
-
-One possible specification representation for the semantics would be a write-once internal slot on Private Field Identifiers, which is created just after all decorators are evaluated, which specifies which of the three categories the private field identifier is used for, and points to the appropriate Functions if it is a method or accessor.
-
-Private methods and accessors can only be used with receivers of the appropriate type. Type checking is done similarly to private fields: instances have a single, unified List of Records mapping Private Field Identifiers to values, where methods and accessors are included with the value *empty*. All private methods and accessors are added to the instance before any instance properties are, so that initializers may call methods.
+Private values are driven by private names, rather than properties, explained above.
 
 #### Private static
 
@@ -282,7 +278,7 @@ Private static fields are private state which is installed on only exactly one o
 
 ##### Private static method
 
-Sample code:
+Syntax:
 
 ```js
 class X {
@@ -294,8 +290,8 @@ Decorator reification:
 
 ```js
 {
-  kind: "behavior",
-  key: fields.PrivateFieldIdentifier("foo"),
+  kind: "method",
+  key: fields.PrivateName("foo"),
   isStatic: true,
   descriptor: {
     value: function foo() {},
@@ -310,7 +306,7 @@ Semantics: This forms a method that can be called as `X.#foo`, or simply `#foo`,
 
 ##### Private static field
 
-Sample code:
+Syntax:
 
 ```js
 class X {
@@ -323,7 +319,7 @@ Decorator reification
 ```js
 {
   kind: "field",
-  key: fields.PrivateFieldIdentifier("foo"),
+  key: fields.PrivateName("foo"),
   isStatic: true,
   descriptor: {
     initializer: () => bar;
@@ -338,7 +334,7 @@ Semantics: This creates a single read/write variable which can be accessed only 
 
 ##### Private static accessor
 
-Sample code:
+Syntax:
 
 ```js
 class X {
@@ -351,8 +347,8 @@ Decorator reification:
 
 ```js
 {
-  kind: "behavior",
-  key: fields.PrivateFieldIdentifier("foo"),
+  kind: "accessor",
+  key: fields.PrivateName("foo"),
   isStatic: true,
   descriptor: {
     get: function foo() {},
@@ -369,7 +365,7 @@ Semantics: Reads to `X.#foo` will call the getter, and writes will call the sett
 
 ##### Private "prototype" method
 
-Sample code:
+Syntax:
 
 ```js
 class X {
@@ -381,8 +377,8 @@ Decorator reification (from the existing decorator proposal):
 
 ```js
 {
-  kind: "behavior",
-  key: fields.PrivateFieldIdentifier("foo"),
+  kind: "method",
+  key: fields.PrivateName("foo"),
   isStatic: false,
   descriptor: {
     value: function foo() {},
@@ -399,7 +395,7 @@ Semantics: The method `#foo` can be called on instances of `X` within the class 
 
 In the private fields proposal
 
-Sample code:
+Syntax:
 
 ```js
 class X {
@@ -412,7 +408,7 @@ Decorator reification
 ```js
 {
   kind: "field",
-  key: fields.PrivateFieldIdentifier("foo"),
+  key: fields.PrivateName("foo"),
   isStatic: false,
   descriptor: {
     initializer: () => bar;
@@ -427,7 +423,7 @@ Semantics: Reads and writes to `instance.#foo` will access the property, which i
 
 ##### Private "prototype" accessor
 
-Sample code:
+Syntax:
 
 ```js
 class X {
@@ -440,8 +436,8 @@ Decorator reification:
 
 ```js
 {
-  kind: "behavior",
-  key: fields.PrivateFieldIdentifier("foo"),
+  kind: "accessor",
+  key: fields.PrivateName("foo"),
   isStatic: false,
   descriptor: {
     get: function foo() {},
