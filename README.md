@@ -13,6 +13,8 @@ In combining the proposals into a unified vision, this document works towards tw
 
 This document builds on the ideas of the [Orthogonal Classes](https://github.com/erights/Orthogonal-Classes) proposal, which attempts to solve the very real problem of creating a single, unified mental model for new and old class features which provides a sense of continuity and regularity. Like that proposal, not all of this necessarily would ship at once, but this document gives a blueprint of where to go as we do add features.
 
+The proposal assumes that it will be following the [Class Evaluation Order](https://onedrive.live.com/view.aspx?resid=A7BBCE1FC8EE16DB!442046&app=PowerPoint&authkey=!AEeXmhZASk50KjA) proposal which finds a common time for all class elements to run. Because there was no contradiction or special interactions to draw out, the points of that proposal are not reiterated here--it just works as stated there.
+
 ## Changes from the orthogonal classes proposal
 
 ### Type implies placement
