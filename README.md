@@ -1,15 +1,17 @@
 # Integrated decorators and fields proposal for JavaScript
 
-This document proposes a combined vision for how the proposed class features could work together--decorators, public fields and private fields. At the intersections of these, we have decorated fields and private methods and accessors, which are all included as well.
+Daniel Ehrenberg
 
-Tying the proposal together are two principles of orthogonality:
+This document proposes a combined vision for how the proposed class features could work together--[decorators](https://tc39.github.io/proposal-decorators/), [public fields](https://tc39.github.io/proposal-class-public-fields/) and [private fields](https://github.com/tc39/proposal-private-fields).
+
+In combining the proposals into a unified vision, this document works towards two types of orthogonality:
 - All class components can be decorated--methods, fields, accessors, and the class at the top level
 - All combinations are supported on the following axes:
   - Visibility: Public vs private
   - Place: static vs instance/prototype
   - Type: Method vs field vs accessor
 
-This proposal is not necessarily intended to be something that is intended to ship in the next ECMAScript standard this instant, but instead the intention is to explain the semantics of the maximal union of all proposals, so that if something smaller ships, it can be a clean subset, rather than something which would have to be redefined in the future.
+This document builds on the ideas of the [Orthogonal Classes](https://github.com/erights/Orthogonal-Classes) proposal, which attempts to solve the very real problem of creating a single, unified mental model for new and old class features which provides a sense of continuity and regularity. Like that proposal, not all of this necessarily would ship at once, but this document gives a blueprint of where to go as we do add features.
 
 ## Changes from the orthogonal classes proposal
 
@@ -33,7 +35,7 @@ Within this regular definition of what forms apply where, JavaScript is able to 
 In this proposal, private methods and private accessors are supported. These have individually motivated use cases, and they help provide full orthogonality to class features.
 
 Why?
-- *Private methods*: Clearly behavior encapsulation is an important for modularity similar to state encapsulation. Private methods provide a simple way to evolve classes towards more encapsulation--with a public method, only a name change is needed--with a public method, all that is needed is a preceding `#` to the name to make it private. A proposed complementary feature would be lexically scoped functions inside class bodies. This proposal is compatible with that, but lexically scoped functions in class bodies would change the way the receiver is passed, making it more difficult to evolve code.
+- *Private methods*: Behavior encapsulation is an important for modularity similar to state encapsulation. Private methods provide a simple way to evolve classes towards more encapsulation--with a public method, only a name change is needed--with a public method, all that is needed is a preceding `#` to the name to make it private. A proposed complementary feature would be lexically scoped functions inside class bodies. This proposal is compatible with that, but lexically scoped functions in class bodies would change the way the receiver is passed, making it more difficult to evolve code.
 - *Private accessors*: These may be most useful in conjunction with decorators on private fields, to turn private fields into private getter/setter pairs, for example:
   - An `@observed` decorator may call a callback to update a View if a private field is used as part of a Model, in one0-way data binding.
   - A `@deprecated` decorator may print out warnings or count usages of deprecated private fields, when evolving a large class to remove usages of a field.
@@ -45,6 +47,10 @@ In this proposal, a conceptual "private prototype" holds private methods and acc
 ### Elimination of the `own` token
 
 The general trend of the feedback from most JavaScript programmers is that they don't want to write `own`. This proposal instead sticks with the previously proposed syntax, which users seem to have been happy with in public fields through transpiler environments.
+
+## Changes from the existing class features proposals
+
+The only change made here is from `kind: "property"` to `kind: "behavior"` for accessor and method definitions. The reason for the change is that the same form of MemberDescriptor is used for both public methods/accessors and private methods/accessors, differing only in the type of the `key`. Using the kind `"property"` would give the misleading impression that these private things are properties, which they are not. The name `"behavior"` is just a strawman; I'd be happy to hear other suggestions.
 
 ## Taxonomy of possibilities and semantic sketch
 
@@ -72,7 +78,7 @@ Decorator reification (from the existing decorator proposal):
 
 ```js
 {
-  kind: "property",
+  kind: "behavior",
   key: "foo",
   isStatic: true,
   descriptor: {
@@ -133,7 +139,7 @@ Decorator reification (from the existing decorator proposal):
 
 ```js
 {
-  kind: "property",
+  kind: "behavior",
   key: "foo",
   isStatic: true,
   descriptor: {
@@ -165,7 +171,7 @@ Decorator reification (from the existing decorator proposal):
 
 ```js
 {
-  kind: "property",
+  kind: "behavior",
   key: "foo",
   isStatic: false,
   descriptor: {
@@ -226,7 +232,7 @@ Decorator reification (from the existing decorator proposal):
 
 ```js
 {
-  kind: "property",
+  kind: "behavior",
   key: "foo",
   isStatic: false,
   descriptor: {
@@ -288,7 +294,7 @@ Decorator reification:
 
 ```js
 {
-  kind: "property",
+  kind: "behavior",
   key: fields.PrivateFieldIdentifier("foo"),
   isStatic: true,
   descriptor: {
@@ -345,7 +351,7 @@ Decorator reification:
 
 ```js
 {
-  kind: "property",
+  kind: "behavior",
   key: fields.PrivateFieldIdentifier("foo"),
   isStatic: true,
   descriptor: {
@@ -375,7 +381,7 @@ Decorator reification (from the existing decorator proposal):
 
 ```js
 {
-  kind: "property",
+  kind: "behavior",
   key: fields.PrivateFieldIdentifier("foo"),
   isStatic: false,
   descriptor: {
@@ -417,7 +423,7 @@ Decorator reification
 }
 ```
 
-Semantics: Define this property on each instance, upon returning from super() or constructing the instance
+Semantics: Reads and writes to `instance.#foo` will access the property, which is added to the class in construction.
 
 ##### Private "prototype" accessor
 
@@ -434,7 +440,7 @@ Decorator reification:
 
 ```js
 {
-  kind: "property",
+  kind: "behavior",
   key: fields.PrivateFieldIdentifier("foo"),
   isStatic: false,
   descriptor: {
@@ -446,4 +452,4 @@ Decorator reification:
 }
 ```
 
-Semantics: Define this property on `X.prototype` with the above descriptor.
+Semantics: Reads to `instance.#foo` for an instance of `X` will call the `get` function, and writes will call the `set` function. If `instance` is not an instance of `X`, throw a TypeError. `#foo` is only visible within the class body.
