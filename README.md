@@ -46,7 +46,7 @@ In this proposal, a conceptual "private prototype" holds private methods and acc
 
 ### Elimination of the `own` token
 
-The general trend of the feedback from most JavaScript programmers is that they don't want to write `own`. This proposal instead sticks with the previously proposed syntax, which users seem to have been happy with in public fields through transpiler environments.
+The general trend of the feedback from most JavaScript programmers is that they don't want to write `own`. This proposal instead sticks with the previously proposed syntax, which users seem to have been happy with in public fields through transpiler environments. Additionally, with the type-implies-placement principle above, an extra token would only serve the purpose of a reminder of semantics, and it could start to feel like excessive typing for experienced programmers.
 
 ## Changes from the existing class features proposals
 
@@ -86,7 +86,7 @@ Decorator reification (from the existing decorator proposal):
     writable: true,
     enumerable: false,
     configurable: true
- }
+  }
 }
 ```
 
@@ -116,7 +116,7 @@ Decorator reification
     writable: true,
     enumerable: true,
     configurable: true
- }
+  }
 }
 ```
 
@@ -147,7 +147,7 @@ Decorator reification (from the existing decorator proposal):
     set: function foo(value) {},
     enumerable: false,
     configurable: true
- }
+  }
 }
 ```
 
@@ -179,7 +179,7 @@ Decorator reification (from the existing decorator proposal):
     writable: true,
     enumerable: false,
     configurable: true
- }
+  }
 }
 ```
 
@@ -209,7 +209,7 @@ Decorator reification
     writable: true,
     enumerable: true,
     configurable: true
- }
+  }
 }
 ```
 
@@ -240,7 +240,7 @@ Decorator reification (from the existing decorator proposal):
     set: function foo(value) {},
     enumerable: false,
     configurable: true
- }
+  }
 }
 ```
 
@@ -302,7 +302,7 @@ Decorator reification:
     writable: false,
     enumerable: false,
     configurable: false
- }
+  }
 }
 ```
 
@@ -330,7 +330,7 @@ Decorator reification
     writable: false,
     enumerable: false,
     configurable: false
- }
+  }
 }
 ```
 
@@ -359,7 +359,7 @@ Decorator reification:
     set: function foo(value) {},
     enumerable: false,
     configurable: false
- }
+  }
 }
 ```
 
@@ -389,7 +389,7 @@ Decorator reification (from the existing decorator proposal):
     writable: true,
     enumerable: false,
     configurable: false
- }
+  }
 }
 ```
 
@@ -419,7 +419,7 @@ Decorator reification
     writable: true,
     enumerable: false,
     configurable: false
- }
+  }
 }
 ```
 
@@ -448,7 +448,7 @@ Decorator reification:
     set: function foo(value) {},
     enumerable: false,
     configurable: false
- }
+  }
 }
 ```
 
