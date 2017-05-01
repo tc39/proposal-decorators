@@ -75,7 +75,7 @@ function observed({kind, key, isStatic, descriptor}) {
       get() { decorators.get(this, storage); },
       set(value) {
         decorators.set(this, storage, value);
-        this.render();
+        window.requestAnimationFrame(() => this.render());
       },
       enumerable: descriptor.enumerable,
       configurable: descriptor.configurable,

@@ -12,6 +12,8 @@ In combining the proposals into a unified vision, this document works towards tw
   - Visibility: Public vs private
   - Place: static vs instance/prototype
   - Type: Method vs field vs accessor
+  - async vs sync
+  - generator vs non-generator
 
 This proposal builds on the ideas of the [Orthogonal Classes](https://github.com/erights/Orthogonal-Classes) proposal, which attempts to solve the very real problem of creating a single, unified mental model for new and old class features which provides a sense of continuity and regularity. Like that proposal, not all of this necessarily would ship at once, but this document gives a blueprint of where to go as we do add features.
 
@@ -74,7 +76,16 @@ The general trend of the feedback from most JavaScript programmers is that they 
 
 ## Changes from the existing class features proposals
 
-The only change made here is from `kind: "property"` to `kind: "accessor"` and `kind: "method"` for accessor and method definitions respectively. The reason for the change is that the same form of MemberDescriptor is used for both public methods/accessors and private methods/accessors, differing only in the type of the `key`. Using the kind `"property"` would give the misleading impression that these private things are properties, which they are not.
+### Decorator `kind` field
+
+The main change made here is from `kind: "property"` to `kind: "accessor"` and `kind: "method"` for accessor and method definitions respectively. The reason for the change is that the same form of MemberDescriptor is used for both public methods/accessors and private methods/accessors, differing only in the type of the `key`. Using the kind `"property"` would give the misleading impression that these private things are properties, which they are not.
 
 These names are just a strawman; there's no particular reason to differentiate at this level, for one, as it's redundant with the property descriptor. For everything seen here, the name could just be eliminated, as it's redundant with what's found in the property descriptor (assuming the descriptor for uninitialized fields have an `initializer: undefined` property).
 
+### async or generator getters?
+
+A hole in the orthogonality matrix that became apparent in writing this proposal is the lack of async getters and generator getters. Async and generator versions don't make much sense for setters (where the return value is not used) or constructors (where a constructor is often expected to return an instance related to the constructor, rather than a Promise or an Iterable). Unlike other orthgonality efforts (e.g., async generators, or this proposal), adding async/generator getters would be more a process of removing a restriction, rather than adding any particular other behavior.
+
+### Should we reconsider the private state shorthand?
+
+Private state allows omitting the `this.` in `this.#x`. This syntax feature isn't quite orthogonal--it doesn't exist for public state. Forms within class literals, such as a field declaration, always omit `this.`, whether it's for public or private fields. Although the shorthand has a sympathetic motivation (encourage people to use private state, which is generally the best practice), this asymmetry may be confusing for people learning the language, when context-switching between the forms which require `this.` and forms which do not.

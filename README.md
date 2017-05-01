@@ -4,32 +4,78 @@ Daniel Ehrenberg
 
 This document proposes a combined vision for how the proposed class features could work together--[decorators](https://tc39.github.io/proposal-decorators/), [public fields](https://tc39.github.io/proposal-class-public-fields/) and [private fields](https://github.com/tc39/proposal-private-fields), drawing on the earlier [Orthogonal Classes](https://github.com/erights/Orthogonal-Classes) and [Class Evaluation Order](https://onedrive.live.com/view.aspx?resid=A7BBCE1FC8EE16DB!442046&app=PowerPoint&authkey=!AEeXmhZASk50KjA) proposals.
 
-## Defining and using methods and fields
+## A guiding example: Custom elements with classes
+
+To define a counter widget, which increments when clicked, you can define the following with ES2015:
 
 ```js
-class IncrementalDownload {
-  constructor(url) {
-    this.url = url;
-    #response = fetch(url);
-    #progressBar = document.querySelector('#progressBar');
-    #run();
+class Counter extends HTMLElement {
+  clicked() {
+    this.x++;
+    window.requestAnimationFrame(this.render.bind(this));
   }
 
-  // INSERT REALISTIC EXAMPLE
+  constructor() {
+    super();
+    this.onclick = this.clicked.bind(this);
+    this.x = 0;
+  }
+
+  connectedCallback() { this.render(); }
+
+  render() {
+    this.textContent = this.x.toString();
+  }
 }
+window.customElements.define('num-counter', Counter);
+```
+
+## Adding field declarations and keeping implementation details private
+
+Using two ESnext features--private class elements and fields declarations--that code can be written as
+
+```js
+class Counter extends HTMLElement {
+  #x = 0;
+
+  #clicked() {
+    #x++;
+    window.requestAnimationFrame(this.render.bind(this));
+  }
+
+  constructor() {
+    super();
+    this.onclick = #clicked.bind(this);
+  }
+
+  connectedCallback() { this.render(); }
+
+  render() {
+    this.textContent = #x.toString();
+  }
+}
+window.customElements.define('counter', Counter);
 ```
 
 In the above example, you can see two new features of classes:
 - Fields can be defined with syntax like `fieldName = value`, or just `fieldName`
-- Fields and methods can be made private by using a name starting with `#`.
+- Methods and fields can be made private by using a name starting with `#`.
   - A shorthand for `this.#x` is simply `#x`.
+
+Advantages to this approach:
+- *Field declarations*: By declaring fields up-front, class definitions become more self-documenting; instances go through fewer state transitions, as declared fields are always present.
+- *Private declarations*: By defining things which are not visible outside of the class, ESnext provides stronger encapsulation, ensuring that your classes' users don't accidentally trip themselves up by depending on internals, which may change version to version.
+
+Note that ESnext provides private fields only as declared up-front in a field declaration; private fields cannot be created as expandos.
 
 ## Using decorators in classes
 
-Decorators allow frameworks and libraries to extend the behavior of classes. Decorators are used by putting `@decoratorName(args)` before an element of a class. Some decorators take arguments, and others expect no arguments. Decorators can do all sorts of things--see the documentation of particular decorator for more information. You can decorate any class element, or the entire class as a whole, as in this example:
+Decorators allow frameworks and libraries to extend the behavior of classes. Decorators are used by putting `@decoratorName(args)` before an element of a class. Some decorators take arguments, and others expect no arguments. Decorators can do all sorts of things--see the documentation of particular decorator for more information. You can decorate any class element.
+
+The above example can be cleaned up a bit with decorators, as follows:
 
 ```js
-@registerElement('counter')
+@defineElement('counter')
 class Counter extends HTMLElement {
   @observed #x = 0;
 
@@ -39,14 +85,22 @@ class Counter extends HTMLElement {
   }
 
   constructor() {
+    super();
     this.onclick = #clicked;
   }
 
+  connectedCallback() { this.render(); }
+
   render() {
-    this.innerHTML = #x.toString();
+    this.textCountent = #x.toString();
   }
 }
 ```
+
+Here, decorators are used for:
+- `@registerElement` registers the custom element, allowing the name of the element to be at the beginning of the class
+- `@bound` makes `#clicked` into an auto-bound method, replacing the explicit `bind` call later
+- `@observed` automatically schedules a call to the `render()` method when the `#x` field is changed
 
 You can decorate the whole class, as well as declarations of fields, getters, setters and methods. Arguments and function declarations cannot be decorated.
 
