@@ -104,8 +104,8 @@ Here, decorators are used for:
 
 You can decorate the whole class, as well as declarations of fields, getters, setters and methods. Arguments and function declarations cannot be decorated.
 
-To learn how to define your own decorators, see [METAPROGRAMMING.md].
+To learn how to define your own decorators, see [METAPROGRAMMING.md](https://github.com/littledan/proposal-unified-class-features/blob/master/METAPROGRAMMING.md).
 
 ## Further details
 
-This page is a high-level overview of the features and their interaction from a user perspective. For detailed semantics, see [DETAILS.md]. For a taxonomy of supported forms, see [TAXONOMY.md].
+This page is a high-level overview of the features and their interaction from a user perspective. For detailed semantics, see [DETAILS.md](https://github.com/littledan/proposal-unified-class-features/blob/master/DETAILS.md). For a taxonomy of supported forms, see [TAXONOMY.md](https://github.com/littledan/proposal-unified-class-features/blob/master/TAXONOMY.md).
