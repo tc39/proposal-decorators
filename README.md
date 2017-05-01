@@ -70,9 +70,7 @@ Note that ESnext provides private fields only as declared up-front in a field de
 
 ## Using decorators in classes
 
-Decorators allow frameworks and libraries to extend the behavior of classes. Decorators are used by putting `@decoratorName(args)` before an element of a class. Some decorators take arguments, and others expect no arguments. Decorators can do all sorts of things--see the documentation of particular decorator for more information. You can decorate any class element.
-
-The above example can be cleaned up a bit with decorators, as follows:
+ESnext provides decorators to let frameworks and libraries to extend the behavior of classes, as seen in the next version of the example:
 
 ```js
 @defineElement('counter')
