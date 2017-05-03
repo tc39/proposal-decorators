@@ -116,6 +116,7 @@ class Counter extends HTMLElement {
 
   connectedCallback() { this.render(); }
 
+  @bound
   render() {
     this.textCountent = #x.toString();
   }
