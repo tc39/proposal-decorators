@@ -75,7 +75,8 @@ function observed({kind, key, isStatic, descriptor}) {
       get() { decorators.get(this, storage); },
       set(value) {
         decorators.set(this, storage, value);
-        window.requestAnimationFrame(() => this.render());
+        // Assume the @bound decorator was used on render
+        window.requestAnimationFrame(this.render);
       },
       enumerable: descriptor.enumerable,
       configurable: descriptor.configurable,
