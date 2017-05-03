@@ -15,7 +15,7 @@ In combining the proposals into a unified vision, this document works towards tw
   - async vs sync
   - generator vs non-generator
 
-This proposal builds on the ideas of the [Orthogonal Classes](https://github.com/erights/Orthogonal-Classes) proposal, which attempts to solve the very real problem of creating a single, unified mental model for new and old class features which provides a sense of continuity and regularity. Like that proposal, not all of this necessarily would ship at once, but this document gives a blueprint of where to go as we do add features.
+This proposal builds on the ideas of the [Orthogonal Classes](https://github.com/erights/Orthogonal-Classes) proposal, which works towards a unified mental model for new and old class features which provides a sense of continuity and regularity. Like that proposal, not all of this necessarily would ship at once, but this document gives a blueprint of where to go as we do add features.
 
 There are a number of changes in this proposal compared to the previous orthogonal classes proposal:
 
