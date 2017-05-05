@@ -9,8 +9,8 @@ The proposal assumes that it will be following the [Class Evaluation Order](http
 In combining the proposals into a unified vision, this document works towards two types of orthogonality:
 - All class components can be decorated--methods, fields, accessors, and the class at the top level
 - All combinations are supported on the following axes:
-  - Visibility: Public vs private
-  - Place: static vs instance/prototype
+  - Visibility: Public literal vs public computed property name vs private
+  - Place: static vs instance/prototype vs object literal
   - Type: Method vs field vs accessor
   - async vs sync
   - generator vs non-generator
@@ -35,6 +35,11 @@ Why?
 Within this regular definition of what forms apply where, JavaScript is able to provide full orthogonality and therefore a simpler mental model.
 
 ### Elaborated private state object model
+
+In this proposal, from a user perspective, private identifiers should be just like public identifiers (properties) except that:
+- You can't access private identifiers outside of the class or object literal
+- Reflective operations are not available on private state except through decorators
+- Only private identifiers get the shorthand
 
 This proposal adds private methods and accessors, both to create a full complement of orthogonality in class features, where private can be used wherever public can, as well as due to concrete use cases requested by users:
 - *Private methods*: Behavior encapsulation is an important for modularity similar to state encapsulation. Private methods provide a simple way to evolve classes towards more encapsulation--with a public method, only a name change is needed--with a public method, all that is needed is a preceding `#` to the name to make it private. A proposed complementary feature would be lexically scoped functions inside class bodies. This proposal is compatible with that, but lexically scoped functions in class bodies would change the way the receiver is passed, making it more difficult to evolve code.
@@ -70,6 +75,22 @@ One possible specification representation for the semantics would be a write-onc
 
 Private methods and accessors can only be used with receivers of the appropriate type. Type checking is done similarly to private fields: instances have a single, unified List of Records mapping Private Names to values, where methods and accessors are included with the value *empty*. All private methods and accessors are added to the instance before any instance properties are, so that initializers may call methods.
 
+#### Private and object literals
+
+Object literals can have private fields, methods and accessors as well. For example:
+
+```js
+let x = {
+  #counter: 0;
+  #increment() { #counter++; }
+  get next() { #increment(); return #counter; }
+};
+x.next();  // 1
+x.next();  // 2
+```
+
+The semantics here follows analogously: `#counter` is a private field which belongs only to the single instance `x`, and `#instance` is a method which is only on this instance. In object literal syntax, the instance being constructed is not within scope to "initializers" (the right-hand side of `:`), and there is no equivalent of "return from super", so it's actually unobservable which order the fields are added to the object (though possibly it could be visible from decorators, if the initializer callback is called with the object under construction as the receiver).
+
 ### Elimination of the `own` token
 
 The general trend of the feedback from most JavaScript programmers is that they don't want to write `own`. This proposal instead sticks with the previously proposed syntax, which users seem to have been happy with in public fields through transpiler environments. Additionally, with the type-implies-placement principle above, an extra token would only serve the purpose of a reminder of semantics, and it could start to feel like excessive typing for experienced programmers.
@@ -78,9 +99,11 @@ The general trend of the feedback from most JavaScript programmers is that they 
 
 ### Decorator `kind` field
 
-The main change made here is from `kind: "property"` to `kind: "accessor"` and `kind: "method"` for accessor and method definitions respectively. The reason for the change is that the same form of MemberDescriptor is used for both public methods/accessors and private methods/accessors, differing only in the type of the `key`. Using the kind `"property"` would give the misleading impression that these private things are properties, which they are not.
+A couple minor possible changes for the MemberDescriptor for decorators:
+- The main change made here is from `kind: "property"` to `kind: "accessor"` and `kind: "method"` for accessor and method definitions respectively. The reason for the change is that the same form of MemberDescriptor is used for both public methods/accessors and private methods/accessors, differing only in the type of the `key`. Using the kind `"property"` would give the misleading impression that these private things are properties, which they are not.
+- Maybe `isStatic` could be instead a `"place"` field with three possible values: `"instance"`, `"static"` and `"object"`. This could let a decorator know whether it's being used in an object literal. However, changes from `"object"` to other types would not be supported.
 
-These names are just a strawman; there's no particular reason to differentiate at this level, for one, as it's redundant with the property descriptor. For everything seen here, the name could just be eliminated, as it's redundant with what's found in the property descriptor (assuming the descriptor for uninitialized fields have an `initializer: undefined` property).
+These are just strawman ideas, however.
 
 ### async or generator getters?
 
