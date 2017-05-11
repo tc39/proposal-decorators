@@ -27,8 +27,8 @@ For example, the above three decorators could be defined as follows:
 ```js
 import "decorators" as decorators;
 
-// Register the class as a custom element with the given tag name
-function registerElement(tagName) {
+// Define the class as a custom element with the given tag name
+function defineElement(tagName) {
   // In order for a decorator to take an argument, it takes that argument
   // in the outer function and returns a different function that's called
   // when actually decorating the class (manual currying).

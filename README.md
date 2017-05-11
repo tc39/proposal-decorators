@@ -124,7 +124,7 @@ class Counter extends HTMLElement {
 ```
 
 Here, decorators are used for:
-- `@registerElement` registers the custom element, allowing the name of the element to be at the beginning of the class
+- `@defineElement` defines the custom element, allowing the name of the element to be at the beginning of the class
 - `@bound` makes `#clicked` into an auto-bound method, replacing the explicit `bind` call later
 - `@observed` automatically schedules a call to the `render()` method when the `#x` field is changed
 
