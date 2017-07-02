@@ -232,8 +232,8 @@ Syntax:
 
 ```js
 let x = {
-  foo: bar;
-}
+  foo: bar
+};
 ```
 
 Decorator reification
@@ -254,7 +254,7 @@ Decorator reification
 
 Semantics: Define this property on the instance
 
-Note: This  ould use `value:` instead of `initializer:`, but the May 2016 class evaluation order proposal seemed to imply that decorators should be able to manipulate this thunk, so it's left as an initializer here.
+Note: This could use `value:` instead of `initializer:`, but the May 2016 class evaluation order proposal seemed to imply that decorators should be able to manipulate this thunk, so it's left as an initializer here.
 
 #### Public object literal accessor
 
@@ -264,9 +264,9 @@ Syntax:
 
 ```js
 let x = {
-  get foo() {}
+  get foo() {},
   set foo(value) {}
-}
+};
 ```
 
 Decorator reification:
@@ -478,7 +478,7 @@ Syntax:
 ```js
 let x = {
   #foo() {}
-}
+};
 ```
 
 Decorator reification:
@@ -505,8 +505,8 @@ Syntax:
 
 ```js
 let x = {
-  #foo: bar;
-}
+  #foo: bar
+};
 ```
 
 Decorator reification:
@@ -532,10 +532,10 @@ Semantics: Reads and writes to `instance.#foo` will access the property, which i
 Syntax:
 
 ```js
-class X {
-  get #foo() {}
+let x = {
+  get #foo() {},
   set #foo(value) {}
-}
+};
 ```
 
 Decorator reification:
