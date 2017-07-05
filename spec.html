@@ -355,7 +355,7 @@ emu-example pre {
     1. Assert: _element_ is a Record as created by ElementEvaluation.
     1. Let _key_ be _element_.[[Key]].
     1. Let _descriptor_ be _element_.[[Descriptor]].
-    1. If _element_ has an [[Initializer]] slot,
+    1. If _element_.[[Kind]] is `"field"`,
       1. Let _initializer_ be _element_.[[Initializer]].
       1. If _initializer_ is ~empty~, let _value_ be *undefined*.
       1. Otherwise, _value_ be ? Call(_initializer_, _receiver_).
@@ -378,11 +378,11 @@ emu-example pre {
     1. Let _elements_ be the value of _F_'s [[Elements]] internal slot.
     1. For each item _element_ in order from _elements_,
       1. Assert: If _element_.[[Placement]] is `"prototype"`, then _element_.[[Key]] is not a Private Name.
-      1. If _element_ does not have an [[Initializer]] slot,
+      1. If _element_.[[Kind]] is `"method"`,
         1. Let _receiver_ be _F_ if _element_.[[Placement]] is `"static"`, else let _receiver_ be _proto_.
         1. Perform ? DefineClassElement(_receiver_, _element_).
     1. For each item _element_ in order from _elements_,
-      1. If _element_ has an [[Initializer]] slot and _element_.[[Placement]] is `"static"` or `"prototype"`,
+      1. If _element_.[[Kind]] is `"field"` and _element_.[[Placement]] is `"static"` or `"prototype"`,
         1. Assert: _element_.[[Descriptor]] does not have a [[Value]], [[Get]] or [[Set]] slot.
         1. Let _receiver_ be _F_ if _element_.[[Placement]] is `"static"`, else let _receiver_ be _proto_.
         1. Perform ? DefineClassElement(_receiver_, _element_).
@@ -399,10 +399,10 @@ emu-example pre {
     1. Assert: Assert _constructor_ is an ECMAScript function object.
     1. Let _elements_ be the value of _F_'s [[Elements]] internal slot.
     1. For each item _element_ in order from _elements_,
-      1. If _element_.[[Placement]] is `"own"` and _element_ does not have an [[Initializer]] slot,
+      1. If _element_.[[Placement]] is `"own"` and _element_.[[Kind]] is `"method"`,
         1. Perform ? DefineClassElement(_O_, _element_).
     1. For each item _element_ in order from _elements_,
-      1. If _element_.[[Placement]] is `"own"` and _element_ has an [[Initializer]] slot,
+      1. If _element_.[[Placement]] is `"own"` and _element_.[[Kind]] is `"field"`,
         1. Assert: _element_.[[Descriptor]] does not have a [[Value]], [[Get]] or [[Set]] slot.
         1. Perform ? DefineClassElement(_O_, _element_).
     1. Return.
@@ -644,7 +644,7 @@ emu-example pre {
         1. Let _configurable_ be *true*.
         1. Let _writable_ be *true*.
       1. Let _desc_ be the PropertyDescriptor{[[Value]]: _closure_, [[Writable]]: _writable_, [[Enumerable]]: _enumerable_, [[Configurable]]: _configurable_}.
-      1. Let _element_ be the Record { [[Key]]: _key_, [[Descriptor]]: _desc_, [[Placement]]: _placement_ }
+      1. Let _element_ be the Record { [[Kind]]: `"method"`, [[Key]]: _key_, [[Descriptor]]: _desc_, [[Placement]]: _placement_ }
       1. Return a List containing _element_.
     </emu-alg>
   </emu-clause>
@@ -652,7 +652,7 @@ emu-example pre {
   <emu-clause id="sec-method-definitions-runtime-semantics-propertydefinitionevaluation">
     <h1>Runtime Semantics: ElementEvaluation</h1>
     <p>With parameters _homeObject_, _enumerable_ and _placement_.</p>
-    <p>ElementEvaluation returns a List of Records of the form { [[Key]]: Property Key or Private Name, [[Descriptor]]: a Property Descriptor, [[Placement]]: `"static"`, `"prototype"` or `"own"`, [[Initializer]]: optional function for initial value }.</p>
+    <p>ElementEvaluation returns a List of Records of the form { [[Kind]]: `"method"` or `"field"`, [[Key]]: Property Key or Private Name, [[Descriptor]]: a Property Descriptor, [[Placement]]: `"static"`, `"prototype"` or `"own"`, [[Initializer]]: optional function for initial value which exists only for fields }.</p>
     <emu-see-also-para op="PropertyDefinitionEvaluation"></emu-see-also-para>
     <emu-grammar>ClassElement : MethodDefinition</emu-grammar>
     <emu-alg>
@@ -689,7 +689,7 @@ emu-example pre {
       1. <ins>Else,</ins>
         1. <ins>Let _configurable_ be *true*.</ins>
       1. <ins>Let _desc_ be the PropertyDescriptor{[[Get]]: _closure_, [[Enumerable]]: _enumerable_, [[Configurable]]: _configurable_}.</ins>
-      1. <ins>Let _element_ be the Record { [[Key]]: _key_, [[Descriptor]]: _desc_, [[Placement]]: _placement_ }</ins>
+      1. <ins>Let _element_ be the Record { [[Kind]]: `"method"`, [[Key]]: _key_, [[Descriptor]]: _desc_, [[Placement]]: _placement_ }</ins>
       1. <ins>Return a List containing _element_.</ins>
     </emu-alg>
     <emu-grammar>MethodDefinition : `set` PropertyName `(` PropertySetParameterList `)` `{` FunctionBody `}`</emu-grammar>
@@ -710,7 +710,7 @@ emu-example pre {
       1. <ins>Else,</ins>
         1. <ins>Let _configurable_ be *true*.</ins>
       1. <ins>Let _desc_ be the PropertyDescriptor{[[Set]]: _closure_, [[Enumerable]]: _enumerable_, [[Configurable]]: _configurable_}.</ins>
-      1. <ins>Let _element_ be the Record { [[Key]]: _key_, [[Descriptor]]: _desc_, [[Placement]]: _placement_ }</ins>
+      1. <ins>Let _element_ be the Record { [[Kind]]: `"method"`, [[Key]]: _key_, [[Descriptor]]: _desc_, [[Placement]]: _placement_ }</ins>
       1. <ins>Return a List containing _element_.</ins>
     </emu-alg>
     <emu-grammar>GeneratorMethod : `*` PropertyName `(` UniqueFormalParameters `)` `{` GeneratorBody `}`</emu-grammar>
@@ -796,6 +796,7 @@ emu-example pre {
       1. Perform MakeMethod(_initializer_, _homeObject_).
     1. Else, let _initializer_ be ~empty~.
     1. Return Record {
+       [[Kind]]: `"field"`,
        [[Key]]: _fieldName_,
        [[Initializer]]: _initializer_,
        [[Placement]]: _placement_,
