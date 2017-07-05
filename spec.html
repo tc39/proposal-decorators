@@ -1180,6 +1180,7 @@ emu-example pre {
       <p>A <dfn>member descriptor</dfn> describes a member of a class or object literal and has the following shape:</p>
       <pre><code class=typescript>
         interface MemberDesciptor {
+          kind: "method" or "field"
           key: String, Symbol or Private Name,
           placement: "static", "prototype", or "own"
           descriptor: PropertyDescriptor,
@@ -1340,39 +1341,38 @@ emu-example pre {
       <p>With parameter _element_.</p>
       <emu-alg>
         1. Let _obj_ be ! ObjectCreate(%ObjectPrototype%).
+        1. Perform ! CreateDataPropertyOrThrow(_obj_, `"kind"`, _element_.[[Kind]]).
         1. Perform ! CreateDataPropertyOrThrow(_obj_, `"key"`, _element_.[[Key]]).
         1. Perform ! CreateDataPropertyOrThrow(_obj_, `"placement"`, _element_.[[Placement]]).
         1. Perform ! CreateDataPropertyOrThrow(_obj_, `"descriptor"`, ! FromPropertyDescriptor(_element_.[[Descriptor]])).
-        1. If _element_ has an [[Initializer]] slot which is not ~empty~, then
-          1. Perform ! CreateDataPropertyOrThrow(_obj_, `"initializer"`, _element_.[[Initializer]]).
+        1. If _element_.[[Kind]] is `"field"`,
+          1. Let _initializer_ be _element_.[[Initializer]].
+          1. If _initializer_ is ~empty~, set _initializer_ to *undefined*.
+          1. Perform ! CreateDataPropertyOrThrow(_obj_, `"initializer"`, _initializer_).
         1. Return _obj_.
       </emu-alg>
     </emu-clause>
 
     <emu-clause id=sec-to-element-descriptor>
       <h1>ToElementDescriptor</h1>
-      <p>With parameter _descriptor_, returns a Record containing three values: { [[Descriptor]]: a Member Descriptor, [[Extras]]: an iterable of other elements, [[Finisher]]: a Function or *undefined* }.</p>
+      <p>With parameter _descriptor_, returns a Record containing three values: { [[Element]]: a class Element Descriptor, [[Extras]]: an iterable of other elements, [[Finisher]]: a Function or *undefined* }.</p>
       <emu-alg>
-          key: String, Symbol or Private Name,
-          placement: "static", "prototype", or "own"
-          descriptor: PropertyDescriptor,
-          initializer?: Function
-          extras?: MemberDescriptor[]
-          finisher?: (klass): void;
-        }
+        1. Let _kind_ be ? Get(_descriptor_, `"kind"`).
+        1. If _kind_ is not one of `"method"` or `"field"`, throw a *TypeError* exception.
         1. Let _key_ be ? Get(_descriptor_, `"key"`).
         1. If _key_ is not a Private Name, let _key_ be ? ToPropertyDescriptor(_key_).
         1. Let _placement_ be ? Get(_descriptor_, `"placement"`).
         1. If _placement_ is not one of `"static"`, `"prototype"`, or `"own"`, throw a *TypeError* exception.
         1. Let _descriptor_ be ? ToPropertyDescriptor(? Get(_descriptor_, `"descriptor"`)).
-        1. Let _initializer_ be ? Get(_descriptor_, `"key"`).
+        1. If _kind_ is `"field"`,
+          1. Let _initializer_ be ? Get(_descriptor_, `"initializer"`).
         1. Let _finisher_ be ? Get(_descriptor_, `"finisher"`).
-        1. Let _descriptor_ be {
-        1. Return the Record {[[Kind]]: _kind_, [[Static]]: _static_, [[Key]]: _key_, [[Descriptor]]: _descriptor_, [[Finisher]]: _finisher_}.
+        1. If IsCallable(_finisher_) is *false* and _finisher_ is not *undefined*, throw a *TypeError* exception.
+        1. Let _extras_ be ? Get(_descriptor_, `"extras"`).
+        1. Let _element_ be {[[Kind]]: _kind_, [[Key]]: _key_, [[Placement]]: _placement_, [[Descriptor]]: _descriptor_}.
+        1. If [[Kind]] is `"field"`, set _element_.[[Initializer]] to _initializer_.
+        1. Return the Record { [[Element]]: _element_, [[Finisher]]: _finisher_, [[Extras]]: _extras_ }.
       </emu-alg>
-      <emu-note type=editor>
-        <p>Todo: Should probably add validations for having kind, static, and key fields.</p>
-      </emu-note>
     </emu-clause>
   </emu-clause>
 </emu-clause>
