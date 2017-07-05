@@ -1169,6 +1169,8 @@ emu-example pre {
 </emu-clause>
 </emu-clause>
 
+<emu-clause id="decorator-semantics">
+  <h1>Decorator semantics</h1>
   <emu-clause id=sec-decorator-functions>
     <h1>Decorator Functions</h1>
     <p>A <dfn>decorator function</dfn> is a function that takes and returns either a member descriptor or a class descriptor. The body of a decorator function modifies and returns the descriptor it receives to change the semantics of the decorated entity.</p>
@@ -1185,6 +1187,7 @@ emu-example pre {
           finisher?: (klass): void;
         }
       </code></pre>
+      The `finisher` and `extra` fields are only present when returning from user code, and are not given as an argument to them, or logically part of the descriptor.
     </emu-clause>
     <emu-clause id=sec-decorator-functions-member-descriptor>
       <h1>Class Descriptors</h1>
@@ -1198,3 +1201,177 @@ emu-example pre {
       </code></pre>
     </emu-clause>
   </emu-clause>
+
+    <emu-clause id=sec-decorator-runtime-semantics-decoratorevaluation>
+      <h1>Runtime Semantics: DecoratorEvaluation</h1>
+      <emu-grammar>Decorator : `@` DecoratorMemberExpression[?Yield]</emu-grammar>
+      <emu-alg>
+        1. Let _ref be the result of evaluating |DecoratorMemberExpression|.
+        1. Let _value be ? GetValue(_ref_).
+        1. Return _value_.
+      </emu-alg>
+      <emu-grammar>Decorator : `@` DecoratorCallExpression[?Yield]</emu-grammar>
+      <emu-alg>
+        1. Let _ref be the result of evaluating |DecoratorCallExpression|.
+        1. Let _value be ? GetValue(_ref_).
+        1. Return _value_.
+      </emu-alg>
+    </emu-clause>
+
+    <emu-clause id=sec-method-definitions-runtime-semantics-decoratorlistevaluation>
+      <h1>Runtime Semantics: DecoratorListEvaluation</h1>
+      <emu-grammar>DecoratorList : DecoratorList[?Yield]? Decorator[?Yield]</emu-grammar>
+      <emu-alg>
+        1. If |DecoratorList| is present, then let _leftValue_ be ? DecoratorListEvaluation(|DecoratorList|).
+        1. Else, let _leftValue_ be a new empty List.
+        1. Let _rightValue_ be ? DecoratorEvaluation(|Decorator|).
+        1. Append _rightValue_ to the end of _leftValue_.
+        1. Return _leftValue_.
+      </emu-alg>
+    </emu-clause>
+
+    <emu-clause id=sec-runtime-semantics-makefunctionuninitialized>
+      <h1>Runtime Semantics: MakeFunctionUninitialized</h1>
+      <p>With parameter _function_.</p>
+      <emu-note type=editor>
+        <p>The semantics of functions leaked to JavaScript during decoration was contentious in Munich. The exact semantics will be driven by implementation considerations.</p>
+      </emu-note>
+    </emu-clause>
+
+    <emu-clause id=sec-runtime-semantics-makefunctioninitialized>
+      <h1>Runtime Semantics: MakeFunctionInitialized</h1>
+      <p>With parameter _function_.</p>
+      <emu-note type=editor>
+        <p>The semantics of functions leaked to JavaScript during decoration was contentious in Munich. The exact semantics will be driven by implementation considerations.</p>
+      </emu-note>
+    </emu-clause>
+
+    <emu-clause id=sec-runtime-semantics-makefunctioninitialized>
+      <h1>Runtime Semantics: IsUninitializedFunction</h1>
+      <p>With parameter _function_.</p>
+      <emu-note type=editor>
+        <p>The semantics of functions leaked to JavaScript during decoration was contentious in Munich. The exact semantics will be driven by implementation considerations.</p>
+      </emu-note>
+    </emu-clause>
+
+    <emu-clause id=sec-runtime-semantics-makeclasselementsinitialized>
+      <h1>Runtime Semantics: MakeClassElementsInitialized</h1>
+      <p>With parameter _elements_.</p>
+      <emu-alg>
+        1. For each _element_ in order from _elements_
+          1. Let _desc_ be _element_.[[Descriptor]].
+          1. If _desc_ has a [[Set]] field, MakeFunctionInitialized(_desc_.[[Set]]).
+          1. If _desc_ has a [[Get]] field, MakeFunctionInitialized(_desc_.[[Get]]).
+          1. If _desc_ has a [[Value]] field, and IsUninitializedFunction(_desc_.[[Value]]) is *true*, MakeFunctionInitialized(_desc_.[[Value]]).
+      </emu-alg type=editor>
+      <emu-note>
+        <p>The semantics of functions leaked to JavaScript during decoration was contentious in Munich. The exact semantics will be driven by implementation considerations.</p>
+      </emu-note>
+    </emu-clause>
+    <emu-clause id=sec-decorate-element aoid=DecorateElement>
+      <h1>DecorateElement</h1>
+      <p>With parameter _element_.</p>
+      <emu-alg>
+        1. Assert: _element_.[[Kind]] is `"property"`.
+        1. Let _extras_ be a new empty List.
+        1. Let _finishers_ be a new empty List.
+        1. Let _previousDescriptor_ be ? FromElementDescriptor(_element_).
+        1. For each _decorator_ in element_.[[Decorators]], in reverse list order do
+          1. Let _result_ be ? Call(_decorator_, *undefined*, « _previousDescriptor_ »).
+          1. Let _currentDescriptor_ be ? Get(_result_, *"descriptor"*).
+          1. Let _current_ be ? ToElementDescriptor(_result_).
+          1. If _current_.[[Finisher]] is not *undefined*, then
+            1. Append _current_.[[Finisher]] to the end of _finishers_.
+            1. Set _current_.[[Finisher]] to *undefined*.
+            1. Note: Finishers are not passed forward to the next decorator.
+          1. Let _previousDescriptor_ be ? FromElementDescriptor(_current_).
+          1. Let _extrasObject_ be ? Get(_result_, `"extras"`).
+          1. If _extrasObject_ is not *undefined*, then:
+            1. Let _iterator_ be ? GetIterator(_extrasObject_).
+            1. Repeat
+              1. Let _next_ be ? IteratorStep(_iterator_).
+              1. If _next_ is *false*, then break.
+              1. Let _nextValue_ be ? IteratorValue(_next_).
+              1. Append _nextValue_ to the end of _extras_.
+        1. Let _extras_ be the result of merging any _extras_ with the same [[Key]] and [[Static]].
+        1. Return the Record {[[Descriptor]]: _previousDescriptor_, [[Extras]]: _extras_, [[Finishers]]: _finishers_}.
+      </emu-alg>
+      <emu-note>
+        <p>Future versions of the spec will create element descriptors with other [[Kind]]s.</p>
+      </emu-note>
+      <emu-note type=editor>
+        <p>There is a decision-point about what validation rules should be applied to the merging that happens right before merging.</p>
+      </emu-note>
+    </emu-clause>
+    <emu-clause id=sec-decorate-class>
+      <h1>DecorateClass</h1>
+      <p>With parameters _decorators_, _constructor_, _heritage_ and _elementDescriptors_.</p>
+      <emu-alg>
+        1. Let _elements_ be a new empty List.
+        1. Let _finishers_ be a new empty List.
+        1. Let _previousConstructor_ be _constructor_.
+        1. Let _previousDescriptors_ be _elementDescriptors_.
+        1. For each _decorator_ in _decorators_, in reverse list order do
+          1. Let _result_ be ? Call(_decorator_, *undefined*, « _previousConstructor_, _heritage_, _previousDescriptors_ »).
+          1. Let _previousConstructor_ be ? Get(_result_, `"constructor"`).
+          1. Let _finisher_ be ? Get(_result_, *"finisher"*).
+          1. If _finisher_ is not *undefined*, then append _finisher_ to the end of _finishers_.
+          1. Let _elementsObject_ be ? Get(_result_, `"elements"`).
+          1. If _elementsObject_ is not *undefined*, then
+            1. Let _iterator_ be ? GetIterator(_extrasObject_).
+            1. Repeat
+              1. Let _next_ be ? IteratorStep(_iterator_).
+              1. If _next_ is *false*, then break.
+              1. Let _nextValue_ be ? IteratorValue(_next_).
+              1. Append _nextValue_ to the end of _elements_.
+        1. Let _elements_ be the result of merging any _elements_ with the same [[Key]] and [[Static]].
+        1. Return the Record {[[Constructor]]: _previousConstructor_, [[Elements]]: _elements_, [[Finishers]]: _finishers_}.
+      </emu-alg>
+      <emu-note type=editor>
+        <p>There is a decision-point about what validation rules should be applied to the merging.</p>
+        <p>We also need to decide whether to produce an error if the returned constructor from a decorator has the wrong prototype. We think it
+        should be an error.</p>
+      </emu-note>
+    </emu-clause>
+
+    <emu-clause id=sec-from-element-descriptor>
+      <h1>FromElementDescriptor</h1>
+      <p>With parameter _element_.</p>
+      <emu-alg>
+        1. Let _obj_ be ! ObjectCreate(%ObjectPrototype%).
+        1. Perform ! CreateDataPropertyOrThrow(_obj_, `"key"`, _element_.[[Key]]).
+        1. Perform ! CreateDataPropertyOrThrow(_obj_, `"placement"`, _element_.[[Placement]]).
+        1. Perform ! CreateDataPropertyOrThrow(_obj_, `"descriptor"`, ! FromPropertyDescriptor(_element_.[[Descriptor]])).
+        1. If _element_ has an [[Initializer]] slot which is not ~empty~, then
+          1. Perform ! CreateDataPropertyOrThrow(_obj_, `"initializer"`, _element_.[[Initializer]]).
+        1. Return _obj_.
+      </emu-alg>
+    </emu-clause>
+
+    <emu-clause id=sec-to-element-descriptor>
+      <h1>ToElementDescriptor</h1>
+      <p>With parameter _descriptor_, returns a Record containing three values: { [[Descriptor]]: a Member Descriptor, [[Extras]]: an iterable of other elements, [[Finisher]]: a Function or *undefined* }.</p>
+      <emu-alg>
+          key: String, Symbol or Private Name,
+          placement: "static", "prototype", or "own"
+          descriptor: PropertyDescriptor,
+          initializer?: Function
+          extras?: MemberDescriptor[]
+          finisher?: (klass): void;
+        }
+        1. Let _key_ be ? Get(_descriptor_, `"key"`).
+        1. If _key_ is not a Private Name, let _key_ be ? ToPropertyDescriptor(_key_).
+        1. Let _placement_ be ? Get(_descriptor_, `"placement"`).
+        1. If _placement_ is not one of `"static"`, `"prototype"`, or `"own"`, throw a *TypeError* exception.
+        1. Let _descriptor_ be ? ToPropertyDescriptor(? Get(_descriptor_, `"descriptor"`)).
+        1. Let _initializer_ be ? Get(_descriptor_, `"key"`).
+        1. Let _finisher_ be ? Get(_descriptor_, `"finisher"`).
+        1. Let _descriptor_ be {
+        1. Return the Record {[[Kind]]: _kind_, [[Static]]: _static_, [[Key]]: _key_, [[Descriptor]]: _descriptor_, [[Finisher]]: _finisher_}.
+      </emu-alg>
+      <emu-note type=editor>
+        <p>Todo: Should probably add validations for having kind, static, and key fields.</p>
+      </emu-note>
+    </emu-clause>
+  </emu-clause>
+</emu-clause>
