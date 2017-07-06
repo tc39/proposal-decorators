@@ -536,7 +536,7 @@ emu-example pre {
 
   <emu-clause id="runtime-semantics-class-definition-evaluation">
     <h1>Runtime Semantics: ClassDefinitionEvaluation</h1>
-    <p>With parameter _className_.</p>
+    <p>With parameter _className_ and optional parameter _decorators_.</p>
     <emu-grammar>ClassTail : ClassHeritage? `{` ClassBody? `}`</emu-grammar>
     <emu-alg>
       1. Let _lex_ be the LexicalEnvironment of the running execution context.
@@ -602,13 +602,15 @@ emu-example pre {
           1. Return Completion(_status_).
         1. <ins>Append _newElements_ to _elements_</ins>
       1. <ins>Let _elements_ be _elements_ with getters and setters of the same key coalesced, with later declarations overriding earlier ones.</ins>
+      1. <ins>Let _decorated_ be ? DecorateClass(_elements_, _decorators_).</ins>
       1. Set the running execution context's LexicalEnvironment to _lex_.
       1. <ins>Set the running execution context's PrivateNameEnvironment to _outerPrivateEnvironment_.</ins>
       1. If _className_ is not *undefined*, then
         1. Perform _classScopeEnvRec_.InitializeBinding(_className_, _F_).
-      1. <ins>Set the value of _F_'s [[Elements]] internal slot to _elements_.</ins>
+      1. <ins>Set the value of _F_'s [[Elements]] internal slot to _decorated_.[[Elements]].</ins>
       1. <ins>Perform ? InitializeClassElements(_F_, _proto_).</ins>
-      1. Return _F_.
+      1. <del>Return _F_.</del>
+      1. <ins>Return ? RunClassFinishers(_F_, _decorated_.[[Finishers]]).</ins>
     </emu-alg>
   </emu-clause>
 
@@ -1232,43 +1234,33 @@ emu-example pre {
       </emu-alg>
     </emu-clause>
 
-    <emu-clause id=sec-runtime-semantics-makefunctionuninitialized>
-      <h1>Runtime Semantics: MakeFunctionUninitialized</h1>
-      <p>With parameter _function_.</p>
-      <emu-note type=editor>
-        <p>The semantics of functions leaked to JavaScript during decoration was contentious in Munich. The exact semantics will be driven by implementation considerations.</p>
-      </emu-note>
-    </emu-clause>
-
-    <emu-clause id=sec-runtime-semantics-makefunctioninitialized>
-      <h1>Runtime Semantics: MakeFunctionInitialized</h1>
-      <p>With parameter _function_.</p>
-      <emu-note type=editor>
-        <p>The semantics of functions leaked to JavaScript during decoration was contentious in Munich. The exact semantics will be driven by implementation considerations.</p>
-      </emu-note>
-    </emu-clause>
-
-    <emu-clause id=sec-runtime-semantics-makefunctioninitialized>
-      <h1>Runtime Semantics: IsUninitializedFunction</h1>
-      <p>With parameter _function_.</p>
-      <emu-note type=editor>
-        <p>The semantics of functions leaked to JavaScript during decoration was contentious in Munich. The exact semantics will be driven by implementation considerations.</p>
-      </emu-note>
-    </emu-clause>
-
-    <emu-clause id=sec-runtime-semantics-makeclasselementsinitialized>
-      <h1>Runtime Semantics: MakeClassElementsInitialized</h1>
-      <p>With parameter _elements_.</p>
+    <emu-clause id=sec-run-class-finishers aoid=RunClassFinishers>
+      <h1>RunClassFinishers ( constructor, finishers )</h1>
       <emu-alg>
-        1. For each _element_ in order from _elements_
-          1. Let _desc_ be _element_.[[Descriptor]].
-          1. If _desc_ has a [[Set]] field, MakeFunctionInitialized(_desc_.[[Set]]).
-          1. If _desc_ has a [[Get]] field, MakeFunctionInitialized(_desc_.[[Get]]).
-          1. If _desc_ has a [[Value]] field, and IsUninitializedFunction(_desc_.[[Value]]) is *true*, MakeFunctionInitialized(_desc_.[[Value]]).
-      </emu-alg type=editor>
-      <emu-note>
-        <p>The semantics of functions leaked to JavaScript during decoration was contentious in Munich. The exact semantics will be driven by implementation considerations.</p>
-      </emu-note>
+        1. For each _finisher_ in _finishers_, do
+          1. Let _newConstructor_ be Call( _finisher_, *undefined*, « _constructor_ »).
+          1. If _newConstructor_ is not *undefined*,
+            1. If IsConstructor(_newConstructor_) is *false*, throw a *TypeError* exception.
+            1. If SameValue(_newConstructor_.[[GetPrototypeOf]](), _constructor_) is *false*, throw a *TypeError* exception.
+            1. Let _constructor_ be _newConstructor_.
+        1. Return _constructor_.
+      </emu-alg>
+    </emu-clause>
+
+    <emu-clause id=sec-decorate-class aoid=DecorateClass>
+      <h1>DecorateClass ( elements, decorators )</h1>
+      <emu-alg>
+        1. Let _newElements_, _extras_, and _finishers_ each be a new empty List.
+        1. For each _element_ in _elements_, do
+          1. Let _elementFinishersExtras_ be ? DecorateElement(_element_).
+          1. Append _elementFinishersExtras_.[[Element]] to _newElements_.
+          1. Concatenate _elementFinishersExtras_.[[Extras]] onto _extras_.
+          1. Concatenate _elementFinishersExtras_.[[Finishers]] onto _finishers_.
+        1. Let _elements_ be the concatenation of _newElements_ and _extras_.
+        1. Let _result_ be ? DecorateConstructor(_elements_, _decorators_).
+        1. Set _result_.[[Finishers]] to the concatenation of _finishers_ and _result_.[[Finishers]].
+        1. Return _result_.
+      </emu-alg>
     </emu-clause>
 
     <emu-clause id=sec-decorate-element aoid=DecorateElement>
@@ -1291,9 +1283,9 @@ emu-example pre {
         1. Return the Record {[[Element]]: _element_, [[Extras]]: _extras_, [[Finishers]]: _finishers_}.
       </emu-alg>
     </emu-clause>
-    <emu-clause id=sec-decorate-class>
-      <h1>DecorateClass ( decorators, elements )</h1>
-      <p>With parameters _decorators_, a List of decorator functions, and _elements_, a List of Class Elements.</p>
+    <emu-clause id=sec-decorate-constructor aoid=DecorateConstructor>
+      <h1>DecorateConstructor ( elements, decorators )</h1>
+      <p>With parameters _elements_, a List of Class Elements, and _decorators_, a List of decorator functions.</p>
       <emu-alg>
         1. Let _elements_ be a new empty List.
         1. Let _finishers_ be a new empty List.
@@ -1308,7 +1300,6 @@ emu-example pre {
         1. Return the Record { [[Elements]]: _elements_, [[Finishers]]: _finishers_ }.
       </emu-alg>
       <emu-note type=editor>
-        <p>There is a decision-point about what validation rules should be applied to the merging.</p>
         <p>We also need to decide whether to produce an error if the returned constructor from a decorator has the wrong prototype. We think it
         should be an error.</p>
       </emu-note>
