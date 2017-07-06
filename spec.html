@@ -941,7 +941,7 @@ emu-example pre {
 
 <emu-clause id="sec-private-names">
   <h1>Private Names and references</h1>
-<p>The <dfn>Private Name</dfn> specification type is used to describe a globally unique identifier which represents a private field name. A private name may be installed on any ECMAScript object with the PrivateFieldDefine internal algorithm, and then read or written using PrivateFieldGet and PrivateFieldSet.</p>
+<p>The <dfn>Private Name</dfn> primitive type is used to describe a globally unique identifier which represents a private field name. A private name may be installed on any ECMAScript object with the PrivateFieldDefine internal algorithm, and then read or written using PrivateFieldGet and PrivateFieldSet.</p>
 
 <p>All ECMAScript objects have a new additional internal slot, [[PrivateFields]], which is a List of Records of the form { [[PrivateName]]: Private Name, [[PrivateFieldDescriptor]]: ECMAScript value }. This List represents the values of the private fields for the object. All objects, including Proxies and all host environment-provided objects, have this internal slot, but primitives such as Numbers do not.</p>
 
@@ -949,14 +949,9 @@ emu-example pre {
 <p>
   Private fields are designed to have semantics analogous to WeakMaps. However, the implied garbage collection semantics are weaker: If all the references to a WeakMap are inaccessible, but there is still a reference to a key which was in the WeakMap, one would expect the value to be eventually collected. However, PrivateNameIdentifiers specifically do not have this connotation: because the reference from the Identifier to the Value is in a Record which the Object points to, the value would not be collected, even if nothing else points to the identifier.
 </p>
-<p>
-  Private Names are a specification type here, not directly observable to ECMAScript code. However, in <a href="https://github.com/tc39/proposal-private-fields/blob/master/DECORATORS.md">a decorator integration strawman</a>, an object wrapping Private Names would be exposed to allow greater metaprogramming.
-</p>
 </emu-note>
 
-<emu-note editor>
-  Private fields are deliberately inaccessible outside of the class body. It is proposed that there could be an "escape hatch" to access them though some sort of reflective mechanism; see <a href="https://github.com/tc39/proposal-private-fields/issues/33">the GitHub thread</a>. This proposal deliberately omits any such escape hatch.
-</emu-note>
+<emu-todo>Specify PrivateName as a primitive type analogous to Symbol.</emu-todo>
 
 <emu-clause id="sec-objectcreate" aoid="ObjectCreate">
   <h1>ObjectCreate (_proto_ [ , _internalSlotsList_ ])</h1>
