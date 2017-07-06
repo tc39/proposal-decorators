@@ -602,6 +602,7 @@ emu-example pre {
           1. Return Completion(_status_).
         1. <ins>Append _newElements_ to _elements_</ins>
       1. <ins>Let _elements_ be _elements_ with getters and setters of the same key coalesced, with later declarations overriding earlier ones.</ins>
+      1. <ins>If _decorators_ is not provided, let _decorators_ be a new empty List.</ins>
       1. <ins>Let _decorated_ be ? DecorateClass(_elements_, _decorators_).</ins>
       1. Set the running execution context's LexicalEnvironment to _lex_.
       1. <ins>Set the running execution context's PrivateNameEnvironment to _outerPrivateEnvironment_.</ins>
@@ -654,15 +655,21 @@ emu-example pre {
   <emu-clause id="sec-method-definitions-runtime-semantics-propertydefinitionevaluation">
     <h1>Runtime Semantics: ElementEvaluation</h1>
     <p>With parameters _homeObject_, _enumerable_ and _placement_.</p>
-    <p>ElementEvaluation returns a List of Records of the form { [[Kind]]: `"method"` or `"field"`, [[Key]]: Property Key or Private Name, [[Descriptor]]: a Property Descriptor, [[Placement]]: `"static"`, `"prototype"` or `"own"`, [[Initializer]]: optional function for initial value which exists only for fields }.</p>
+    <p>ElementEvaluation returns a List of Records of the form { [[Kind]]: `"method"` or `"field"`, [[Key]]: Property Key or Private Name, [[Descriptor]]: a Property Descriptor, [[Placement]]: `"static"`, `"prototype"` or `"own"`, [[Initializer]]: optional function for initial value which exists only for fields, [[Decorators]]: optional List of decorator functions }.</p>
     <emu-see-also-para op="PropertyDefinitionEvaluation"></emu-see-also-para>
-    <emu-grammar>ClassElement : MethodDefinition</emu-grammar>
+    <emu-grammar>ClassElement : <ins>DecoratorList?</ins> MethodDefinition</emu-grammar>
     <emu-alg>
-      1. Return ElementEvaluation of |MethodDefinition| with arguments ! Get(_homeObject_, `"prototype"`),_enumerable_, and `"prototype"`.
+      1. <ins>If |DecoratorList| is present, let _decorators_ be the result of performing DecoratorListEvaluation of |DecoratorList|.</ins>
+      1. <del>Return</del><ins>Let _elements_ be ?</ins> ElementEvaluation of |MethodDefinition| with arguments ! Get(_homeObject_, `"prototype"`),_enumerable_, and `"prototype"`.
+      1. <ins>If |DecoratorList| is present, for _element_ in _elements_, set _element_.[[Decorators]] to _decorators_.</ins>
+      1. <ins>Return _elements_.</ins>
     </emu-alg>
-    <emu-grammar>ClassElement : `static` MethodDefinition</emu-grammar>
+    <emu-grammar>ClassElement : <ins>DecoratorList?</ins> `static` MethodDefinition</emu-grammar>
     <emu-alg>
-      1. Return ElementEvaluation of |MethodDefinition| with arguments _homeObject_, _enumerable_ and `"static"`.
+      1. <ins>If |DecoratorList| is present, let _decorators_ be the result of performing DecoratorListEvaluation of |DecoratorList|.</ins>
+      1. <del>Return</del><ins>Let _elements_ be ?</ins> ElementEvaluation of |MethodDefinition| with arguments _homeObject_, _enumerable_ and `"static"`.
+      1. <ins>If |DecoratorList| is present, for _element_ in _elements_, set _element_.[[Decorators]] to _decorators_.</ins>
+      1. <ins>Return _elements_.</ins>
     </emu-alg>
     <emu-grammar>MethodDefinition : PropertyName `(` UniqueFormalParameters `)` `{` FunctionBody `}`</emu-grammar>
     <emu-alg>
@@ -746,14 +753,20 @@ emu-example pre {
       1. <ins>Return DefaultMethodDescriptor(_propKey_, _closure_, _enumerable_, _placement_).</ins>
     </emu-alg>
 
-  <emu-grammar>ClassElement : `static` FieldDefinitionList `;`</emu-grammar>
+  <emu-grammar>ClassElement : <ins>DecoratorList?</ins> `static` FieldDefinitionList `;`</emu-grammar>
   <emu-alg>
-    1. Return ClassFieldDefinitionEvaluation of FieldDefinitionList with parameters `"static"` and _homeObject_.
+      1. <ins>If |DecoratorList| is present, let _decorators_ be the result of performing DecoratorListEvaluation of |DecoratorList|.</ins>
+      1. <del>Return</del><ins>Let _elements_ be ? ClassFieldDefinitionEvaluation of FieldDefinitionList with parameters `"static"` and _homeObject_.</ins>
+      1. <ins>If |DecoratorList| is present, for _element_ in _elements_, set _element_.[[Decorators]] to _decorators_.</ins>
+      1. <ins>Return _elements_.</ins>
   </emu-alg>
 
-  <emu-grammar>ClassElement : FieldDefinitionList `;`</emu-grammar>
+  <emu-grammar>ClassElement : <ins>DecoratorList?</ins> FieldDefinitionList `;`</emu-grammar>
   <emu-alg>
-    1. Return ClassFieldDefinitionEvaluation of FieldDefinitionList with parameters `"own"` and ! Get(_homeObject_, `"prototype"`).
+      1. <ins>If |DecoratorList| is present, let _decorators_ be the result of performing DecoratorListEvaluation of |DecoratorList|.</ins>
+      1. <del>Return</del><ins>Let _elements_ be ? ClassFieldDefinitionEvaluation of FieldDefinitionList with parameters `"own"` and ! Get(_homeObject_, `"prototype"`).</ins>
+      1. <ins>If |DecoratorList| is present, for _element_ in _elements_, set _element_.[[Decorators]] to _decorators_.</ins>
+      1. <ins>Return _elements_.</ins>
   </emu-alg>
 </emu-clause>
 
@@ -894,6 +907,33 @@ emu-example pre {
       <p>When a `delete` operator occurs within strict mode code, a *SyntaxError* exception is thrown if its |UnaryExpression| is a direct reference to a variable, function argument, or function name. In addition, if a `delete` operator occurs within strict mode code and the property to be deleted has the attribute { [[Configurable]]: *false* }, a *TypeError* exception is thrown.</p>
     </emu-note>
   </emu-clause>
+
+    <!-- es6num="14.5.15" -->
+    <emu-clause id="sec-runtime-semantics-bindingclassdeclarationevaluation">
+      <h1>Runtime Semantics: BindingClassDeclarationEvaluation</h1>
+      <emu-grammar>ClassDeclaration : <ins>DecoratorList?</ins> `class` BindingIdentifier ClassTail</emu-grammar>
+      <emu-alg>
+        1. <ins>If |DecoratorList| is present, let _decorators_ be the result of performing DecoratorListEvaluation of |DecoratorList|.</ins>
+        1. <ins>Otherwise, let _decorators_ be a new empty List.</ins>
+        1. Let _className_ be StringValue of |BindingIdentifier|.
+        1. Let _value_ be the result of ClassDefinitionEvaluation of |ClassTail| with arguments _className_<ins> and _decorators</ins>.
+        1. ReturnIfAbrupt(_value_).
+        1. Let _hasNameProperty_ be ? HasOwnProperty(_value_, `"name"`).
+        1. If _hasNameProperty_ is *false*, perform SetFunctionName(_value_, _className_).
+        1. Let _env_ be the running execution context's LexicalEnvironment.
+        1. Perform ? InitializeBoundName(_className_, _value_, _env_).
+        1. Return _value_.
+      </emu-alg>
+      <emu-grammar>ClassDeclaration : <ins>DecoratorList?</ins> `class` ClassTail</emu-grammar>
+      <emu-alg>
+        1. <ins>If |DecoratorList| is present, let _decorators_ be the result of performing DecoratorListEvaluation of |DecoratorList|.</ins>
+        1. <ins>Otherwise, let _decorators_ be a new empty List.</ins>
+        1. Return the result of ClassDefinitionEvaluation of |ClassTail| with arguments *undefined* <ins>and _decorators_</ins>.
+      </emu-alg>
+      <emu-note>
+        <p><emu-grammar>ClassDeclaration : `class` ClassTail</emu-grammar> only occurs as part of an |ExportDeclaration| and the setting of a name property and establishing its binding are handled as part of the evaluation action for that production. See <emu-xref href="#sec-exports-runtime-semantics-evaluation"></emu-xref>.</p>
+      </emu-note>
+    </emu-clause>
 </emu-clause>
 
 
