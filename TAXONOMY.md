@@ -26,7 +26,7 @@ Decorator reification (from the existing decorator proposal):
 {
   kind: "method",
   key: "foo",
-  isStatic: true,
+  placement: "static",
   descriptor: {
     value: function foo() {},
     writable: true,
@@ -56,7 +56,7 @@ Decorator reification
 {
   kind: "field",
   key: "foo",
-  isStatic: true,
+  placement: "static",
   descriptor: {
     initializer: () => bar;
     writable: true,
@@ -85,9 +85,9 @@ Decorator reification (from the existing decorator proposal):
 
 ```js
 {
-  kind: "accessor",
+  kind: "method",
   key: "foo",
-  isStatic: true,
+  placement: "static",
   descriptor: {
     get: function foo() {},
     set: function foo(value) {},
@@ -119,7 +119,7 @@ Decorator reification (from the existing decorator proposal):
 {
   kind: "method",
   key: "foo",
-  isStatic: false,
+  placement: "prototype",
   descriptor: {
     value: function foo() {},
     writable: true,
@@ -149,7 +149,7 @@ Decorator reification
 {
   kind: "field",
   key: "foo",
-  isStatic: false,
+  placement: "own",
   descriptor: {
     initializer: () => bar;
     writable: true,
@@ -178,9 +178,9 @@ Decorator reification (from the existing decorator proposal):
 
 ```js
 {
-  kind: "accessor",
+  kind: "method",
   key: "foo",
-  isStatic: false,
+  placement: "prototype",
   descriptor: {
     get: function foo() {},
     set: function foo(value) {},
@@ -212,7 +212,7 @@ Decorator reification:
 {
   kind: "method",
   key: "foo",
-  isStatic: false,
+  placement: "prototype",
   descriptor: {
     value: function foo() {},
     writable: true,
@@ -242,7 +242,7 @@ Decorator reification
 {
   kind: "field",
   key: "foo",
-  isStatic: false,
+  placement: "own",
   descriptor: {
     initializer: () => bar;
     writable: true,
@@ -273,9 +273,9 @@ Decorator reification:
 
 ```js
 {
-  kind: "accessor",
+  kind: "method",
   key: "foo",
-  isStatic: false,
+  placement: "own",
   descriptor: {
     get: function foo() {},
     set: function foo(value) {},
@@ -311,7 +311,7 @@ Decorator reification:
 {
   kind: "method",
   key: decorators.PrivateName("foo"),
-  isStatic: true,
+  placement: "static",
   descriptor: {
     value: function foo() {},
     writable: false,
@@ -339,7 +339,7 @@ Decorator reification
 {
   kind: "field",
   key: decorators.PrivateName("foo"),
-  isStatic: true,
+  placement: "static",
   descriptor: {
     initializer: () => bar;
     writable: false,
@@ -366,9 +366,9 @@ Decorator reification:
 
 ```js
 {
-  kind: "accessor",
+  kind: "method",
   key: decorators.PrivateName("foo"),
-  isStatic: true,
+  placement: "static",
   descriptor: {
     get: function foo() {},
     set: function foo(value) {},
@@ -398,7 +398,7 @@ Decorator reification:
 {
   kind: "method",
   key: decorators.PrivateName("foo"),
-  isStatic: false,
+  placement: "own",
   descriptor: {
     value: function foo() {},
     writable: true,
@@ -428,7 +428,7 @@ Decorator reification:
 {
   kind: "field",
   key: decorators.PrivateName("foo"),
-  isStatic: false,
+  placement: "own",
   descriptor: {
     initializer: () => bar;
     writable: true,
@@ -455,9 +455,9 @@ Decorator reification:
 
 ```js
 {
-  kind: "accessor",
+  kind: "method",
   key: decorators.PrivateName("foo"),
-  isStatic: false,
+  placement: "own",
   descriptor: {
     get: function foo() {},
     set: function foo(value) {},
@@ -487,7 +487,7 @@ Decorator reification:
 {
   kind: "method",
   key: decorators.PrivateName("foo"),
-  isStatic: false,
+  placement: "own",
   descriptor: {
     value: function foo() {},
     writable: true,
@@ -515,7 +515,7 @@ Decorator reification:
 {
   kind: "field",
   key: decorators.PrivateName("foo"),
-  isStatic: false,
+  placement: "own",
   descriptor: {
     initializer: () => bar;
     writable: true,
@@ -542,9 +542,9 @@ Decorator reification:
 
 ```js
 {
-  kind: "accessor",
+  kind: "method",
   key: decorators.PrivateName("foo"),
-  isStatic: false,
+  placement: "own",
   descriptor: {
     get: function foo() {},
     set: function foo(value) {},

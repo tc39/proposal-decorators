@@ -9,10 +9,10 @@ Decorators are implemented as functions which take a JSON-like representation of
 
 ```js
 {
-  kind: "method", "accessor" or "field"
+  kind: "method" or "field"
   key: String, Symbol or Private Name,
-  isStatic: Boolean,
-  descriptor: Property descriptor (argument to Object.defineProperty),
+  placement: "static", "prototype" or "own",
+  descriptor: Property Descriptor (argument to Object.defineProperty),
 }
 ```
 

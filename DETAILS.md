@@ -95,20 +95,25 @@ The semantics here follows analogously: `#counter` is a private field which belo
 
 The general trend of the feedback from most JavaScript programmers is that they don't want to write `own`. This proposal instead sticks with the previously proposed syntax, which users seem to have been happy with in public fields through transpiler environments. Additionally, with the type-implies-placement principle above, an extra token would only serve the purpose of a reminder of semantics, and it could start to feel like excessive typing for experienced programmers.
 
-## Changes from the existing class features proposals
+## Changes from the previous decorators proposal
 
-### Decorator `kind` field
+### Member descriptors
 
-A couple minor possible changes for the MemberDescriptor for decorators:
-- The main change made here is from `kind: "property"` to `kind: "accessor"` and `kind: "method"` for accessor and method definitions respectively. The reason for the change is that the same form of MemberDescriptor is used for both public methods/accessors and private methods/accessors, differing only in the type of the `key`. Using the kind `"property"` would give the misleading impression that these private things are properties, which they are not.
-- Maybe `isStatic` could be instead a `"place"` field with three possible values: `"instance"`, `"static"` and `"object"`. This could let a decorator know whether it's being used in an object literal. However, changes from `"object"` to other types would not be supported.
+A couple minor possible changes were made for the MemberDescriptor for decorators:
+- The main change made here is from `kind: "property"` to `kind: "field"` and `kind: "method"` for accessor and method definitions respectively. The reason for the change is that the same form of MemberDescriptor is used for both public methods/accessors and private methods/accessors, differing only in the type of the `key`. Using the kind `"property"` would give the misleading impression that these private things are properties, which they are not.
+- `isStatic` is instead a `"placement"` field with three possible values: `"own"`, `"static"` and `"prototype"`.
+- There is an `initializer` field, whose value is a method which contains the initializer body.
+- The key may be a Private Name, in addition to a String or Symbol
+- Methods are not made uninitialized, and MakeMethod is called early.
 
-These are just strawman ideas, however.
+### Class descriptors and decorators
+
+This proposal significantly reduces the power of class descriptors, instead hoping that finishers will be able to subsume that responsibility. Specifically:
+- Class descriptors are no longer able to change the heritage; that can instead be done imperatively from a finisher.
+- Class descriptors cannot change the constructor. Instead, the finisher can return a new constructor, which will be used as a replacement for the class.
+
+With these changes, class decorators are really just for taking the elements as input and returning a new set of elements as output, or adding a finisher.
 
 ### async or generator getters?
 
 A hole in the orthogonality matrix that became apparent in writing this proposal is the lack of async getters and generator getters. Async and generator versions don't make much sense for setters (where the return value is not used) or constructors (where a constructor is often expected to return an instance related to the constructor, rather than a Promise or an Iterable). Unlike other orthgonality efforts (e.g., async generators, or this proposal), adding async/generator getters would be more a process of removing a restriction, rather than adding any particular other behavior.
-
-### Should we reconsider the private state shorthand?
-
-Private state allows omitting the `this.` in `this.#x`. This syntax feature isn't quite orthogonal--it doesn't exist for public state. Forms within class literals, such as a field declaration, always omit `this.`, whether it's for public or private fields. Although the shorthand has a sympathetic motivation (encourage people to use private state, which is generally the best practice), this asymmetry may be confusing for people learning the language, when context-switching between the forms which require `this.` and forms which do not.
