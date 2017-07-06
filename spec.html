@@ -1197,7 +1197,7 @@ emu-example pre {
       <pre><code class=typescript>
         interface ClassDesciptor {
           constructor: Function,
-          heritage: Object | null,
+          heritage: Object, null or undefined,
           elements: MemberDescriptor[]
         }
       </code></pre>
@@ -1270,40 +1270,28 @@ emu-example pre {
         <p>The semantics of functions leaked to JavaScript during decoration was contentious in Munich. The exact semantics will be driven by implementation considerations.</p>
       </emu-note>
     </emu-clause>
+
     <emu-clause id=sec-decorate-element aoid=DecorateElement>
       <h1>DecorateElement</h1>
       <p>With parameter _element_.</p>
       <emu-alg>
-        1. Assert: _element_.[[Kind]] is `"property"`.
         1. Let _extras_ be a new empty List.
         1. Let _finishers_ be a new empty List.
-        1. Let _previousDescriptor_ be ? FromElementDescriptor(_element_).
         1. For each _decorator_ in element_.[[Decorators]], in reverse list order do
-          1. Let _result_ be ? Call(_decorator_, *undefined*, « _previousDescriptor_ »).
-          1. Let _currentDescriptor_ be ? Get(_result_, *"descriptor"*).
-          1. Let _current_ be ? ToElementDescriptor(_result_).
-          1. If _current_.[[Finisher]] is not *undefined*, then
-            1. Append _current_.[[Finisher]] to the end of _finishers_.
-            1. Set _current_.[[Finisher]] to *undefined*.
-            1. Note: Finishers are not passed forward to the next decorator.
-          1. Let _previousDescriptor_ be ? FromElementDescriptor(_current_).
-          1. Let _extrasObject_ be ? Get(_result_, `"extras"`).
+          1. Let _elementObject_ be ? FromElementDescriptor(_element_).
+          1. Let _elemenentFinisherExtrasObject_ be ? Call(_decorator_, *undefined*, « _elementObject_ »).
+          1. Let _elementFinisherExtras_ be ? ToElementDescriptor(_elementFinisherExtrasObject_).
+          1. Let _element_ be _elementFinisherExtras_.[[Element]].
+          1. If _elementFinisherExtras_.[[Finisher]] is not *undefined*, then
+            1. Append _elementFinisherExtras_.[[Finisher]] to the end of _finishers_.
+            1. NOTE: Finishers are not passed forward to the next decorator.
+          1. Let _extrasObject_ be _elementFinisherExtras_.[[Extras]]
           1. If _extrasObject_ is not *undefined*, then:
-            1. Let _iterator_ be ? GetIterator(_extrasObject_).
-            1. Repeat
-              1. Let _next_ be ? IteratorStep(_iterator_).
-              1. If _next_ is *false*, then break.
-              1. Let _nextValue_ be ? IteratorValue(_next_).
-              1. Append _nextValue_ to the end of _extras_.
-        1. Let _extras_ be the result of merging any _extras_ with the same [[Key]] and [[Static]].
-        1. Return the Record {[[Descriptor]]: _previousDescriptor_, [[Extras]]: _extras_, [[Finishers]]: _finishers_}.
+            1. Let _extraObjects_ be IterableToList(_extrasObject_).
+            1. For each _extraObject_ in _extraObjects_, do
+              1. Append ToElementDescriptor(_extraObject_) to _extras_.
+        1. Return the Record {[[Element]]: _element_, [[Extras]]: _extras_, [[Finishers]]: _finishers_}.
       </emu-alg>
-      <emu-note>
-        <p>Future versions of the spec will create element descriptors with other [[Kind]]s.</p>
-      </emu-note>
-      <emu-note type=editor>
-        <p>There is a decision-point about what validation rules should be applied to the merging that happens right before merging.</p>
-      </emu-note>
     </emu-clause>
     <emu-clause id=sec-decorate-class>
       <h1>DecorateClass</h1>
