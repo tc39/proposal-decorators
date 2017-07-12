@@ -2060,11 +2060,17 @@ emu-example pre {
         1. Set _key_ to ? ToPrimitive(_key_, hint String).
         1. If _key_ is not a Private Name, set _key_ to ? ToPropertyKey(_key_).
         1. Let _placement_ be ? Get(_descriptor_, `"placement"`).
-        1. If _placement_ is not one of `"static"`, `"prototype"`, or `"own"`, throw a *TypeError* exception.
         1. Let _descriptor_ be ? ToPropertyDescriptor(? Get(_descriptor_, `"descriptor"`)).
         1. If _kind_ is `"field"`,
           1. Let _initializer_ be ? Get(_descriptor_, `"initializer"`).
         1. Let _extras_ be ? Get(_descriptor_, `"extras"`).
+        1. If _placement_ is not one of `"static"`, `"prototype"`, or `"own"`, throw a *TypeError* exception.
+        1. If _key_ is a Private Name,
+          1. If _descriptor_.[[Enumerable]] is *true*, throw a *TypeError* exception.
+          1. If _descriptor_.[[Configurable]] is *true*, throw a *TypeError* exception.
+          1. If _placement_ is `"prototype"`, throw a *TypeError* exception.
+          1. If _kind_ is `"method"` and _descriptor_.[[Writable]] is *true*, throw a *TypeError* exception.
+        1. If _kind_ is `"field"` and _descriptor_ has a [[Get]] or [[Set]] internal slot, throw a *TypeError* exception.
         1. Let _element_ be {[[Kind]]: _kind_, [[Key]]: _key_, [[Placement]]: _placement_, [[Descriptor]]: _descriptor_}.
         1. If [[Kind]] is `"field"`, set _element_.[[Initializer]] to _initializer_.
         1. Return the Record { [[Element]]: _element_, [[Finisher]]: _finisher_, [[Extras]]: _extras_ }.
