@@ -55,10 +55,10 @@ However, in normal usage which does not reference these runtime metaprogramming-
 
 Private state is not keyed on property keys--Strings or Symbols--but instead on Private Names. Literal references like `#x` are lexically bound to a Private Name which is textually present in the definition of a class, but decorators can create new, anonymous private fields by imperatively creating Private Names and adding them to the List of fields defined for the class.
 
-To get and set the value of any field in an orthogonal way, a new built-in module `"decorators"` is created (as decorators are the only use case for metaprogramming here), with three functions exposed (the module may be used for other utilities as well, if needed):
-- `decorators.get(object, identifier)`: When `identifier` is a property key, return `object[identifer]`. When `identifier` is a private name, get the private field with that identifier, or throw a ReferenceError if it is missing. If `identifier` refers to an accessor, invoke the getter; if it refers to a method, get the method value.
-- `decorators.set(object, identifier, value)`: When `identifier` is a property key, perform `object[identifer] = value`. When `identifier` is a private name, set the private field with that identifier to the value, or throw a ReferenceError if it is missing. If `identifier` is an accessor, invoke the setter; if `identifier` is a method, throw a ReferenceError.
-- `decorators.PrivateName([name])` returns a new opaque private name, optionally with the given descriptive name. TBD whether this name is a primitive or object (likely a new primitive type); the only operations possible on it are using it as a `key` in a decorator, and passing it to `decorators.get`/`decorators.set`.
+To create and use private names, a new function `PrivateName` is created:
+- `PrivateName(description)` creates a new Private Name primitive, analogous to Symbol except that it's not a property key
+- `PrivateName.prototype.get(object)` gets the private field or method value from the object, or invokes a getter, or throws a *ReferenceError* if it is not present.
+- `PrivateName.prototype.set(object)` sets the private field value in the object, or invokes a setter, or throws a *ReferenceError* if it is not present or if it is a private method.
 
 The interface for adding a private field to an object is to add a field descriptor using a decorator. A particular private name may be used just once, to define a single field. With this pattern, each private field is added by exactly one class.
 
