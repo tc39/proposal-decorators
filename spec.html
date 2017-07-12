@@ -2051,7 +2051,8 @@ emu-example pre {
         1. Let _kind_ be ? Get(_descriptor_, `"kind"`).
         1. If _kind_ is not one of `"method"` or `"field"`, throw a *TypeError* exception.
         1. Let _key_ be ? Get(_descriptor_, `"key"`).
-        1. If _key_ is not a Private Name, let _key_ be ? ToPropertyDescriptor(_key_).
+        1. Set _key_ to ? ToPrimitive(_key_, hint String).
+        1. If _key_ is not a Private Name, set _key_ to ? ToPropertyKey(_key_).
         1. Let _placement_ be ? Get(_descriptor_, `"placement"`).
         1. If _placement_ is not one of `"static"`, `"prototype"`, or `"own"`, throw a *TypeError* exception.
         1. Let _descriptor_ be ? ToPropertyDescriptor(? Get(_descriptor_, `"descriptor"`)).
