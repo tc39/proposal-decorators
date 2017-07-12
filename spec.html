@@ -1895,7 +1895,7 @@ emu-example pre {
       <h1>Element Descriptors</h1>
       <p>An <dfn>element descriptor</dfn> describes a member of a class or object literal and has the following shape:</p>
       <pre><code class=typescript>
-        interface MemberDesciptor {
+        interface ElementDesciptor {
           kind: "method" or "field"
           key: String, Symbol or Private Name,
           placement: "static", "prototype", or "own"
@@ -1908,9 +1908,10 @@ emu-example pre {
     </emu-clause>
     <emu-clause id=sec-decorator-functions-class-descriptor>
       <h1>Class Descriptors</h1>
-      <p>To describe a class to a class decorator, an array of Element Descriptors is passed. As a return value, an object of the following form is given:</p>
+      <p>A <dfn>class descriptor</dfn> describes a class and has the following shape:</p>
       <pre><code class=typescript>
         interface ClassDesciptor {
+          kind: "class"
           elements: MemberDescriptor[]
           finisher?: Function
         }
@@ -1994,7 +1995,12 @@ emu-example pre {
         1. Let _finishers_ be a new empty List.
         1. For each _decorator_ in _decorators_, in reverse list order do
           1. Let _elementsObjects_ be FromElementDescriptors(_elements_).
-          1. Let _result_ be ? Call(_decorator_, *undefined*, «  _elementsObjects_ »).
+          1. Let _obj_ be ! ObjectCreate(%ObjectPrototype%).
+          1. Perform ! CreateDataPropertyOrThrow(_obj_, `"kind"`, `"class"`).
+          1. Perform ! CreateDataPropertyOrThrow(_obj_, `"elements"`, _elementsObjects_).
+          1. Let _result_ be ? Call(_decorator_, *undefined*, « _obj_ »).
+          1. Let _kind_ be ? ToString(_result_, `"kind"`).
+          1. If _kind_ is not `"class"`, throw a *TypeError* exception.
           1. Let _finisher_ be ? Get(_result_, `"finisher"`).
           1. If _finisher_ is not *undefined*,
             1. If IsCallable(_finisher_) is *false*, throw a *TypeError* exception.
