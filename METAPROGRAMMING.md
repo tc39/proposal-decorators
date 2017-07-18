@@ -32,9 +32,12 @@ function defineElement(tagName) {
   // In order for a decorator to take an argument, it takes that argument
   // in the outer function and returns a different function that's called
   // when actually decorating the class (manual currying).
-  return function(constructor) {
+  return function(classDescriptor) {
+    let {kind, elements} = classDescriptor;
+    assert(kind == "class");
     return {
-      constructor,
+      kind,
+      elements,
       // This callback is called once the class is otherwise fully defined
       finisher(klass) {
         window.customElements.define(tagName, klass);
@@ -44,37 +47,33 @@ function defineElement(tagName) {
 }
 
 // Replace a method with a field with a bound version of the method
-function bound(memberDescriptor) {
+function bound(elementDescriptor) {
+  let {kind, key, placement, descriptor} = elementDescriptor;
   assert(kind === "method");
-  let {kind, key, isStatic, propertyDescriptor} = memberDescriptor;
-  // Add an extra field which is initialized when instances are made
-  // Leave the existing one in place so that it's available on the prototype
-  memberDescriptor.extras = [{
-    kind: "field",
-    // The initializer callback is called with the receiver set to the new instance
-    initializer() { return descriptor.value.bind(this); },
-    descriptor,
-    isStatic,
-  }];
-  return memberDescriptor;
+  if (placement == "prototype") placement = "instance";
+  function initializer() { return descriptor.value.bind(this); }
+  delete descriptor.value;
+  return { kind: "field", key, placement, descriptor, initializer };
 }
 
 // Whenever a read or write is done to a field, call the render()
 // method afterwards. Implement this by replacing the field with
 // a getter/setter pair.
-function observed({kind, key, isStatic, descriptor}) {
+function observed({kind, key, placement, descriptor, initializer}) {
   assert(kind == "field");
+  assert(placement == "instance");
   // Create a new anonymous private name as a key for a class element
   let storage = decorators.PrivateName();
-  let underlying = {kind, key: storage, isStatic, descriptor};
+  let underlyingDescriptor = { enumerable: false, configurable: false, writable: true };
+  let underlying = { kind, key: storage, placement, underlyingDescriptor, initializer };
   return {
-    kind: "accessor",
+    kind: "method",
     key,
-    isStatic,
+    placement,
     descriptor: {
-      get() { decorators.get(this, storage); },
+      get() { storage.get(this); },
       set(value) {
-        decorators.set(this, storage, value);
+        storage.set(this, value);
         // Assume the @bound decorator was used on render
         window.requestAnimationFrame(this.render);
       },
