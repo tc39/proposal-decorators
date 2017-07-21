@@ -23,10 +23,8 @@ Class decorators are passed in an Array of all class elements and output an obje
 For private fields, methods or accessors, the `key` will be a Private Name--this is similar to a String or Symbol, except that it is invalid to use with property access `[]` or with operations such as `Object.defineProperty`. Instead, it can only be used with decorators.
 
 
-For example, the above three decorators could be defined as follows:
+For example, the three decorators from README.md could be defined as follows:
 ```js
-import "decorators" as decorators;
-
 // Define the class as a custom element with the given tag name
 function defineElement(tagName) {
   // In order for a decorator to take an argument, it takes that argument
@@ -50,7 +48,7 @@ function defineElement(tagName) {
 function bound(elementDescriptor) {
   let {kind, key, placement, descriptor} = elementDescriptor;
   assert(kind === "method");
-  if (placement == "prototype") placement = "instance";
+  if (placement == "prototype") placement = "own";
   function initializer() { return descriptor.value.bind(this); }
   delete descriptor.value;
   return { kind: "field", key, placement, descriptor, initializer };
@@ -61,7 +59,7 @@ function bound(elementDescriptor) {
 // a getter/setter pair.
 function observed({kind, key, placement, descriptor, initializer}) {
   assert(kind == "field");
-  assert(placement == "instance");
+  assert(placement == "own");
   // Create a new anonymous private name as a key for a class element
   let storage = decorators.PrivateName();
   let underlyingDescriptor = { enumerable: false, configurable: false, writable: true };
