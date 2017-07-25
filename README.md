@@ -77,13 +77,13 @@ class Counter extends HTMLElement {
 
   constructor() {
     super();
-    this.onclick = #clicked.bind(this);
+    this.onclick = this.#clicked.bind(this);
   }
 
   connectedCallback() { this.render(); }
 
   render() {
-    this.textContent = #x.toString();
+    this.textContent = this.#x.toString();
   }
 }
 window.customElements.define('num-counter', Counter);
@@ -106,19 +106,19 @@ class Counter extends HTMLElement {
 
   @bound
   #clicked() {
-    #x++;
+    this.#x++;
   }
 
   constructor() {
     super();
-    this.onclick = #clicked;
+    this.onclick = this.#clicked;
   }
 
   connectedCallback() { this.render(); }
 
   @bound
   render() {
-    this.textCountent = #x.toString();
+    this.textCountent = this.#x.toString();
   }
 }
 ```
