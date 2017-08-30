@@ -323,19 +323,19 @@ emu-example pre {
         <p>The initial value of `PrivateName.prototype.constructor` is the intrinsic object %PrivateName%.</p>
       </emu-clause>
 
-      <emu-clause id="sec-private-name.prototype.get">
-        <h1>PrivateName.prototype.get ( _object_ )</h1>
-        <p>The following steps are taken:</p>
+      <emu-clause id="sec-private-name-get">
+        <h1>%PrivateNameGet%( _name_, _object_ )</h1>
+        <p>%PrivateNameGet% is a per-realm built-in function object. When invoked, the following steps are taken:</p>
         <emu-alg>
-          1. Let _pn_ be ? ThisPrivateName().
+          1. Let _pn_ be ? ToPrivateName(_name_).
           1. If Type(_object_) is not Object, throw a *TypeError* exception.
           1. Return ? PrivateFieldGet(_pn_, _object_).
         </emu-alg>
       </emu-clause>
 
-      <emu-clause id="sec-private-name.prototype.set">
-        <h1>PrivateName.prototype.set ( _object_, _value_ )</h1>
-        <p>The following steps are taken:</p>
+      <emu-clause id="sec-private-name-set">
+        <h1>%PrivateNameSet% ( _name_, _object_, _value_ )</h1>
+        <p>%PrivateNameSet% is a per-realm built-in function object. When invoked, the following steps are taken:</p>
         <emu-alg>
           1. Let _pn_ be ? ThisPrivateName().
           1. If Type(_object_) is not Object, throw a *TypeError* exception.
@@ -382,10 +382,17 @@ emu-example pre {
         <p>This property has the attributes { [[Writable]]: *false*, [[Enumerable]]: *false*, [[Configurable]]: *true* }.</p>
       </emu-clause>
 
-      <emu-clause id="sec-private-name-to-primitive" aoid=PrivateNameToPrimitive>
+      <emu-clause id="sec-private-name-this-private-name" aoid=ThisPrivateName>
         <h1>ThisPrivateName()</h1>
         <emu-alg>
           1. Let _p_ be the *this* value.
+          1. Return ToPrivateName(_p_).
+        </emu-alg>
+      </emu-clause>
+
+      <emu-clause id="sec-private-name-to-private-name" aoid=ToPrivateName>
+        <h1>ThisPrivateName(_p_)</h1>
+        <emu-alg>
           1. If Type(_p_) is PrivateName, return _p_.
           1. If Type(_p_) is not Object, throw a *TypeError* exception.
           1. If _p_ does not have a [[PrivateNameData]] internal slot, throw a *TypeError* exception.
@@ -1058,7 +1065,7 @@ emu-example pre {
         1. Let _finishers_ be a new empty List.
         1. For each _decorator_ in element_.[[Decorators]], in reverse list order do
           1. Let _elementObject_ be ? FromElementDescriptor(_element_).
-          1. Let _elemenentFinisherExtrasObject_ be ? Call(_decorator_, *undefined*, « _elementObject_ »).
+          1. Let _elementFinisherExtrasObject_ be ? Call(_decorator_, *undefined*, « _elementObject_, %PrivateNameGet%, %PrivateNameSet% »).
           1. Let _elementFinisherExtras_ be ? ToElementDescriptor(_elementFinisherExtrasObject_).
           1. Let _element_ be _elementFinisherExtras_.[[Element]].
           1. If _elementFinisherExtras_.[[Finisher]] is not *undefined*, then
@@ -1081,7 +1088,7 @@ emu-example pre {
           1. Let _obj_ be ! ObjectCreate(%ObjectPrototype%).
           1. Perform ! CreateDataPropertyOrThrow(_obj_, `"kind"`, `"class"`).
           1. Perform ! CreateDataPropertyOrThrow(_obj_, `"elements"`, _elementsObjects_).
-          1. Let _result_ be ? Call(_decorator_, *undefined*, « _obj_ »).
+          1. Let _result_ be ? Call(_decorator_, *undefined*, « _obj_, %PrivateNameGet%, %PrivateNameSet% »).
           1. Let _kind_ be ? ToString(_result_, `"kind"`).
           1. If _kind_ is not `"class"`, throw a *TypeError* exception.
           1. Let _finisher_ be ? Get(_result_, `"finisher"`).
