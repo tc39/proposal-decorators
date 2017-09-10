@@ -1028,7 +1028,6 @@ emu-example pre {
           1. Let _newConstructor_ be Call( _finisher_, *undefined*, « _constructor_ »).
           1. If _newConstructor_ is not *undefined*,
             1. If IsConstructor(_newConstructor_) is *false*, throw a *TypeError* exception.
-            1. If SameValue(_newConstructor_.[[GetPrototypeOf]](), _constructor_) is *false*, throw a *TypeError* exception.
             1. Let _constructor_ be _newConstructor_.
         1. Return _constructor_.
       </emu-alg>
