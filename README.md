@@ -118,7 +118,7 @@ class Counter extends HTMLElement {
 
   @bound
   render() {
-    this.textCountent = this.#x.toString();
+    this.textContent = this.#x.toString();
   }
 }
 ```
