@@ -301,7 +301,7 @@ emu-example pre {
         </emu-alg>
       </emu-clause>
 
-      <emu-clause id="sec-private-description">
+      <emu-clause id="sec-private-description" aoid=PrivateName>
         <h1>PrivateName ( [ _description_ ] )</h1>
         <p>When `PrivateName` is called with optional argument _description_, the following steps are taken:</p>
         <emu-alg>
@@ -1001,7 +1001,7 @@ emu-example pre {
     </emu-clause>
   </emu-clause>
 
-    <emu-clause id=sec-decorator-runtime-semantics-decoratorevaluation>
+    <emu-clause id=sec-decorator-runtime-semantics-decoratorevaluation aoid=DecoratorEvaluation>
       <h1>Runtime Semantics: DecoratorEvaluation</h1>
       <emu-grammar>Decorator : `@` DecoratorMemberExpression[?Yield]</emu-grammar>
       <emu-alg>
@@ -1017,7 +1017,7 @@ emu-example pre {
       </emu-alg>
     </emu-clause>
 
-    <emu-clause id=sec-method-definitions-runtime-semantics-decoratorlistevaluation>
+    <emu-clause id=sec-method-definitions-runtime-semantics-decoratorlistevaluation aoid=DecoratorListEvaluation>
       <h1>Runtime Semantics: DecoratorListEvaluation</h1>
       <emu-grammar>DecoratorList : DecoratorList[?Yield]? Decorator[?Yield]</emu-grammar>
       <emu-alg>
@@ -1102,7 +1102,7 @@ emu-example pre {
       </emu-alg>
     </emu-clause>
 
-    <emu-clause id="sec-from-element-descriptors">
+    <emu-clause id="sec-from-element-descriptors" aoid=FromElementDescriptors>
       <h1>FromElementDescriptors ( _elements_ )</h1>
       <emu-alg>
         1. Let _elementObjects_ be a new empty List.
@@ -1112,20 +1112,8 @@ emu-example pre {
       </emu-alg>
     </emu-clause>
 
-    <emu-clause id="sec-to-element-descriptors">
-      <h1>ToElementDescriptors ( _elementsObject_ )</h1>
-      <emu-alg>
-        1. Let _elements_ be a new empty List.
-        1. Let _elementObjectList_ be ? IterableToList(_elementsObject_).
-        1. For each _elementObject_ in _elementObjectList_, do
-          1. Append ToElementDescriptor(_elementObject_) to _elements_.
-        1. Return _elements_.
-      </emu-alg>
-    </emu-clause>
-
-    <emu-clause id=sec-from-element-descriptor>
-      <h1>FromElementDescriptor</h1>
-      <p>With parameter _element_.</p>
+    <emu-clause id=sec-from-element-descriptor aoid=FromElementDescriptor>
+      <h1>FromElementDescriptor ( _element_ )</h1>
       <emu-alg>
         1. Let _obj_ be ! ObjectCreate(%ObjectPrototype%).
         1. Perform ! CreateDataPropertyOrThrow(_obj_, `"kind"`, _element_.[[Kind]]).
@@ -1140,8 +1128,19 @@ emu-example pre {
       </emu-alg>
     </emu-clause>
 
-    <emu-clause id=sec-to-element-descriptor>
-      <h1>ToElementDescriptor</h1>
+    <emu-clause id="sec-to-element-descriptors" aoid=ToElementDescriptor>
+      <h1>ToElementDescriptors ( _elementsObject_ )</h1>
+      <emu-alg>
+        1. Let _elements_ be a new empty List.
+        1. Let _elementObjectList_ be ? IterableToList(_elementsObject_).
+        1. For each _elementObject_ in _elementObjectList_, do
+          1. Append ToElementDescriptor(_elementObject_) to _elements_.
+        1. Return _elements_.
+      </emu-alg>
+    </emu-clause>
+
+    <emu-clause id=sec-to-element-descriptor aoid=ToElementDescriptor>
+      <h1>ToElementDescriptor ( _descriptor_ )</h1>
       <p>With parameter _descriptor_, returns a Record containing three values: { [[Element]]: a class Element Descriptor, [[Extras]]: an iterable of other elements, [[Finisher]]: a Function or *undefined* }.</p>
       <emu-alg>
         1. Let _kind_ be ? Get(_descriptor_, `"kind"`).
