@@ -36,7 +36,7 @@ window.customElements.define('num-counter', Counter);
 
 ## Field declarations
 
-With the ESnext field declarations proposal, the above example can be written as
+With the ESnext [field declarations proposal](https://github.com/tc39/proposal-class-fields), the above example can be written as
 
 
 ```js
@@ -66,7 +66,7 @@ In the above example, you can see a field declared with the syntax `x = 0`. You 
 
 ## Private methods and fields
 
-The above example has some implementation details exposed to the world that might be better kept internal. Using ESnext private fields and methods, the definition can be refined to:
+The above example has some implementation details exposed to the world that might be better kept internal. Using ESnext [private fields and methods](https://github.com/tc39/proposal-private-methods), the definition can be refined to:
 
 ```js
 class Counter extends HTMLElement {
