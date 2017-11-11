@@ -1,4 +1,4 @@
-# ESnext class features for JavaScript
+# Decorators for JavaScript
 
 Daniel Ehrenberg
 
