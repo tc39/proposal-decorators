@@ -101,9 +101,11 @@ emu-example pre {
       DecoratorMemberExpression[Yield, Await] :
         IdentifierReference[?Yield, ?Await]
         DecoratorMemberExpression[?Yield, ?Await] `.` IdentifierName
+        `(` Expression[+In, ?Yield, ?Await] `)`
 
       DecoratorCallExpression[Yield, Await] :
         DecoratorMemberExpression Arguments[?Yield, ?Await]
+        DecoratorCallExpression[?Yield, ?Await] `.` IdentifierName
     </emu-grammar>
   </emu-clause>
 
@@ -1005,13 +1007,15 @@ emu-example pre {
       <h1>Runtime Semantics: DecoratorEvaluation</h1>
       <emu-grammar>Decorator : `@` DecoratorMemberExpression[?Yield]</emu-grammar>
       <emu-alg>
-        1. Let _ref be the result of evaluating |DecoratorMemberExpression|.
+        1. Let _expr_ be the result of reparsing |DecoratorMemberExpression| as a |MemberExpression|.
+        1. Let _ref be the result of evaluating _expr_.
         1. Let _value be ? GetValue(_ref_).
         1. Return _value_.
       </emu-alg>
       <emu-grammar>Decorator : `@` DecoratorCallExpression[?Yield]</emu-grammar>
       <emu-alg>
-        1. Let _ref be the result of evaluating |DecoratorCallExpression|.
+        1. Let _expr_ be the result of reparsing |DecoratorCallExpression| as a |CallMemberExpression|.
+        1. Let _ref be the result of evaluating _expr_.
         1. Let _value be ? GetValue(_ref_).
         1. Return _value_.
       </emu-alg>
