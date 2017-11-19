@@ -1044,9 +1044,11 @@ emu-example pre {
     <emu-clause id=sec-decorate-class aoid=DecorateClass>
       <h1>DecorateClass ( elements, decorators )</h1>
       <emu-alg>
-        1. Let _newElements_, _extras_, and _finishers_ each be a new empty List.
+        1. Let _newElements_, _extras_, _finishers_, and _keys_ each be a new empty List.
         1. For each _element_ in _elements_, do
-          1. Let _elementFinishersExtras_ be ? DecorateElement(_element_).
+          1. Append _element_.[[Key]] to _keys_.
+        1. For each _element_ in _elements_, do
+          1. Let _elementFinishersExtras_ be ? DecorateElement(_element_, _keys_).
           1. Append _elementFinishersExtras_.[[Element]] to _newElements_.
           1. Concatenate _elementFinishersExtras_.[[Extras]] onto _extras_.
           1. Concatenate _elementFinishersExtras_.[[Finishers]] onto _finishers_.
@@ -1058,22 +1060,30 @@ emu-example pre {
     </emu-clause>
 
     <emu-clause id=sec-decorate-element aoid=DecorateElement>
-      <h1>DecorateElement ( element )</h1>
-      <p>With parameter _element_, a Class Element.</p>
+      <h1>DecorateElement ( element, keys )</h1>
+      <p>With parameters _element_, a Class Element and _keys_, a List of Property Keys and Private Names.</p>
       <emu-alg>
         1. Let _extras_ be a new empty List.
         1. Let _finishers_ be a new empty List.
         1. For each _decorator_ in element_.[[Decorators]], in reverse list order do
+          1. Assert: _element_.[[Key]] is an element of _keys_.
+          1. Remove _element_.[[Key]] from _keys_.
           1. Let _elementObject_ be ? FromElementDescriptor(_element_).
           1. Let _elementFinisherExtrasObject_ be ? Call(_decorator_, *undefined*, « _elementObject_, %PrivateNameGet%, %PrivateNameSet% »).
           1. Let _elementFinisherExtras_ be ? ToElementDescriptor(_elementFinisherExtrasObject_).
           1. Let _element_ be _elementFinisherExtras_.[[Element]].
+          1. If _element_.[[Key]] is an element of _keys_, throw a *TypeError* exception.
+          1. Otherwise, append _element_.[[Key]] to _keys_.
           1. If _elementFinisherExtras_.[[Finisher]] is not *undefined*, then
             1. Append _elementFinisherExtras_.[[Finisher]] to the end of _finishers_.
             1. NOTE: Finishers are not passed forward to the next decorator.
           1. Let _extrasObject_ be _elementFinisherExtras_.[[Extras]]
           1. If _extrasObject_ is not *undefined*, then
-            1. Concatenate ? ToElementDescriptors(_extrasObject_) onto _extras_.
+            1. Let _newExtras_ be ? ToElementDescriptors(_extrasObject_).
+            1. For each _extra_ of _newExtras_, do
+              1. If _extra_.[[Key]] is an element of _keys_, throw a *TypeError* exception.
+              1. Otherwise, append _extra_.[[Key]] to _keys_.
+            1. Concatenate _newExtras_ onto _extras_.
         1. Return the Record {[[Element]]: _element_, [[Extras]]: _extras_, [[Finishers]]: _finishers_}.
       </emu-alg>
     </emu-clause>
@@ -1098,6 +1108,7 @@ emu-example pre {
           1. Let _elementsObject_ be ? Get(_result_, `"elements"`).
           1. If _elementsObject_ is not *undefined*, then
             1. Set _elements_ to ? ToElementDescriptors(_elementsObject_).
+            1. If there are two class elements _a_ and _b_ in _elements_ such that _a_.[[Key]] is _b_.[[Key]], throw a *TypeError* exception.
         1. Return the Record { [[Elements]]: _elements_, [[Finishers]]: _finishers_ }.
       </emu-alg>
     </emu-clause>
