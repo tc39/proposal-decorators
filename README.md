@@ -4,9 +4,9 @@ Daniel Ehrenberg, Yehuda Katz and Brian Terlson
 
 This proposal adds decorators to JavaScript, building on earlier class fields and private methods proposals.
 
-This introductory document proposes a combined vision for how the proposed class features could work together--[decorators](https://tc39.github.io/proposal-decorators/), [public fields](https://tc39.github.io/proposal-class-public-fields/) and [private fields](https://github.com/tc39/proposal-private-fields), drawing on the earlier [Orthogonal Classes](https://github.com/erights/Orthogonal-Classes) and [Class Evaluation Order](https://onedrive.live.com/view.aspx?resid=A7BBCE1FC8EE16DB!442046&app=PowerPoint&authkey=!AEeXmhZASk50KjA) proposals.
+This introductory document proposes a combined vision for how the proposed class features could work together--decorators, [class fields](https://tc39.github.io/proposal-class-fields/) and [private methods](https://github.com/tc39/proposal-private-methods), drawing on the earlier [Orthogonal Classes](https://github.com/erights/Orthogonal-Classes) and [Class Evaluation Order](https://onedrive.live.com/view.aspx?resid=A7BBCE1FC8EE16DB!442046&app=PowerPoint&authkey=!AEeXmhZASk50KjA) proposals.
 
-This page is an overview of the features and their interaction from a user perspective. For detailed semantics, see [DETAILS.md](https://github.com/littledan/proposal-unified-class-features/blob/master/DETAILS.md).
+This page is an overview of the features and their interaction from a user perspective. For detailed semantics, see [DETAILS.md](https://github.com/tc39/proposal-decorators/blob/master/DETAILS.md). Decorators were previously developed [in this repository](https://github.com/tc39/proposal-decorators-previous/).
 
 ## A guiding example: Custom elements with classes
 
