@@ -99,7 +99,7 @@ Note that ESnext provides private fields only as declared up-front in a field de
 
 ## Decorators
 
-ESnext provides decorators to let frameworks and libraries to implement part of the behavior of classes, as seen in the next version of the example:
+ESnext provides decorators to let frameworks and libraries implement part of the behavior of classes, as seen in the next version of the example:
 
 ```js
 @defineElement('num-counter')
