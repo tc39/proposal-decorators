@@ -1,6 +1,6 @@
 # Decorators for JavaScript
 
-Daniel Ehrenberg, Yehuda Katz and Brian Terlson
+Daniel Ehrenberg, Yehuda Katz, and Brian Terlson
 
 This proposal adds decorators to JavaScript, building on earlier class fields and private methods proposals.
 
