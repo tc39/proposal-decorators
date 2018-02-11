@@ -49,7 +49,8 @@ function bound(elementDescriptor) {
   let {kind, key, placement, descriptor} = elementDescriptor;
   assert(kind === "method");
   if (placement == "prototype") placement = "own";
-  function initializer() { return descriptor.value.bind(this); }
+  const {value} = descriptor;
+  function initializer() { return value.bind(this); }
   delete descriptor.value;
   return { kind: "field", key, placement, descriptor, initializer };
 }
