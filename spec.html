@@ -1170,11 +1170,9 @@ emu-example pre {
         1. If _key_ is a Private Name,
           1. If _descriptor_.[[Enumerable]] is *true*, throw a *TypeError* exception.
           1. If _descriptor_.[[Configurable]] is *true*, throw a *TypeError* exception.
-          1. If _placement_ is `"prototype"`, throw a *TypeError* exception.
-          1. If _kind_ is `"method"` and _descriptor_.[[Writable]] is *true*, throw a *TypeError* exception.
+          1. If _placement_ is `"prototype"` or `"static"`, throw a *TypeError* exception.
         1. If _kind_ is `"field"`,
           1. If _descriptor_ has a [[Get]], [[Set]] or [[Value]] internal slot, throw a *TypeError* exception.
-          1. If _placement_ is `"prototype"`, throw a *TypeError* exception.
         1. Let _element_ be {[[Kind]]: _kind_, [[Key]]: _key_, [[Placement]]: _placement_, [[Descriptor]]: _descriptor_}.
         1. If [[Kind]] is `"field"`, set _element_.[[Initializer]] to _initializer_.
         1. Return the Record { [[Element]]: _element_, [[Finisher]]: _finisher_, [[Extras]]: _extras_ }.
