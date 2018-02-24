@@ -127,7 +127,7 @@ class Counter extends HTMLElement {
 
 Here, decorators are used for:
 - `@defineElement` defines the custom element, allowing the name of the element to be at the beginning of the class
-- `@bound` makes `#clicked` into an auto-bound method, replacing the explicit `bind` call later
+- `@bound` makes `#clicked` into an auto-bound method, replacing the explicit `bind` call later. See also [notes about the `@bound` decorator](METAPROGRAMMING.md#bound-decorator-notes).
 - `@observed` automatically schedules a call to the `render()` method when the `#x` field is changed
 
 You can decorate the whole class, as well as declarations of fields, getters, setters and methods. Arguments and function declarations cannot be decorated.
