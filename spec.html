@@ -195,7 +195,7 @@ emu-example pre {
           1. <ins>Set the running execution context's PrivateNameEnvironment to _outerPrivateEnvironment_.</ins>
           1. Return Completion(_status_).
         1. <ins>Append _newElements_ to _elements_</ins>
-      1. <ins>Let _elements_ be _elements_ with getters and setters of the same key coalesced, with later declarations overriding earlier ones.</ins>
+      1. <ins>Let _elements_ be CoalesceClassElements(_elements_).</ins>
       1. <ins>If _decorators_ is not provided, let _decorators_ be a new empty List.</ins>
       1. <ins>Let _decorated_ be ? DecorateClass(_elements_, _decorators_).</ins>
       1. Set the running execution context's LexicalEnvironment to _lex_.
@@ -273,6 +273,39 @@ emu-example pre {
         <p><emu-grammar>ClassDeclaration : `class` ClassTail</emu-grammar> only occurs as part of an |ExportDeclaration| and the setting of a name property and establishing its binding are handled as part of the evaluation action for that production. See <emu-xref href="#sec-exports-runtime-semantics-evaluation"></emu-xref>.</p>
       </emu-note>
     </emu-clause>
+
+  <emu-clause id="sec-coalesce-class-elements" aoid="CoalesceClassElements">
+    <h1>CoalesceClassElements ( _elements_ )</h1>
+    <emu-alg>
+      1. Let _newElements_ be an empty List.
+      1. For _element_ in _elements_,
+        1. If _element_.[[Kind]] is `"method"` and _newElements_ contains a Record _other_ where _other_.[[Kind]] is `"method"`, SameValue(_other_.[[Key]], _element_.[[Key]]) is *true*, and _other_.[[Placement]] is _element_.[[Placement]],
+          1. If _element_.[[Decorators]] is not empty,
+            1. If _other_.[[Decorators]] is not empty, throw a *ReferenceError* exception.
+            1. Set _other_.[[Decorators]] to _element_.[[Decorators]].
+          1. If _element_.[[Key]] is a Private Name,
+            1. Assert: _element_.[[Kind]] is `"method"`.
+            1. If _element_.[[Descriptor]] has a [[Get]] field,
+              1. Assert: _other_.[[Descriptor]] has a [[Set]] field.
+              1. Set _other_.[[Descriptor]].[[Get]] to _element_.[[Descriptor]].[[Get]].
+            1. Otherwise,
+              1. Assert: _element_.[[Descriptor]] has a [[Set]] field.
+              1. Assert: _other_.[[Descriptor]] has a [[Get]] field.
+              1. Set _other_.[[Descriptor]].[[Set]] to _element_.[[Descriptor]].[[Set]].
+          1. Otherwise,
+            1. If IsDataDescriptor(_element_.[[Descriptor]]) is *true* or IsDataDescriptor(_other_.[[Descriptor]]) is *true*, then
+              1. Assert: _element_.[[Descriptor]].[[Configurable]] is *true*, and _other_.[[Descriptor]].[[Configurable]] is *true*.
+              1. Set _other_.[[Descriptor]] to _element_.[[Descriptor]].
+            1. Else,
+              1. Assert: IsAccessorDescriptor(_other_.[[Descriptor]]) and IsAccessorDescriptor(_element_.[[Descriptor]]) are both *true*,
+              1. If _element_.[[Descriptor]].[[Set]] is present, set _other_.[[Descriptor]].[[Set]] to _element_.[[Descriptor]].[[Set]].
+              1. If _element_.[[Descriptor]].[[Get]] is present, set _other_.[[Descriptor]].[[Get]] to _element_.[[Descriptor]].[[Get]].
+        1. Otherwise, append _element_ to _newElements_.
+      1. Return _newElements_.
+    </emu-alg>
+    <emu-note>In the case of public class elements, coalescing corresponds in semantics to ValidateAndApplyPropertyDescriptor. Note that this algorithm only coalesces method and accessor declarations, and it leaves field declarations as is.</emu-note>
+  </emu-clause>
+
 </emu-clause>
 
 
