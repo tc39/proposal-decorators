@@ -1006,7 +1006,7 @@ emu-example pre {
   <h1>Decorator semantics</h1>
   <emu-clause id=sec-decorator-functions>
     <h1>Decorator Functions</h1>
-    <p>A <dfn>decorator function</dfn> is a function that takes and returns either a element descriptor or a class descriptor. The body of a decorator function modifies and returns the descriptor it receives to change the semantics of the decorated entity.</p>
+    <p>A <dfn>decorator function</dfn> is a function that takes and returns either a element descriptor or a class descriptor. The body of a decorator function modifies and returns the descriptor it receives to change the semantics of the decorated entity. Descriptor types can be differentiated by their `kind` property, which is either `"method"`, `"field"` or `"class"`. Descriptors also have a @@toStringTag property which is of the form `"Kind Descriptor"`, where `"Kind"` is replaced by the `kind` property with the first letter capitalized; this property helps differentiate them from other objects.</p>
     <emu-clause id=sec-decorator-functions-element-descriptor>
       <h1>Element Descriptors</h1>
       <p>An <dfn>element descriptor</dfn> describes an element of a class or object literal and has the following shape:</p>
@@ -1155,6 +1155,12 @@ emu-example pre {
       <h1>FromElementDescriptor ( _element_ )</h1>
       <emu-alg>
         1. Let _obj_ be ! ObjectCreate(%ObjectPrototype%).
+        1. If _element_.[[Kind]] is `"method"`,
+          1. Let _desc_ be PropertyDescriptor{ [[Value]]: `"Method Descriptor"`, [[Writable]]: *false*, [[Enumerable]]: *false*, [[Configurable]]: *true* }.
+        1. Otherwise,
+          1. Assert: _element_.[[Kind]] is `"field"`.
+          1. Let _desc_ be PropertyDescriptor{ [[Value]]: `"Field Descriptor"`, [[Writable]]: *false*, [[Enumerable]]: *false*, [[Configurable]]: *true* }.
+        1. Perform ! DefinePropertyOrThrow(_obj_, @@toStringTag, _desc_).
         1. Perform ! CreateDataPropertyOrThrow(_obj_, `"kind"`, _element_.[[Kind]]).
         1. Perform ! CreateDataPropertyOrThrow(_obj_, `"key"`, _element_.[[Key]]).
         1. Perform ! CreateDataPropertyOrThrow(_obj_, `"placement"`, _element_.[[Placement]]).
@@ -1217,6 +1223,8 @@ emu-example pre {
       <emu-alg>
         1. Let _elementsObjects_ be FromElementDescriptors(_elements_).
         1. Let _obj_ be ! ObjectCreate(%ObjectPrototype%).
+        1. Let _desc_ be PropertyDescriptor{ [[Value]]: `"Class Descriptor"`, [[Writable]]: *false*, [[Enumerable]]: *false*, [[Configurable]]: *true* }.
+        1. Perform ! DefinePropertyOrThrow(_obj_, @@toStringTag, _desc_).
         1. Perform ! CreateDataPropertyOrThrow(_obj_, `"kind"`, `"class"`).
         1. Perform ! CreateDataPropertyOrThrow(_obj_, `"elements"`, _elementsObjects_).
         1. Return _obj_.
