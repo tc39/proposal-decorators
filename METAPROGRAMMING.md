@@ -93,51 +93,6 @@ function observed({kind, key, placement, descriptor, initializer}, get, set) {
 }
 ```
 
-## Class element finisher
-
-Here is an example that uses the `finisher` property for a class element:
-
-```js
-class User {
-  @readonly id;
-  email;
-
-  constructor(id = null, email = null) {
-    this.id = id;
-    this.email = email;
-  }
-}
-
-function readonly(elementDecriptor) {
-  // we don't want to set `writable` to false until after the property has been initialized
-  elementDecriptor.finisher = () => {
-    elementDecriptor.descriptor.writable = false;
-  };
-  return elementDecriptor;
-}
-```
-
-The above code is functionally equivalent to the following:
-
-```js
-class User {
-  id;
-  email;
-
-  constructor(id = null, email = null) {
-    this.id = id;
-    this.email = email;
-    // finisher
-    Object.defineProperty(this, 'id', {
-      writable: false,
-      // configurable: false and enumerable: true are the default for public class fields
-      configurable: false,
-      enumerable: true
-    });
-  }
-}
-```
-
 <a id="bound-decorator-notes"></a>
 ## Notes about the `@bound` decorator
 
