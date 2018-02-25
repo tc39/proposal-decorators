@@ -128,6 +128,27 @@ emu-example pre {
 <emu-clause id="sec-internal-algorithms">
 <h1>Modified class algorithms</h1>
 
+  <emu-clause id="sec-decorators-early-errors">
+    <h1>Static Semantics: Early Errors</h1>
+    <emu-grammar>
+      ClassBody[Yield, Await] :
+        ClassElementList[?Yield, ?Await]
+
+      ClassElement[Yield, Await] :
+        DecoratorList[?Yield, ?Await] MethodDefinition[?Yield, ?Await]
+        DecoratorList[?Yield, ?Await] `static` MethodDefinition[?Yield, ?Await]
+    </emu-grammar>
+    <ul>
+      <li>It is a Syntax Error if |ClassElementList| contains two |MethodDefinition| productions such that:
+        <ul>
+          <li>Either both are of the form <emu-grammar>DecoratorList MethodDefinition</emu-grammar> or both are of the form <emu-grammar>DecoratorList `static` MethodDefinition</emu-grammar>. In particular, these two |DecoratorList|s are non-empty.</li>
+          <li>The |ClassElementName| of each of the |MethodDefinition|s is either a |PrivateName| or |LiteralPropertyName|.</li>
+          <li>The |StringValue| of the two |PropertyName|s is equal.</li>
+        </ul>
+    </ul>
+    <emu-note>Multiple same-named methods (e.g., a getter/setter pair) can have a single one of the two decorated, and the decorator list will apply to the combination after coalescing.</emu-note>
+  </emu-clause>
+
   <emu-clause id="runtime-semantics-class-definition-evaluation">
     <h1>Runtime Semantics: ClassDefinitionEvaluation</h1>
     <p>With parameter _className_ and optional parameter _decorators_.</p>
