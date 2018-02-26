@@ -1047,16 +1047,15 @@ emu-example pre {
     <emu-clause id=sec-decorate-class aoid=DecorateClass>
       <h1>DecorateClass ( elements, decorators )</h1>
       <emu-alg>
-        1. Let _newElements_, _extras_, _finishers_, and _keys_ each be a new empty List.
+        1. Let _newElements_, _finishers_, and _keys_ each be a new empty List.
         1. For each _element_ in _elements_, do
           1. Append _element_.[[Key]] to _keys_.
         1. For each _element_ in _elements_, do
           1. Let _elementFinishersExtras_ be ? DecorateElement(_element_, _keys_).
           1. Append _elementFinishersExtras_.[[Element]] to _newElements_.
-          1. Concatenate _elementFinishersExtras_.[[Extras]] onto _extras_.
+          1. Concatenate _elementFinishersExtras_.[[Extras]] onto _newElements_.
           1. Concatenate _elementFinishersExtras_.[[Finishers]] onto _finishers_.
-        1. Let _elements_ be the concatenation of _newElements_ and _extras_.
-        1. Let _result_ be ? DecorateConstructor(_elements_, _decorators_).
+        1. Let _result_ be ? DecorateConstructor(_newElements_, _decorators_).
         1. Set _result_.[[Finishers]] to the concatenation of _finishers_ and _result_.[[Finishers]].
         1. Return _result_.
       </emu-alg>
