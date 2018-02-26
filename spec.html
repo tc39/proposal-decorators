@@ -274,6 +274,18 @@ emu-example pre {
       </emu-note>
     </emu-clause>
 
+  <emu-clause id="sec-coalesce-getter-setter" aoid=CoalesceGetterSetter>
+    <h1>CoalesceGetterSetter ( _element_, _other_ )</h1>
+    <emu-alg>
+      1. Assert: IsAccessorDescriptor(_other_.[[Descriptor]]) and IsAccessorDescriptor(_element_.[[Descriptor]]) are both *true*,
+      1. If _element_.[[Descriptor]] has a [[Get]] field,
+        1. Set _other_.[[Descriptor]].[[Get]] to _element_.[[Descriptor]].[[Get]].
+      1. Otherwise,
+        1. Assert: _element_.[[Descriptor]] has a [[Set]] field.
+        1. Set _other_.[[Descriptor]].[[Set]] to _element_.[[Descriptor]].[[Set]].
+    </emu-alg>
+  </emu-clause>
+
   <emu-clause id="sec-coalesce-class-elements" aoid="CoalesceClassElements">
     <h1>CoalesceClassElements ( _elements_ )</h1>
     <emu-alg>
@@ -283,23 +295,12 @@ emu-example pre {
           1. If _element_.[[Decorators]] is not empty,
             1. If _other_.[[Decorators]] is not empty, throw a *ReferenceError* exception.
             1. Set _other_.[[Decorators]] to _element_.[[Decorators]].
-          1. If _element_.[[Key]] is a Private Name,
-            1. Assert: _element_.[[Kind]] is `"method"`.
-            1. If _element_.[[Descriptor]] has a [[Get]] field,
-              1. Assert: _other_.[[Descriptor]] has a [[Set]] field.
-              1. Set _other_.[[Descriptor]].[[Get]] to _element_.[[Descriptor]].[[Get]].
-            1. Otherwise,
-              1. Assert: _element_.[[Descriptor]] has a [[Set]] field.
-              1. Assert: _other_.[[Descriptor]] has a [[Get]] field.
-              1. Set _other_.[[Descriptor]].[[Set]] to _element_.[[Descriptor]].[[Set]].
-          1. Otherwise,
-            1. If IsDataDescriptor(_element_.[[Descriptor]]) is *true* or IsDataDescriptor(_other_.[[Descriptor]]) is *true*, then
-              1. Assert: _element_.[[Descriptor]].[[Configurable]] is *true*, and _other_.[[Descriptor]].[[Configurable]] is *true*.
-              1. Set _other_.[[Descriptor]] to _element_.[[Descriptor]].
-            1. Else,
-              1. Assert: IsAccessorDescriptor(_other_.[[Descriptor]]) and IsAccessorDescriptor(_element_.[[Descriptor]]) are both *true*,
-              1. If _element_.[[Descriptor]].[[Set]] is present, set _other_.[[Descriptor]].[[Set]] to _element_.[[Descriptor]].[[Set]].
-              1. If _element_.[[Descriptor]].[[Get]] is present, set _other_.[[Descriptor]].[[Get]] to _element_.[[Descriptor]].[[Get]].
+          1. If IsDataDescriptor(_element_.[[Descriptor]]) is *true* or IsDataDescriptor(_other_.[[Descriptor]]) is *true*, then
+            1. Assert: _element_.[[Key]] is not a Private Name.
+            1. Assert: _element_.[[Descriptor]].[[Configurable]] is *true*, and _other_.[[Descriptor]].[[Configurable]] is *true*.
+            1. Set _other_.[[Descriptor]] to _element_.[[Descriptor]].
+          1. Else,
+            1. Perform ! CoalesceGetterSetter(_element_, _other_).
         1. Otherwise, append _element_ to _newElements_.
       1. Return _newElements_.
     </emu-alg>
