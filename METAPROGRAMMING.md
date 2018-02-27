@@ -66,7 +66,7 @@ function observed({kind, key, placement, descriptor, initializer}) {
   let underlyingDescriptor = { enumerable: false, configurable: false, writable: true };
   let underlying = { kind, key: storage, placement, descriptor: underlyingDescriptor, initializer };
   return {
-    kind: "field",
+    kind: "method",
     key,
     placement,
     descriptor: {
