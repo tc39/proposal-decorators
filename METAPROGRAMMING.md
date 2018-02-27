@@ -64,9 +64,9 @@ function observed({kind, key, placement, descriptor, initializer}) {
   // Create a new anonymous private name as a key for a class element
   let storage = decorators.PrivateName();
   let underlyingDescriptor = { enumerable: false, configurable: false, writable: true };
-  let underlying = { kind, key: storage, placement, underlyingDescriptor, initializer };
+  let underlying = { kind, key: storage, placement, descriptor: underlyingDescriptor, initializer };
   return {
-    kind: "method",
+    kind: "field",
     key,
     placement,
     descriptor: {
