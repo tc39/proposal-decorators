@@ -96,7 +96,7 @@ function observed({kind, key, placement, descriptor, initializer}, get, set) {
 <a id="bound-decorator-notes"></a>
 ## Notes about the `@bound` decorator
 
-You may have seen the following pattern for creating bound methods and be wondering why a decorator would be preferred for this:
+You may have seen the following pattern for creating bound methods and be wondering why a `@bound` decorator would be preferred over this:
 
 ```js
 class Counter extends HTMLElement {
