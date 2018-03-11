@@ -2,30 +2,90 @@
 
 Previously, metaprogramming within JavaScript was driven by use of dynamic operations that manipulate JavaScript objects, such as `Object.defineProperty`. ESnext upgrades classes with decorators, with the advantages:
 
-* Decorators make it more clear what's going on--users write class literals and explicitly annotate the piece of source code that is being manipulated, rather than spooky action-at-a-distance where a big object is passed into a special application-dependent class framework.
+* Users write class literals and explicitly annotate the piece of source code that is being manipulated, rather than spooky action-at-a-distance where a big object is passed into a special application-dependent class framework.
 * Decorators can manipulate private fields and private methods, whereas operations on objects are unable to manipulate the definitions of private names.
 * Decorators do their manipulations at the time the class is defined, rather than when instances are being created and used, so they may lead to patterns which are more amenable to efficient implementation.
 
-Dcorators can be used either to decorate a whole class or an individual class element (field or method). Decorators are implemented as functions which take a JSON-like representation of a class element as an argument and return a possibly-modified form of that, optionally with additional class elements. For both kinds of decorator functions, class elements are represented in the form:
+Dcorators can be used either to decorate a whole class or an individual class element (field or method). Decorators are implemented as functions which take a JSON-like representation of class element(s) as an argument and return a possibly-modified form of that, optionally with additional class elements.
+
+The signatures of the different kinds of decorator functions are as follows:
+
+### Field Decorator
+
+#### Parameters
+
+A class element descriptor with the following properties:
 
 ```js
 {
-  kind: "method" or "field"
+  kind: "field"
   key: String, Symbol or Private Name,
   placement: "static", "prototype" or "own",
   descriptor: Property Descriptor (argument to Object.defineProperty),
-  initializer: method used to set the initial state of the class element
+  initializer: A method used to set the initial state of the field
 }
 ```
 
-For class element decorators, the return value is allowed to add the following additional properties:
+For private fields or accessors, the `key` will be a Private Name--this is similar to a String or Symbol, except that it is invalid to use with property access `[]` or with operations such as `Object.defineProperty`. Instead, it can only be used with decorators.
+
+#### Returns
+
+A class element descriptor with the following properties (optional properties are indicated with `?`):
+
+`{ kind, key, placement, descriptor, initializer, extras?, finisher? }`
+
+The optional additional properties:
 
 * `extras`: A property with additional class elements
-* `finisher`: A callback that is called with the constructor, once it's created.
+* `finisher`: A callback that is called at the end of class creation (before finishers for the class as a whole, if they exist)
 
-Class decorators (i.e. decorators that decorate the class as a whole) are passed in an Array of all class elements and output an object with fields `elements` for the new class elements, `constructor` for the function which should act as the construtor, and `finisher` for a similar callback.
+### Method Decorator
 
-For private fields, methods or accessors, the `key` will be a Private Name--this is similar to a String or Symbol, except that it is invalid to use with property access `[]` or with operations such as `Object.defineProperty`. Instead, it can only be used with decorators.
+#### Parameters
+
+A class element descriptor with the following properties:
+
+```js
+{
+  kind: "method"
+  key: String, Symbol or Private Name,
+  placement: "static", "prototype" or "own",
+  descriptor: Property Descriptor (argument to Object.defineProperty),
+}
+```
+
+#### Returns
+
+A class element descriptor with the following properties:
+
+`{ kind, key, placement, descriptor, extras?, finisher? }`
+
+### Class Decorator
+
+#### Parameters
+
+A class descriptor with the following properties:
+
+```js
+{
+  kind: "class"
+  elements: Array of all class elements
+}
+```
+
+#### Returns
+
+A class descriptor with the following properties:
+
+```js
+{
+  elements: Possibly modified class elements (can include additional class elements)
+  constructor: (optional) The function which should act as the construtor
+  finisher: (optional) A callback that is called at the end of class creation
+}
+```
+
+Note: finishers run once per class (at class creation time), not once per instance.
 
 ## Examples
 
@@ -82,7 +142,12 @@ function observed({kind, key, placement, descriptor, initializer}, get, set) {
       get() { get(this, storage); },
       set(value) {
         set(this, storage, value);
-        // Assume the @bound decorator was used on render
+        if (!this.hasOwnProperty("render")) {
+          throw Error(
+            "@observed decorator assumes that render() is a bound method."
+            + " Please use the @bound decorator on the render method."
+          )
+        }
         window.requestAnimationFrame(this.render);
       },
       enumerable: descriptor.enumerable,
