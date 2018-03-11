@@ -72,8 +72,15 @@ As we saw above, using arrow functions in class field initializers causes the me
 Suppose we have a subclass of `Counter` with its own `onclick` method:
 
 ```js
-class SpecialCounter extends Counter {
+class Counter extends HTMLElement {
   ...
+  onclick = () => {
+    this.#x++;
+  }
+  ...
+}
+
+class SpecialCounter extends Counter {
   onclick() {
     console.log("SpecialCounter clicked");
   }
