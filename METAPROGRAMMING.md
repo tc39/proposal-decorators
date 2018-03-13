@@ -111,17 +111,24 @@ function defineElement(tagName) {
   };
 }
 
-// Replace a method with a field with a bound version of the method
+// Create a bound version of the method as a field
 function bound(elementDescriptor) {
-  let { kind, key, placement, descriptor } = elementDescriptor;
-  assert(kind === "method");
-  if (placement == "prototype") placement = "own";
-  const { value } = descriptor;
+  let { kind, key, descriptor } = elementDescriptor;
+  assert(kind == "method");
+  let { value } = descriptor
   function initializer() {
     return value.bind(this);
   }
-  delete descriptor.value;
-  return { kind: "field", key, placement, descriptor, initializer };
+  // Return both the original method and a bound function field that calls the method.
+  // (That way the original method will still exist on the prototype, avoiding
+  // confusing side-effects.)
+  let boundFieldDescriptor = { ...descriptor, value: undefined }
+  return {
+    ...elementDescriptor,
+    extras: [
+      { kind: "field", key, placement: "own", descriptor: boundFieldDescriptor, initializer }
+    ]
+  }
 }
 
 // Whenever a read or write is done to a field, call the render()
@@ -146,7 +153,7 @@ function observed({kind, key, placement, descriptor, initializer}, get, set) {
           throw Error(
             "@observed decorator assumes that render() is a bound method."
             + " Please use the @bound decorator on the render method."
-          )
+          );
         }
         window.requestAnimationFrame(this.render);
       },
