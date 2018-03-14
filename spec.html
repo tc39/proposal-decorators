@@ -1126,7 +1126,6 @@ emu-example pre {
       <h1>DecorateConstructor ( elements, decorators )</h1>
       <p>With parameters _elements_, a List of Class Elements, and _decorators_, a List of decorator functions.</p>
       <emu-alg>
-        1. Let _elements_ be a new empty List.
         1. Let _finishers_ be a new empty List.
         1. For each _decorator_ in _decorators_, in reverse list order do
           1. Let _obj_ be FromClassDescriptor(_elements_).
@@ -1186,23 +1185,23 @@ emu-example pre {
     </emu-clause>
 
     <emu-clause id=sec-to-element-descriptor aoid=ToElementDescriptor>
-      <h1>ToElementDescriptor ( _descriptor_ )</h1>
-      <p>With parameter _descriptor_, returns a Record containing three values: { [[Element]]: a class Element Descriptor, [[Extras]]: an iterable of other elements, [[Finisher]]: a Function or *undefined* }.</p>
+      <h1>ToElementDescriptor ( _elementObject_ )</h1>
+      <p>With parameter _elementObject_, returns a Record containing three values: { [[Element]]: a class Element Descriptor, [[Extras]]: an iterable of other elements, [[Finisher]]: a Function or *undefined* }.</p>
       <emu-alg>
-        1. Let _kind_ be ? ToString(? Get(_descriptor_, `"kind"`)).
+        1. Let _kind_ be ? ToString(? Get(_elementObject_, `"kind"`)).
         1. If _kind_ is not one of `"method"` or `"field"`, throw a *TypeError* exception.
-        1. Let _key_ be ? Get(_descriptor_, `"key"`).
+        1. Let _key_ be ? Get(_elementObject_, `"key"`).
         1. Set _key_ to ? ToPrimitive(_key_, hint String).
         1. If _key_ is not a Private Name, set _key_ to ? ToPropertyKey(_key_).
-        1. Let _placement_ be ? ToString(? Get(_descriptor_, `"placement"`)).
+        1. Let _placement_ be ? ToString(? Get(_elementObject_, `"placement"`)).
         1. If _placement_ is not one of `"static"`, `"prototype"`, or `"own"`, throw a *TypeError* exception.
-        1. Let _descriptor_ be ? ToPropertyDescriptor(? Get(_descriptor_, `"descriptor"`)).
-        1. Let _initializer_ be ? Get(_descriptor_, `"initializer"`).
-        1. Let _finisher_ be ? Get(_descriptor_, `"finisher"`).
+        1. Let _descriptor_ be ? ToPropertyDescriptor(? Get(_elementObject_, `"descriptor"`)).
+        1. Let _initializer_ be ? Get(_elementObject_, `"initializer"`).
+        1. Let _finisher_ be ? Get(_elementObject_, `"finisher"`).
         1. If IsCallable(_finisher_) is *false* and _finisher_ is not *undefined*, throw a *TypeError* exception.
-        1. Let _extrasObject_ be ? Get(_descriptor_, `"extras"`).
+        1. Let _extrasObject_ be ? Get(_elementObject_, `"extras"`).
         1. Let _extras_ be ? ToElementDescriptors(_extrasObject_).
-        1. Let _elements_ be ? Get(_descriptor_, `"elements"`).
+        1. Let _elements_ be ? Get(_elementObject_, `"elements"`).
         1. If _elements_ is not *undefined*, throw a *TypeError* exception.
         1. If _kind_ not `"field"`,
           1. If _initializer_ is not *undefined*, throw a *TypeError* exception.
@@ -1234,22 +1233,22 @@ emu-example pre {
     <emu-clause id=sec-to-class-descriptor aoid=ToClassDescriptor>
       <h1>ToClassDescriptor ( _obj_ )</h1>
       <emu-alg>
-        1. Let _kind_ be ? ToString(? Get(_descriptor_, `"kind"`).
+        1. Let _kind_ be ? ToString(? Get(_obj_, `"kind"`).
         1. If _kind_ is not `"class"`, throw a *TypeError* exception.
-        1. Let _key_ be ? Get(_descriptor_, `"key"`).
+        1. Let _key_ be ? Get(_obj_, `"key"`).
         1. If _key_ is not *undefined*, throw a *TypeError* exception.
-        1. Let _placement_ be ? Get(_descriptor_, `"placement"`).
+        1. Let _placement_ be ? Get(_obj_, `"placement"`).
         1. If _placement_ is not *undefined*, throw a *TypeError* exception.
-        1. Let _descriptor_ be ? Get(_descriptor_, `"descriptor"`).
+        1. Let _descriptor_ be ? Get(_obj_, `"descriptor"`).
         1. If _descriptor_ is not *undefined*, throw a *TypeError* exception.
-        1. Let _initializer_ be ? Get(_descriptor_, `"initializer"`).
+        1. Let _initializer_ be ? Get(_obj_, `"initializer"`).
         1. If _initializer_ is not *undefined*, throw a *TypeError* exception.
-        1. Let _extras_ be ? Get(_extras_, `"initializer"`).
+        1. Let _extras_ be ? Get(_obj_, `"extras"`).
         1. If _extras_ is not *undefined*, throw a *TypeError* exception.
         1. Let _finisher_ be ? Get(_obj_, `"finisher"`).
         1. If _finisher_ is not *undefined*,
           1. If IsCallable(_finisher_) is *false*, throw a *TypeError* exception.
-        1. Let _elementsObject_ be ? Get(_result_, `"elements"`).
+        1. Let _elementsObject_ be ? Get(_obj_, `"elements"`).
         1. Let _elements_ be ? ToElementDescriptors(_elementsObject_).
         1. Return the Record { [[Elements]]: _elements_, [[Finisher]]: _finisher_ }.
       </emu-alg>
