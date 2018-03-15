@@ -1106,7 +1106,7 @@ emu-example pre {
           1. Remove _element_.[[Key]] from _keys_.
           1. Let _elementObject_ be ? FromElementDescriptor(_element_).
           1. Let _elementFinisherExtrasObject_ be ? Call(_decorator_, *undefined*, « _elementObject_, %PrivateNameGet%, %PrivateNameSet% »).
-          1. Let _elementFinisherExtras_ be ? ToElementDescriptor(_elementFinisherExtrasObject_).
+          1. Let _elementFinisherExtras_ be ? ToElementFinisherExtras(_elementFinisherExtrasObject_).
           1. Let _element_ be _elementFinisherExtras_.[[Element]].
           1. If _element_.[[Key]] is an element of _keys_, throw a *TypeError* exception.
           1. Otherwise, append _element_.[[Key]] to _keys_.
@@ -1143,10 +1143,10 @@ emu-example pre {
     <emu-clause id="sec-from-element-descriptors" aoid=FromElementDescriptors>
       <h1>FromElementDescriptors ( _elements_ )</h1>
       <emu-alg>
-        1. Let _elementObjects_ be a new empty List.
-        1. For each _element_ in _elements_, do
-          1. Append FromElementDescriptor(_element_) to _elementObjects_.
-        1. Return CreateArrayFromList(_elementObjects_).
+          1. Let _elementObjects_ be a new empty List.
+          1. For each _element_ in _elements_, do
+            1. Append FromElementDescriptor(_element_) to _elementObjects_.
+          1. Return CreateArrayFromList(_elementObjects_).
       </emu-alg>
     </emu-clause>
 
@@ -1172,21 +1172,26 @@ emu-example pre {
       </emu-alg>
     </emu-clause>
 
-    <emu-clause id="sec-to-element-descriptors" aoid=ToElementDescriptor>
+    <emu-clause id="sec-to-element-descriptors" aoid=ToElementDescriptors>
       <h1>ToElementDescriptors ( _elementDescriptors_ )</h1>
       <emu-alg>
         1. If _elementDescriptors_ is *undefined*, return *undefined*.
         1. Let _elements_ be a new empty List.
-        1. Let _elementDescriptorList_ be ? IterableToList(_elementDescriptors_).
-        1. For each _elementDescriptor_ in _elementDescriptorList_, do
-          1. Append ToElementDescriptor(_elementDescriptor_) to _elements_.
+        1. Let _elementDescriptorsList_ be ? IterableToList(_elementDescriptors_).
+        1. For each _elementDescriptor_ in _elementDescriptorsList_, do
+          1. Let _element_ be ? ToElementDescriptor(_elementDescriptor_).
+          1. Let _finisher_ be ? Get(_elementDescriptor_, `"finisher"`).
+          1. If _finisher_ is not *undefined*, throw a *TypeError* exception.
+          1. Let _extras_ be ? Get(_elementDescriptor_, `"extras"`).
+          1. If _extras_ is not *undefined*, throw a *TypeError* exception.
+          1. Append _element_ to _elements_.
         1. Return _elements_.
       </emu-alg>
     </emu-clause>
 
     <emu-clause id=sec-to-element-descriptor aoid=ToElementDescriptor>
       <h1>ToElementDescriptor ( _elementDescriptor_ )</h1>
-      <p>With parameter _elementDescriptor_, returns a Record containing three values: { [[Element]]: a class Element Descriptor, [[Extras]]: an iterable of other elements, [[Finisher]]: a Function or *undefined* }.</p>
+      <p>With parameter _elementDescriptor_, returns a Record representing a class Element Descriptor.</p>
       <emu-alg>
         1. Let _kind_ be ? ToString(? Get(_elementDescriptor_, `"kind"`)).
         1. If _kind_ is not one of `"method"` or `"field"`, throw a *TypeError* exception.
@@ -1197,10 +1202,6 @@ emu-example pre {
         1. If _placement_ is not one of `"static"`, `"prototype"`, or `"own"`, throw a *TypeError* exception.
         1. Let _descriptor_ be ? ToPropertyDescriptor(? Get(_elementDescriptor_, `"descriptor"`)).
         1. Let _initializer_ be ? Get(_elementDescriptor_, `"initializer"`).
-        1. Let _finisher_ be ? Get(_elementDescriptor_, `"finisher"`).
-        1. If IsCallable(_finisher_) is *false* and _finisher_ is not *undefined*, throw a *TypeError* exception.
-        1. Let _extrasObject_ be ? Get(_elementDescriptor_, `"extras"`).
-        1. Let _extras_ be ? ToElementDescriptors(_extrasObject_).
         1. Let _elements_ be ? Get(_elementDescriptor_, `"elements"`).
         1. If _elements_ is not *undefined*, throw a *TypeError* exception.
         1. If _kind_ not `"field"`,
@@ -1213,6 +1214,19 @@ emu-example pre {
           1. If _descriptor_ has a [[Get]], [[Set]] or [[Value]] internal slot, throw a *TypeError* exception.
         1. Let _element_ be {[[Kind]]: _kind_, [[Key]]: _key_, [[Placement]]: _placement_, [[Descriptor]]: _descriptor_}.
         1. If [[Kind]] is `"field"`, set _element_.[[Initializer]] to _initializer_.
+        1. Return _element_.
+      </emu-alg>
+    </emu-clause>
+
+    <emu-clause id=sec-to-element-finisher-extras aoid=ToElementFinisherExtras>
+      <h1>ToElementFinisherExtras ( _elementDescriptor_ )</h1>
+      <p>With parameter _elementDescriptor_, returns a Record containing three values: { [[Element]]: a class Element Descriptor, [[Extras]]: an iterable of other Element Descriptors, [[Finisher]]: a Function or *undefined* }.</p>
+      <emu-alg>
+        1. Let _element_ be ? ToElementDescriptor(_elementDescriptor_).
+        1. Let _finisher_ be ? Get(_elementDescriptor_, `"finisher"`).
+        1. If IsCallable(_finisher_) is *false* and _finisher_ is not *undefined*, throw a *TypeError* exception.
+        1. Let _extrasObject_ be ? Get(_elementDescriptor_, `"extras"`).
+        1. Let _extras_ be ? ToElementDescriptors(_extrasObject_).
         1. Return the Record { [[Element]]: _element_, [[Finisher]]: _finisher_, [[Extras]]: _extras_ }.
       </emu-alg>
     </emu-clause>
