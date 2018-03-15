@@ -18,9 +18,18 @@ Decorators are implemented as functions which take a JSON-like representation of
 
 The return value is allowed to add an `extras` property with additional class elements, and a `finisher` property, which is a callback that is called with the constructor, once it's created.
 
-Class decorators are passed in an Array of all class elements and output an object with fields `elements` for the new class elements, `constructor` for the function which should act as the construtor, and `finisher` for a similar callback.
-
 For private fields, methods or accessors, the `key` will be a Private Name--this is similar to a String or Symbol, except that it is invalid to use with property access `[]` or with operations such as `Object.defineProperty`. Instead, it can only be used with decorators.
+
+Class decorators are passed an object of this form:
+
+```js
+{
+  kind: "class"
+  elements: Array of element descriptors
+}
+```
+
+The return value has the same form plus a `finisher` property, which is a callback that is called with the constructor, once it's created.
 
 
 For example, the three decorators from README.md could be defined as follows:
