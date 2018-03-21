@@ -1041,15 +1041,16 @@ emu-example pre {
       <emu-grammar>Decorator : `@` DecoratorMemberExpression[?Yield]</emu-grammar>
       <emu-alg>
         1. Let _expr_ be the result of reparsing |DecoratorMemberExpression| as a |MemberExpression|.
-        1. Let _ref be the result of evaluating _expr_.
-        1. Let _value be ? GetValue(_ref_).
+        1. Let _ref_ be the result of evaluating _expr_.
+        1. Let _func_ be ? GetValue(_ref_).
+        1. Let _value_ be ? EvaluateCall(_func_, _ref_, « », *false*).
         1. Return _value_.
       </emu-alg>
       <emu-grammar>Decorator : `@` DecoratorCallExpression[?Yield]</emu-grammar>
       <emu-alg>
         1. Let _expr_ be the result of reparsing |DecoratorCallExpression| as a |CallMemberExpression|.
-        1. Let _ref be the result of evaluating _expr_.
-        1. Let _value be ? GetValue(_ref_).
+        1. Let _ref_ be the result of evaluating _expr_.
+        1. Let _value_ be ? GetValue(_ref_).
         1. Return _value_.
       </emu-alg>
     </emu-clause>
