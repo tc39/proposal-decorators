@@ -1138,17 +1138,12 @@ emu-example pre {
     </emu-clause>
 
     <emu-clause id=sec-decorate-class aoid=DecorateClass>
-      <h1>DecorateClass ( elements, decorators )</h1>
+      <h1>DecorateClass ( _elements_, _decorators_ )</h1>
       <emu-alg>
         1. Let _newElements_ and _finishers_ each be a new empty List.
-        1. Let _keys_ be the Record { [[StaticKeys]]: « », [[PrototypeKeys]]: « », [[OwnKeys]]: « » }.
+        1. Let _placements_ be the Record { [[StaticKeys]]: « », [[PrototypeKeys]]: « », [[OwnKeys]]: « » }.
         1. For each _element_ in _elements_, do
-          1. If _element_.[[Placement]] is `"own"`, then
-            1. Append _element_.[[Key]] to _keys_.[[OwnKeys]].
-          1. Else if _element_.[[Placement]] is `"static"`, then
-            1. Append _element_.[[Key]] to _keys_.[[StaticKeys]].
-          1. Else,
-            1. Append _element_.[[Key]] to _keys_.[[PrototypeKeys]].
+          1. Perform ? AddElementPlacement(_element_, _placements_).
         1. For each _element_ in _elements_, do
           1. Let _elementFinishersExtras_ be ? DecorateElement(_element_, _keys_).
           1. Append _elementFinishersExtras_.[[Element]] to _newElements_.
@@ -1161,53 +1156,31 @@ emu-example pre {
     </emu-clause>
 
     <emu-clause id=sec-decorate-element aoid=DecorateElement>
-      <h1>DecorateElement ( element, keys )</h1>
-      <p>With parameters Class Element _element_ and _keys_:</p>
+      <h1>DecorateElement ( _element_, _placements_ )</h1>
+      <p>With parameters _element_, a Class Element, and _placements_:</p>
       <emu-alg>
         1. Let _extras_ be a new empty List.
         1. Let _finishers_ be a new empty List.
-        1. Let _placementKeys_ be *undefined*.
-        1. For each _decorator_ in element_.[[Decorators]], in reverse list order do
-          1. If _element_.[[Placement]] is `"own"`, then
-            1. set _placementKeys_ to _keys_.[[OwnKeys]].
-          1. Else if _element_.[[Placement]] is `"static"`, then
-            1. set _placementKeys_ to _keys_.[[StaticKeys]].
-          1. Else,
-            1. set _placementKeys_ to _keys_.[[PrototypeKeys]].
-          1. Assert: _element_.[[Key]] is an element of _placementKeys_.
-          1. Remove _element_.[[Key]] from _placementKeys_.
+        1. For each _decorator_ in _element_.[[Decorators]], in reverse list order do
+          1. Perform RemoveElementPlacement(_element_, _placements_).
           1. Let _elementObject_ be ? FromElementDescriptor(_element_).
           1. Let _elementFinisherExtrasObject_ be ? Call(_decorator_, *undefined*, « _elementObject_, %PrivateNameGet%, %PrivateNameSet% »).
           1. Let _elementFinisherExtras_ be ? ToElementFinisherExtras(_elementFinisherExtrasObject_).
           1. Let _element_ be _elementFinisherExtras_.[[Element]].
-          1. If _element_.[[Placement]] is `"own"`, then
-            1. set _placementKeys_ to _keys_.[[OwnKeys]].
-          1. Else if _element_.[[Placement]] is `"static"`, then
-            1. set _placementKeys_ to _keys_.[[StaticKeys]].
-          1. Else,
-            1. set _placementKeys_ to _keys_.[[PrototypeKeys]].
-          1. If _element_.[[Key]] is an element of _placementKeys_, throw a *TypeError* exception.
-          1. Otherwise, append _element_.[[Key]] to _placementKeys_.
+          1. Perform ? AddElementPlacement(_element_, _placements_).
           1. If _elementFinisherExtras_.[[Finisher]] is not *undefined*, then
             1. Append _elementFinisherExtras_.[[Finisher]] to the end of _finishers_.
             1. NOTE: Finishers are not passed forward to the next decorator.
           1. Let _newExtras_ be _elementFinisherExtras_.[[Extras]]
           1. If _newExtras_ is not *undefined*, then
             1. For each _extra_ of _newExtras_, do
-              1. If _extra_.[[Placement]] is `"own"`, then
-                1. set _placementKeys_ to _keys_.[[OwnKeys]].
-              1. Else if _extra_.[[Placement]] is `"static"`, then
-                1. set _placementKeys_ to _keys_.[[StaticKeys]].
-              1. Else,
-                1. set _placementKeys_ to _keys_.[[PrototypeKeys]].
-              1. If _extra_.[[Key]] is an element of _placementKeys_, throw a *TypeError* exception.
-              1. Otherwise, append _extra_.[[Key]] to _placementKeys_.
+              1. Perform ? AddElementPlacement(_extra_, _placements_).
             1. Concatenate _newExtras_ onto _extras_.
         1. Return the Record {[[Element]]: _element_, [[Extras]]: _extras_, [[Finishers]]: _finishers_}.
       </emu-alg>
     </emu-clause>
     <emu-clause id=sec-decorate-constructor aoid=DecorateConstructor>
-      <h1>DecorateConstructor ( elements, decorators )</h1>
+      <h1>DecorateConstructor ( _elements_, _decorators_ )</h1>
       <p>With parameters _elements_, a List of Class Elements, and _decorators_, a List of decorator functions.</p>
       <emu-alg>
         1. Let _finishers_ be a new empty List.
@@ -1221,6 +1194,34 @@ emu-example pre {
             1. Set _elements_ to _elementsAndFinisher_.[[Elements]].
             1. If there are two class elements _a_ and _b_ in _elements_ such that _a_.[[Key]] is _b_.[[Key]] and _a_.[[Placement]] is _b_.[[Placement]], throw a *TypeError* exception.
         1. Return the Record { [[Elements]]: _elements_, [[Finishers]]: _finishers_ }.
+      </emu-alg>
+    </emu-clause>
+
+    <emu-clause id=sec-add-element-placement aoid=AddElementPlacement>
+      <h1>AddElementPlacement (_element_, _placements_)</h1>
+      <emu-alg>
+          1. If _element_.[[Placement]] is `"own"`, then
+            1. Let _keys_ be _placements_.[[OwnKeys]].
+          1. Else if _element_.[[Placement]] is `"static"`, then
+            1. Let _keys_ be _placements_.[[StaticKeys]].
+          1. Else,
+            1. Let _keys_ be _placements_.[[PrototypeKeys]].
+          1. If _element_.[[Key]] is an element of _keys_, throw a *TypeError* exception.
+          1. Otherwise, append _element_.[[Key]] to _keys_.
+      </emu-alg>
+    </emu-clause>
+
+    <emu-clause id=sec-remove-element-placement aoid=RemoveElementPlacement>
+      <h1>RemoveElementPlacement (_element_, _placements_)</h1>
+      <emu-alg>
+          1. If _element_.[[Placement]] is `"own"`, then
+            1. Let _keys_ be _placements_.[[OwnKeys]].
+          1. Else if _element_.[[Placement]] is `"static"`, then
+            1. Let _keys_ be _placements_.[[StaticKeys]].
+          1. Else,
+            1. Let _keys_ be _placements_.[[PrototypeKeys]].
+          1. Assert: _element_.[[Key]] is an element of _keys_.
+          1. Remove _element_.[[Key]] from _keys_.
       </emu-alg>
     </emu-clause>
 
