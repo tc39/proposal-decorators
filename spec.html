@@ -135,22 +135,23 @@ emu-example pre {
       <h1>The ElementDescriptor Specification Type</h1>
 
       <p>
-        The ElementDescriptor is a Record used to represent class elements at runtime.
-        Values of the ElementDescriptor type are Record values whose fields are defined as by <emu-xref href="#table-1"></emu-xref>.
+        The <dfn>ElementDescriptor</dfn> is a Record used to represent class elements at runtime.
+        Values of the ElementDescriptor type are Record values whose fields are defined as by <emu-xref href="#table-element-descriptor-fields"></emu-xref>.
+        Unless otherwise specified, every field is always present.
       </p>
 
-      <emu-table id="table-1" caption="ElementDescriptor fields">
+      <emu-table id="table-element-descriptor-fields" caption="ElementDescriptor fields">
         <table>
           <thead>
-            <tr> <th>Field Name</th>      <th>Value</th>                                       </tr>
+            <tr> <th>Field Name</th>      <th>Value</th>                                                          </tr>
           </thead>
           <tbody>
-            <tr> <td>[[Kind]]</td>        <td>One of `"method"` or `"field"`</td>              </tr>
-            <tr> <td>[[Key]]</td>         <td>A Property Key or PrivateName</td>               </tr>
-            <tr> <td>[[Descriptor]]</td>  <td>A Property Descriptor</td>                       </tr>
-            <tr> <td>[[Placement]]</td>   <td>One of `"static"`, `"prototype"` or `"own"`</td> </tr>
-            <tr> <td>[[Initializer]]</td> <td>A function or ~empty~</td>                       </tr>
-            <tr> <td>[[Decorators]]</td>  <td>A List of functions or ~empty~</td>              </tr>
+            <tr> <td>[[Kind]]</td>        <td>One of `"method"` or `"field"`</td>                                  </tr>
+            <tr> <td>[[Key]]</td>         <td>A Property Key or PrivateName</td>                                   </tr>
+            <tr> <td>[[Descriptor]]</td>  <td>A Property Descriptor</td>                                           </tr>
+            <tr> <td>[[Placement]]</td>   <td>One of `"static"`, `"prototype"` or `"own"`</td>                     </tr>
+            <tr> <td>[[Initializer]]</td> <td>A function or ~empty~. This field can be absent.</td>                </tr>
+            <tr> <td>[[Decorators]]</td>  <td>A List of ECMAScript language values. This field can be absent.</td> </tr>
           </tbody>
         </table>
       </emu-table>
@@ -158,12 +159,12 @@ emu-example pre {
       <p>
         In addition, given an ElementDescriptor _element_, the following conditions are always respected:
         <ul>
-          <li>If _element_.[[Kind]] is `"method"`, then _element_.[[Initializer]] is ~empty~.</li>
+          <li>If _element_.[[Kind]] is `"method"`, then _element_.[[Initializer]] is not present.</li>
           <li>
             If _element_.[[Kind]] is `"field"`, then
             <ul>
-              <li>_element_.[[Initializer]] is not ~empty~.</li>
-              <li>_element_.[[Descriptor]]'s [[Get]], [[Set]] and [[Value]] slots are ~empty~.</li>
+              <li>_element_.[[Initializer]] is present.</li>
+              <li>_element_.[[Descriptor]]'s [[Get]], [[Set]] and [[Value]] slots are absent.</li>
             </ul>
           </li>
           <li>
@@ -349,8 +350,8 @@ emu-example pre {
       1. Let _newElements_ be an empty List.
       1. For _element_ in _elements_,
         1. If _element_.[[Kind]] is `"method"` and _newElements_ contains a Record _other_ where _other_.[[Kind]] is `"method"`, SameValue(_other_.[[Key]], _element_.[[Key]]) is *true*, and _other_.[[Placement]] is _element_.[[Placement]],
-          1. If _element_.[[Decorators]] is not empty,
-            1. If _other_.[[Decorators]] is not empty, throw a *ReferenceError* exception.
+          1. If _element_.[[Decorators]] is present,
+            1. If _other_.[[Decorators]] is present, throw a *ReferenceError* exception.
             1. Set _other_.[[Decorators]] to _element_.[[Decorators]].
           1. If IsDataDescriptor(_element_.[[Descriptor]]) is *true* or IsDataDescriptor(_other_.[[Descriptor]]) is *true*, then
             1. Assert: _element_.[[Key]] is not a Private Name.
@@ -1232,16 +1233,17 @@ emu-example pre {
     </emu-clause>
 
     <emu-clause id="sec-to-element-descriptors" aoid=ToElementDescriptors>
-      <h1>ToElementDescriptors ( _elementDescriptors_ )</h1>
+      <h1>ToElementDescriptors ( _elementObjects_ )</h1>
       <emu-alg>
-        1. If _elementDescriptors_ is *undefined*, return *undefined*.
+        1. Assert: _elementObject_ is an ECMAScript language value.
+        1. If _elementObjects_ is *undefined*, return *undefined*.
         1. Let _elements_ be a new empty List.
-        1. Let _elementDescriptorsList_ be ? IterableToList(_elementDescriptors_).
-        1. For each _elementDescriptor_ in _elementDescriptorsList_, do
-          1. Let _element_ be ? ToElementDescriptor(_elementDescriptor_).
-          1. Let _finisher_ be ? Get(_elementDescriptor_, `"finisher"`).
+        1. Let _elementObjectsList_ be ? IterableToList(_elementObjects_).
+        1. For each _elementObject_ in _elementObjectsList_, do
+          1. Let _element_ be ? ToElementDescriptor(_elementObject_).
+          1. Let _finisher_ be ? Get(_elementObject_, `"finisher"`).
           1. If _finisher_ is not *undefined*, throw a *TypeError* exception.
-          1. Let _extras_ be ? Get(_elementDescriptor_, `"extras"`).
+          1. Let _extras_ be ? Get(_elementObject_, `"extras"`).
           1. If _extras_ is not *undefined*, throw a *TypeError* exception.
           1. Append _element_ to _elements_.
         1. Return _elements_.
@@ -1249,19 +1251,20 @@ emu-example pre {
     </emu-clause>
 
     <emu-clause id=sec-to-element-descriptor aoid=ToElementDescriptor>
-      <h1>ToElementDescriptor ( _elementDescriptor_ )</h1>
-      <p>With parameter _elementDescriptor_, returns an ElementDescriptor.</p>
+      <h1>ToElementDescriptor ( _elementObject_ )</h1>
+      <p>With parameter _elementObject_, returns an ElementDescriptor.</p>
       <emu-alg>
-        1. Let _kind_ be ? ToString(? Get(_elementDescriptor_, `"kind"`)).
+        1. Assert: _elementObject_ is an ECMAScript language value.
+        1. Let _kind_ be ? ToString(? Get(_elementObject_, `"kind"`)).
         1. If _kind_ is not one of `"method"` or `"field"`, throw a *TypeError* exception.
-        1. Let _key_ be ? Get(_elementDescriptor_, `"key"`).
+        1. Let _key_ be ? Get(_elementObject_, `"key"`).
         1. Set _key_ to ? ToPrimitive(_key_, hint String).
         1. If _key_ is not a Private Name, set _key_ to ? ToPropertyKey(_key_).
-        1. Let _placement_ be ? ToString(? Get(_elementDescriptor_, `"placement"`)).
+        1. Let _placement_ be ? ToString(? Get(_elementObject_, `"placement"`)).
         1. If _placement_ is not one of `"static"`, `"prototype"`, or `"own"`, throw a *TypeError* exception.
-        1. Let _descriptor_ be ? ToPropertyDescriptor(? Get(_elementDescriptor_, `"descriptor"`)).
-        1. Let _initializer_ be ? Get(_elementDescriptor_, `"initializer"`).
-        1. Let _elements_ be ? Get(_elementDescriptor_, `"elements"`).
+        1. Let _descriptor_ be ? ToPropertyDescriptor(? Get(_elementObject_, `"descriptor"`)).
+        1. Let _initializer_ be ? Get(_elementObject_, `"initializer"`).
+        1. Let _elements_ be ? Get(_elementObject_, `"elements"`).
         1. If _elements_ is not *undefined*, throw a *TypeError* exception.
         1. If _kind_ not `"field"`,
           1. If _initializer_ is not *undefined*, throw a *TypeError* exception.
@@ -1278,13 +1281,13 @@ emu-example pre {
     </emu-clause>
 
     <emu-clause id=sec-to-element-finisher-extras aoid=ToElementFinisherExtras>
-      <h1>ToElementFinisherExtras ( _elementDescriptor_ )</h1>
-      <p>With parameter _elementDescriptor_, returns a Record containing three values: { [[Element]]: ElementDescriptor, [[Extras]]: an iterable of other Element Descriptors, [[Finisher]]: a Function or *undefined* }.</p>
+      <h1>ToElementFinisherExtras ( _elementObject_ )</h1>
+      <p>With parameter _elementObject_, returns a Record containing three values: { [[Element]]: ElementDescriptor, [[Extras]]: an iterable of other Element Descriptors, [[Finisher]]: a Function or *undefined* }.</p>
       <emu-alg>
-        1. Let _element_ be ? ToElementDescriptor(_elementDescriptor_).
-        1. Let _finisher_ be ? Get(_elementDescriptor_, `"finisher"`).
+        1. Let _element_ be ? ToElementDescriptor(_elementObject_).
+        1. Let _finisher_ be ? Get(_elementObject_, `"finisher"`).
         1. If IsCallable(_finisher_) is *false* and _finisher_ is not *undefined*, throw a *TypeError* exception.
-        1. Let _extrasObject_ be ? Get(_elementDescriptor_, `"extras"`).
+        1. Let _extrasObject_ be ? Get(_elementObject_, `"extras"`).
         1. Let _extras_ be ? ToElementDescriptors(_extrasObject_).
         1. Return the Record { [[Element]]: _element_, [[Finisher]]: _finisher_, [[Extras]]: _extras_ }.
       </emu-alg>
