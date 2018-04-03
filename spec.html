@@ -350,14 +350,15 @@ emu-example pre {
       1. Let _newElements_ be an empty List.
       1. For _element_ in _elements_,
         1. If _element_.[[Kind]] is `"method"` and _newElements_ contains a Record _other_ where _other_.[[Kind]] is `"method"`, SameValue(_other_.[[Key]], _element_.[[Key]]) is *true*, and _other_.[[Placement]] is _element_.[[Placement]],
-          1. If _element_.[[Decorators]] is present,
-            1. If _other_.[[Decorators]] is present, throw a *ReferenceError* exception.
-            1. Set _other_.[[Decorators]] to _element_.[[Decorators]].
           1. If IsDataDescriptor(_element_.[[Descriptor]]) is *true* or IsDataDescriptor(_other_.[[Descriptor]]) is *true*, then
             1. Assert: _element_.[[Key]] is not a Private Name.
             1. Assert: _element_.[[Descriptor]].[[Configurable]] is *true*, and _other_.[[Descriptor]].[[Configurable]] is *true*.
+            1. If _element_.[[Decorators]] is present or _other_.[[Decorators]] is present, throw a *ReferenceError* exception.
             1. Set _other_.[[Descriptor]] to _element_.[[Descriptor]].
           1. Else,
+            1. If _element_.[[Decorators]] is present,
+              1. If _other_.[[Decorators]] is present, throw a *ReferenceError* exception.
+              1. Set _other_.[[Decorators]] to _element_.[[Decorators]].
             1. Perform ! CoalesceGetterSetter(_element_, _other_).
         1. Otherwise, append _element_ to _newElements_.
       1. Return _newElements_.
