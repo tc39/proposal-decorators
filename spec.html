@@ -147,7 +147,7 @@ emu-example pre {
           </thead>
           <tbody>
             <tr> <td>[[Kind]]</td>        <td>One of `"method"` or `"field"`</td>                                  </tr>
-            <tr> <td>[[Key]]</td>         <td>A Property Key or PrivateName</td>                                   </tr>
+            <tr> <td>[[Key]]</td>         <td>A Property Key or %PrivateName% object</td>                          </tr>
             <tr> <td>[[Descriptor]]</td>  <td>A Property Descriptor</td>                                           </tr>
             <tr> <td>[[Placement]]</td>   <td>One of `"static"`, `"prototype"` or `"own"`</td>                     </tr>
             <tr> <td>[[Initializer]]</td> <td>A function or ~empty~. This field can be absent.</td>                </tr>
@@ -372,63 +372,55 @@ emu-example pre {
 </emu-clause>
 
   <emu-clause id="sec-private-name-type-and-objects">
-    <h1>PrivateName Type and Objects</h1>
+    <h1>PrivateName Objects</h1>
 
-    <emu-clause id="sec-ecmascript-language-types-private-name-type">
-      <h1>The PrivateName Type</h1>
-      <p>The PrivateName type is the set of all values which may be used as a Private Name in operations such as PrivateNameget.</p>
-      <p>Each possible PrivateName value is unique and immutable.</p>
-      <p>Each PrivateName value immutably holds an associated value called [[Description]] that is either *undefined* or a String value.</p>
-    </emu-clause>
+    <emu-note type=editor>
+      This section refers to <a href="https://tc39.github.io/proposal-class-fields/#sec-private-names">Private Name values</a>, as defined in the class fields proposal.
+    </emu-note>
 
   <emu-clause id="sec-private-name-objects">
-    <h1>PrivateName Objects</h1>
+    <h1>Private Name Objects</h1>
     <emu-clause id="sec-private-name-constructor">
-      <h1>The Private Name Constructor</h1>
-      <p>The Private Name constructor is the <dfn>%PrivateName%</dfn> intrinsic object and the initial value of the `PrivateName` property of the global object. When `PrivateName` is called as a function, it returns a new Private Name value.</p>
-      <p>The `PrivateName` constructor is not intended to be used with the `new` operator or to be subclassed. It may be used as the value of an `extends` clause of a class definition but a `super` call to the `PrivateName` constructor will cause an exception.</p>
-
-      <emu-clause id="sec-newprivatename" aoid="NewPrivateName">
-        <h1>NewPrivateName ( _description_ )</h1>
-        <emu-alg>
-          1. Return a new unique PrivateName value whose [[Description]] value is _description_.
-        </emu-alg>
-      </emu-clause>
+      <h1>The %PrivateName% Constructor</h1>
+      <p>The Private Name constructor is the <dfn>%PrivateName%</dfn> intrinsic object. When %PrivateName% is constructed with `new`, it returns a new object which wraps a Private Name value. The %PrivateName% intrinsic does not have a global name or appear as a property of the global object.</p>
 
       <emu-clause id="sec-private-description" aoid=PrivateName>
-        <h1>PrivateName ( [ _description_ ] )</h1>
-        <p>When `PrivateName` is called with optional argument _description_, the following steps are taken:</p>
+        <h1>%PrivateName% ( [ _description_ ] )</h1>
+        <p>When %PrivateName% is called with optional argument _description_, the following steps are taken:</p>
         <emu-alg>
-          1. If NewTarget is not *undefined*, throw a *TypeError* exception.
+          1. If NewTarget is *undefined*, throw a *TypeError* exception.
           1. If _description_ is *undefined*, let _descString_ be *undefined*.
           1. Else, let _descString_ be ? ToString(_description_).
-          1. Return NewPrivateName(_descString_).
+          1. Let _name_ be NewPrivateName(_descString_).
+          1. Let _O_ be ? OrdinaryCreateFromConstructor(NewTarget, `"%PrivateNamePrototype%"`, &laquo; [[PrivateName]] &raquo;).
+          1. Set _O_.[[PrivateNameData]] to _name_.
+          1. Return _O_.
         </emu-alg>
       </emu-clause>
     </emu-clause>
 
     <emu-clause id="sec-properties-of-the-private-name-prototype-object">
-      <h1>Properties of the PrivateName Prototype Object</h1>
-      <p>The PrivateName prototype object is the intrinsic object <dfn>%PrivateNamePrototype%</dfn>. The PrivateName prototype object is an ordinary object. It is not a PrivateName instance and does not have a [[PrivateNameData]] internal slot.</p>
+      <h1>Properties of the %PrivateNamePrototype% Object</h1>
+      <p>The %PrivateNamePrototype% object is an ordinary object. It is not a %PrivateName% instance and does not have a [[PrivateNameData]] internal slot.</p>
       <p>The value of the [[Prototype]] internal slot of the PrivateName prototype object is the intrinsic object %ObjectPrototype%.</p>
 
       <emu-clause id="sec-private-name.prototype.constructor">
-        <h1>PrivateName.prototype.constructor</h1>
+        <h1>%PrivateName%.prototype.constructor</h1>
         <p>The initial value of `PrivateName.prototype.constructor` is the intrinsic object %PrivateName%.</p>
       </emu-clause>
 
       <emu-clause id="sec-private-name-get">
-        <h1>%PrivateNameGet%( _name_, _object_ )</h1>
-        <p>%PrivateNameGet% is a per-realm built-in function object. When invoked, the following steps are taken:</p>
+        <h1>%PrivateName%.prototype.get ( _object_ )</h1>
+        <p>When invoked, the following steps are taken:</p>
         <emu-alg>
-          1. Let _pn_ be ? ToPrivateName(_name_).
+          1. Let _pn_ be ? ThisPrivateName().
           1. If Type(_object_) is not Object, throw a *TypeError* exception.
           1. Return ? PrivateFieldGet(_pn_, _object_).
         </emu-alg>
       </emu-clause>
 
       <emu-clause id="sec-private-name-set">
-        <h1>%PrivateNameSet% ( _name_, _object_, _value_ )</h1>
+        <h1>%PrivateName%.prototype.set ( _object_, _value_ )</h1>
         <p>%PrivateNameSet% is a per-realm built-in function object. When invoked, the following steps are taken:</p>
         <emu-alg>
           1. Let _pn_ be ? ThisPrivateName().
@@ -437,61 +429,26 @@ emu-example pre {
         </emu-alg>
       </emu-clause>
 
+      <emu-clause id="sec-private-name.prototype.description">
+        <h1>get %PrivateName%.prototype.description ( )</h1>
+        <p>The following steps are taken:</p>
+        <emu-alg>
+          1. Let _pn_ be ? ThisPrivateName().
+          1. Let _desc_ be _sym_'s [[Description]] value.
+          1. If _desc_ is *undefined*, return _desc_ be the empty string.
+          1. Otherwise, return _desc_.
+        </emu-alg>
+      </emu-clause>
+
       <emu-clause id="sec-private-name.prototype.tostring">
-        <h1>PrivateName.prototype.toString ( )</h1>
+        <h1>%PrivateName%.prototype.toString ( )</h1>
         <p>The following steps are taken:</p>
         <emu-alg>
-          1. Return PrivateNameDescriptiveString(? ThisPrivateName()).
+          1. Throw a *TypeError* exception.
         </emu-alg>
-
-        <emu-clause id="sec-private-namedescriptivestring" aoid="PrivateNameDescriptiveString">
-          <h1>Runtime Semantics: PrivateNameDescriptiveString ( _sym_ )</h1>
-          <p>When the abstract operation PrivateNameDescriptiveString is called with argument _sym_, the following steps are taken:</p>
-          <emu-alg>
-            1. Assert: Type(_sym_) is PrivateName.
-            1. Let _desc_ be _sym_'s [[Description]] value.
-            1. If _desc_ is *undefined*, let _desc_ be the empty string.
-            1. Assert: Type(_desc_) is String.
-            1. Return the result of concatenating the strings `"#"` and _desc_.
-          </emu-alg>
-        </emu-clause>
-      </emu-clause>
-
-      <emu-clause id="sec-private-name.prototype.valueof">
-        <h1>PrivateName.prototype.valueOf ( )</h1>
-        <p>The following steps are taken:</p>
-        <emu-alg>
-          1. Return ? ThisPrivateName().
-        </emu-alg>
-      </emu-clause>
-
-      <emu-clause id="sec-private-name.prototype-@@toprimitive">
-        <h1>PrivateName.prototype [ @@toPrimitive ] ( _hint_ )</h1>
-        <p>This function is called by ECMAScript language operators to convert a PrivateName object to a primitive value. The allowed values for _hint_ are `"default"`, `"number"`, and `"string"`.</p>
-        <p>When the `@@toPrimitive` method is called with argument _hint_, the following steps are taken:</p>
-        <emu-alg>
-          1. Return ? ThisPrivateName().
-        </emu-alg>
-        <p>The value of the `name` property of this function is `"[PrivateName.toPrimitive]"`.</p>
-        <p>This property has the attributes { [[Writable]]: *false*, [[Enumerable]]: *false*, [[Configurable]]: *true* }.</p>
-      </emu-clause>
-
-      <emu-clause id="sec-private-name-this-private-name" aoid=ThisPrivateName>
-        <h1>ThisPrivateName()</h1>
-        <emu-alg>
-          1. Let _p_ be the *this* value.
-          1. Return ToPrivateName(_p_).
-        </emu-alg>
-      </emu-clause>
-
-      <emu-clause id="sec-private-name-to-private-name" aoid=ToPrivateName>
-        <h1>ThisPrivateName(_p_)</h1>
-        <emu-alg>
-          1. If Type(_p_) is PrivateName, return _p_.
-          1. If Type(_p_) is not Object, throw a *TypeError* exception.
-          1. If _p_ does not have a [[PrivateNameData]] internal slot, throw a *TypeError* exception.
-          1. Return _p_.[[PrivateNameData]].
-        </emu-alg>
+        <emu-note>
+          Because conversion to a string throws, ToPropertyKey applied to a %PrivateName% object throws as well. This property is important to ensure that Private Names are not incorrectly used by decorators using property access, rather than with their `get` and `set` methods.
+        </emu-note>
       </emu-clause>
 
       <emu-clause id="sec-private-name.prototype-@@tostringtag">
@@ -499,564 +456,22 @@ emu-example pre {
         <p>The initial value of the @@toStringTag property is the String value `"PrivateName"`.</p>
         <p>This property has the attributes { [[Writable]]: *false*, [[Enumerable]]: *false*, [[Configurable]]: *true* }.</p>
       </emu-clause>
+
+      <emu-clause id="sec-private-name-this-private-name" aoid=ThisPrivateName>
+        <h1>ThisPrivateName()</h1>
+        <emu-alg>
+          1. Let _O_ be the *this* value.
+          1. If Type(_O_) is not Object, throw a *TypeError* exception.
+          1. If _O_ does not have a [[PrivateNameData]] internal slot, throw a *TypeError* exception.
+          1. Let _pn_ be _O_.[[PrivateNameData]].
+        </emu-alg>
+      </emu-clause>
     </emu-clause>
 
     <emu-clause id="sec-properties-of-private-name-instances">
       <h1>Properties of PrivateName Instances</h1>
-      <p>PrivateName instances are ordinary objects that inherit properties from the PrivateName prototype object. PrivateName instances have a [[PrivateNameData]] internal slot. The [[PrivateNameData]] internal slot is the PrivateName value represented by this PrivateName object.</p>
+      <p>PrivateName instances are ordinary objects that inherit properties from the PrivateName prototype object. PrivateName instances have a [[PrivateNameData]] internal slot. The [[PrivateNameData]] internal slot is the Private Name value represented by this Private Name object.</p>
     </emu-clause>
-    </emu-clause>
-
-    <emu-clause id="sec-private-name-amended-algs">
-      <h1>Amended internal algorithms for private names</h1>
-
-    <emu-clause id="sec-toboolean" aoid="ToBoolean">
-      <h1>ToBoolean ( _argument_ )</h1>
-      <p>The abstract operation ToBoolean converts _argument_ to a value of type Boolean according to <emu-xref href="#table-10"></emu-xref>:</p>
-      <emu-table id="table-10" caption="ToBoolean Conversions">
-        <table>
-          <tbody>
-          <tr>
-            <th>
-              Argument Type
-            </th>
-            <th>
-              Result
-            </th>
-          </tr>
-          <tr>
-            <td>
-              Undefined
-            </td>
-            <td>
-              Return *false*.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              Null
-            </td>
-            <td>
-              Return *false*.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              Boolean
-            </td>
-            <td>
-              Return _argument_.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              Number
-            </td>
-            <td>
-              If _argument_ is *+0*, *-0*, or *NaN*, return *false*; otherwise return *true*.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              String
-            </td>
-            <td>
-              If _argument_ is the empty String (its length is zero), return *false*; otherwise return *true*.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              Symbol
-            </td>
-            <td>
-              Return *true*.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <ins>PrivateName</ins>
-            </td>
-            <td>
-              <ins>Return *true*.</ins>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              Object
-            </td>
-            <td>
-              Return *true*.
-            </td>
-          </tr>
-          </tbody>
-        </table>
-      </emu-table>
-    </emu-clause>
-
-    <!-- es6num="7.1.3" -->
-    <emu-clause id="sec-tonumber" aoid="ToNumber">
-      <h1>ToNumber ( _argument_ )</h1>
-      <p>The abstract operation ToNumber converts _argument_ to a value of type Number according to <emu-xref href="#table-11"></emu-xref>:</p>
-      <emu-table id="table-11" caption="ToNumber Conversions">
-        <table>
-          <tbody>
-          <tr>
-            <th>
-              Argument Type
-            </th>
-            <th>
-              Result
-            </th>
-          </tr>
-          <tr>
-            <td>
-              Undefined
-            </td>
-            <td>
-              Return *NaN*.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              Null
-            </td>
-            <td>
-              Return *+0*.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              Boolean
-            </td>
-            <td>
-              If _argument_ is *true*, return 1. If _argument_ is *false*, return *+0*.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              Number
-            </td>
-            <td>
-              Return _argument_ (no conversion).
-            </td>
-          </tr>
-          <tr>
-            <td>
-              String
-            </td>
-            <td>
-              See grammar and conversion algorithm below.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              Symbol
-            </td>
-            <td>
-              Throw a *TypeError* exception.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <ins>PrivateName</ins>
-            </td>
-            <td>
-              <ins>Throw a *TypeError* exception.</ins>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              Object
-            </td>
-            <td>
-              <p>Apply the following steps:</p>
-              <emu-alg>
-                1. Let _primValue_ be ? ToPrimitive(_argument_, hint Number).
-                1. Return ? ToNumber(_primValue_).
-              </emu-alg>
-            </td>
-          </tr>
-          </tbody>
-        </table>
-      </emu-table>
-      </emu-clause>
-
-    <!-- es6num="7.1.12" -->
-    <emu-clause id="sec-tostring" aoid="ToString">
-      <h1>ToString ( _argument_ )</h1>
-      <p>The abstract operation ToString converts _argument_ to a value of type String according to <emu-xref href="#table-12"></emu-xref>:</p>
-      <emu-table id="table-12" caption="ToString Conversions">
-        <table>
-          <tbody>
-          <tr>
-            <th>
-              Argument Type
-            </th>
-            <th>
-              Result
-            </th>
-          </tr>
-          <tr>
-            <td>
-              Undefined
-            </td>
-            <td>
-              Return `"undefined"`.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              Null
-            </td>
-            <td>
-              Return `"null"`.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              Boolean
-            </td>
-            <td>
-              <p>If _argument_ is *true*, return `"true"`.</p>
-              <p>If _argument_ is *false*, return `"false"`.</p>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              Number
-            </td>
-            <td>
-              See <emu-xref href="#sec-tostring-applied-to-the-number-type"></emu-xref>.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              String
-            </td>
-            <td>
-              Return _argument_.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              Symbol
-            </td>
-            <td>
-              Throw a *TypeError* exception.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <ins>PrivateName</ins>
-            </td>
-            <td>
-              <ins>Throw a *TypeError* exception.</ins>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              Object
-            </td>
-            <td>
-              <p>Apply the following steps:</p>
-              <emu-alg>
-                1. Let _primValue_ be ? ToPrimitive(_argument_, hint String).
-                1. Return ? ToString(_primValue_).
-              </emu-alg>
-            </td>
-          </tr>
-          </tbody>
-        </table>
-      </emu-table>
-    </emu-clause>
-
-    <emu-clause id="sec-toobject" aoid="ToObject">
-      <h1>ToObject ( _argument_ )</h1>
-      <p>The abstract operation ToObject converts _argument_ to a value of type Object according to <emu-xref href="#table-13"></emu-xref>:</p>
-      <emu-table id="table-13" caption="ToObject Conversions">
-        <table>
-          <tbody>
-          <tr>
-            <th>
-              Argument Type
-            </th>
-            <th>
-              Result
-            </th>
-          </tr>
-          <tr>
-            <td>
-              Undefined
-            </td>
-            <td>
-              Throw a *TypeError* exception.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              Null
-            </td>
-            <td>
-              Throw a *TypeError* exception.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              Boolean
-            </td>
-            <td>
-              Return a new Boolean object whose [[BooleanData]] internal slot is set to _argument_. See <emu-xref href="#sec-boolean-objects"></emu-xref> for a description of Boolean objects.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              Number
-            </td>
-            <td>
-              Return a new Number object whose [[NumberData]] internal slot is set to _argument_. See <emu-xref href="#sec-number-objects"></emu-xref> for a description of Number objects.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              String
-            </td>
-            <td>
-              Return a new String object whose [[StringData]] internal slot is set to _argument_. See <emu-xref href="#sec-string-objects"></emu-xref> for a description of String objects.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              Symbol
-            </td>
-            <td>
-              Return a new Symbol object whose [[SymbolData]] internal slot is set to _argument_. See <emu-xref href="#sec-symbol-objects"></emu-xref> for a description of Symbol objects.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <ins>PrivateName</ins>
-            </td>
-            <td>
-              <ins>Return a new PrivateName object whose [[PrivateNameData]] internal slot is set to _argument_. See <emu-xref href="#sec-private-name-objects"></emu-xref> for a description of PrivateName objects.</ins>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              Object
-            </td>
-            <td>
-              Return _argument_.
-            </td>
-          </tr>
-          </tbody>
-        </table>
-      </emu-table>
-    </emu-clause>
-
-    <emu-clause id="sec-requireobjectcoercible" aoid="RequireObjectCoercible">
-      <h1>RequireObjectCoercible ( _argument_ )</h1>
-      <p>The abstract operation RequireObjectCoercible throws an error if _argument_ is a value that cannot be converted to an Object using ToObject. It is defined by <emu-xref href="#table-14"></emu-xref>:</p>
-      <emu-table id="table-14" caption="RequireObjectCoercible Results">
-        <table>
-          <tbody>
-          <tr>
-            <th>
-              Argument Type
-            </th>
-            <th>
-              Result
-            </th>
-          </tr>
-          <tr>
-            <td>
-              Undefined
-            </td>
-            <td>
-              Throw a *TypeError* exception.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              Null
-            </td>
-            <td>
-              Throw a *TypeError* exception.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              Boolean
-            </td>
-            <td>
-              Return _argument_.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              Number
-            </td>
-            <td>
-              Return _argument_.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              String
-            </td>
-            <td>
-              Return _argument_.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              Symbol
-            </td>
-            <td>
-              Return _argument_.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <ins>PrivateName</ins>
-            </td>
-            <td>
-              <ins>Return _argument_.</ins>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              Object
-            </td>
-            <td>
-              Return _argument_.
-            </td>
-          </tr>
-          </tbody>
-        </table>
-      </emu-table>
-    </emu-clause>
-
-    <emu-clause id="sec-typeof-operator">
-      <h1>The `typeof` Operator</h1>
-
-      <!-- es6num="12.5.6.1" -->
-      <emu-clause id="sec-typeof-operator-runtime-semantics-evaluation">
-        <h1>Runtime Semantics: Evaluation</h1>
-        <emu-grammar>UnaryExpression : `typeof` UnaryExpression</emu-grammar>
-        <emu-alg>
-          1. Let _val_ be the result of evaluating |UnaryExpression|.
-          1. If Type(_val_) is Reference, then
-            1. If IsUnresolvableReference(_val_) is *true*, return `"undefined"`.
-          1. Set _val_ to ? GetValue(_val_).
-          1. Return a String according to <emu-xref href="#table-35"></emu-xref>.
-        </emu-alg>
-        <emu-table id="table-35" caption="typeof Operator Results">
-          <table>
-            <tbody>
-            <tr>
-              <th>
-                Type of _val_
-              </th>
-              <th>
-                Result
-              </th>
-            </tr>
-            <tr>
-              <td>
-                Undefined
-              </td>
-              <td>
-                `"undefined"`
-              </td>
-            </tr>
-            <tr>
-              <td>
-                Null
-              </td>
-              <td>
-                `"object"`
-              </td>
-            </tr>
-            <tr>
-              <td>
-                Boolean
-              </td>
-              <td>
-                `"boolean"`
-              </td>
-            </tr>
-            <tr>
-              <td>
-                Number
-              </td>
-              <td>
-                `"number"`
-              </td>
-            </tr>
-            <tr>
-              <td>
-                String
-              </td>
-              <td>
-                `"string"`
-              </td>
-            </tr>
-            <tr>
-              <td>
-                Symbol
-              </td>
-              <td>
-                `"symbol"`
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <ins>PrivateName</ins>
-              </td>
-              <td>
-                <ins>`"privatename"`</ins>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                Object (ordinary and does not implement [[Call]])
-              </td>
-              <td>
-                `"object"`
-              </td>
-            </tr>
-            <tr>
-              <td>
-                Object (standard exotic and does not implement [[Call]])
-              </td>
-              <td>
-                `"object"`
-              </td>
-            </tr>
-            <tr>
-              <td>
-                Object (implements [[Call]])
-              </td>
-              <td>
-                `"function"`
-              </td>
-            </tr>
-            <tr>
-              <td>
-                Object (non-standard exotic and does not implement [[Call]])
-              </td>
-              <td>
-                Implementation-defined. Must not be `"undefined"`, `"boolean"`, `"function"`, `"number"`, `"symbol"`, or `"string"`.
-              </td>
-            </tr>
-            </tbody>
-          </table>
-        </emu-table>
-        <emu-note>
-          <p>Implementations are discouraged from defining new `typeof` result values for non-standard exotic objects. If possible `"object"` should be used for such objects.</p>
-        </emu-note>
-      </emu-clause>
-
     </emu-clause>
   </emu-clause>
 </emu-clause>
@@ -1189,7 +604,7 @@ emu-example pre {
         1. Let _finishers_ be a new empty List.
         1. For each _decorator_ in _decorators_, in reverse list order do
           1. Let _obj_ be FromClassDescriptor(_elements_).
-          1. Let _result_ be ? Call(_decorator_, *undefined*, « _obj_, %PrivateNameGet%, %PrivateNameSet% »).
+          1. Let _result_ be ? Call(_decorator_, *undefined*, « _obj_, %PrivateName% »).
           1. If _result_ is *undefined*, let _result_ be _obj_.
           1. Let _elementsAndFinisher_ be ? ToClassDescriptor(_result_).
           1. If _elementsAndFinisher_.[[Finisher]] is not *undefined*,

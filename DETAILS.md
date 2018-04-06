@@ -56,7 +56,7 @@ However, in normal usage which does not reference these runtime metaprogramming-
 Private state is not keyed on property keys--Strings or Symbols--but instead on Private Names. Literal references like `#x` are lexically bound to a Private Name which is textually present in the definition of a class, but decorators can create new, anonymous private fields by imperatively creating Private Names and adding them to the List of fields defined for the class.
 
 To create and use private names, a new function `PrivateName` is created:
-- `PrivateName(description)` creates a new Private Name primitive, analogous to Symbol except that it's not a property key
+- `new PrivateName(description)` creates a new Private Name object, which cannot be used as a property key.
 - `PrivateName.prototype.get(object)` gets the private field or method value from the object, or invokes a getter, or throws a *ReferenceError* if it is not present.
 - `PrivateName.prototype.set(object)` sets the private field value in the object, or invokes a setter, or throws a *ReferenceError* if it is not present or if it is a private method.
 
