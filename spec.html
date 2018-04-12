@@ -1143,9 +1143,9 @@ emu-example pre {
         1. Let _newElements_ and _finishers_ each be a new empty List.
         1. Let _placements_ be the Record { [[StaticKeys]]: « », [[PrototypeKeys]]: « », [[OwnKeys]]: « » }.
         1. For each _element_ in _elements_, do
-          1. Perform ? AddElementPlacement(_element_, _placements_).
+          1. Perform ? AddElementPlacement(_element_, _placements_, *true*).
         1. For each _element_ in _elements_, do
-          1. Let _elementFinishersExtras_ be ? DecorateElement(_element_, _keys_).
+          1. Let _elementFinishersExtras_ be ? DecorateElement(_element_, _placements_).
           1. Append _elementFinishersExtras_.[[Element]] to _newElements_.
           1. Concatenate _elementFinishersExtras_.[[Extras]] onto _newElements_.
           1. Concatenate _elementFinishersExtras_.[[Finishers]] onto _finishers_.
@@ -1201,7 +1201,7 @@ emu-example pre {
     </emu-clause>
 
     <emu-clause id=sec-add-element-placement aoid=AddElementPlacement>
-      <h1>AddElementPlacement (_element_, _placements_)</h1>
+      <h1>AddElementPlacement (_element_, _placements_ [, _silent_])</h1>
       <emu-alg>
           1. If _element_.[[Placement]] is `"own"`, then
             1. Let _keys_ be _placements_.[[OwnKeys]].
@@ -1209,7 +1209,8 @@ emu-example pre {
             1. Let _keys_ be _placements_.[[StaticKeys]].
           1. Else,
             1. Let _keys_ be _placements_.[[PrototypeKeys]].
-          1. If _element_.[[Key]] is an element of _keys_, throw a *TypeError* exception.
+          1. If _element_.[[Key]] is an element of _keys_, then
+            1. If _silent_ is not present or is *false*, throw a *TypeError* exception.
           1. Otherwise, append _element_.[[Key]] to _keys_.
       </emu-alg>
     </emu-clause>
