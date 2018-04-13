@@ -6,7 +6,58 @@ Previously, metaprogramming within JavaScript was driven by use of dynamic opera
 * Decorators can manipulate private fields and private methods, whereas operations on objects are unable to manipulate the definitions of private names.
 * Decorators do their manipulations at the time the class is defined, rather than when instances are being created and used, so they may lead to patterns which are more amenable to efficient implementation.
 
-Dcorators can be used either to decorate a whole class or an individual class element (field or method). Decorators are implemented as functions which take a JSON-like representation of class element(s) as an argument and return a possibly-modified form of that, optionally with additional class elements.
+Dcorators can be used either to decorate a whole class or an individual class element (field or method).
+
+## Basic Usage
+
+Decorators are implemented as functions which take a JSON-like representation of class element(s) as an argument and return a possibly-modified form of that, optionally with additional class elements.
+
+For example, suppose we want a simple decorator to change the placement of a property so that it will be created on the prototype rather than the instance:
+
+```js
+class Demo {
+  @prototypeProp
+  x = 1
+}
+```
+
+The public field `x` above would be represented as the following class element descriptor, which will be passed into our decorator function:
+
+```js
+{
+  kind: "field"
+  key: "x",
+  placement: "own",
+  // property descriptor for Object.defineProperty
+  descriptor: { configurable: false, enumerable: true, writable: true },
+  initializer: () => 1
+}
+```
+
+To implement our decorator function, we need to take the class element descriptor and change its `placement` property to `'prototype'`:
+
+```js
+function prototypeProp(elementDescriptor) {
+  assert(kind == "field" || kind == "method");
+  // Note: this decorator would generally be used for fields, not methods, because the
+  // 'prototype' placement is already the default for non-static methods. So it would only
+  // be useful for methods if you wanted to override the default placement or the placement
+  // from a previous decorator.
+  return {
+    ...elementDescriptor,
+    placement: 'prototype'
+  }
+}
+```
+
+Thanks to the `prototypeProp` decorator, `x` will now be placed on the prototype as if we had written the following code:
+
+```js
+class Demo {}
+Demo.prototype.x = 1
+```
+
+## API
 
 The signatures of the different kinds of decorator functions are as follows:
 
