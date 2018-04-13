@@ -1165,6 +1165,8 @@ emu-example pre {
           1. Remove _element_.[[Key]] from _keys_.
           1. Let _elementObject_ be ? FromElementDescriptor(_element_).
           1. Let _elementFinisherExtrasObject_ be ? Call(_decorator_, *undefined*, « _elementObject_, %PrivateNameGet%, %PrivateNameSet% »).
+          1. If _elementFinisherExtrasObject_ is *undefined*, 
+            1. Let _elementFinisherExtrasObject_ be _elementObject_.
           1. Let _elementFinisherExtras_ be ? ToElementFinisherExtras(_elementFinisherExtrasObject_).
           1. Let _element_ be _elementFinisherExtras_.[[Element]].
           1. If _element_.[[Key]] is an element of _keys_, throw a *TypeError* exception.
@@ -1189,6 +1191,7 @@ emu-example pre {
         1. For each _decorator_ in _decorators_, in reverse list order do
           1. Let _obj_ be FromClassDescriptor(_elements_).
           1. Let _result_ be ? Call(_decorator_, *undefined*, « _obj_, %PrivateNameGet%, %PrivateNameSet% »).
+          1. If _result_ is *undefined*, let _result_ be _obj_.
           1. Let _elementsAndFinisher_ be ? ToClassDescriptor(_result_).
           1. If _elementsAndFinisher_.[[Finisher]] is not *undefined*,
             1. Append _elementsAndFinisher_.[[Finisher]] to _finishers_.
