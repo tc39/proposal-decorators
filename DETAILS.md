@@ -89,7 +89,7 @@ x.next();  // 1
 x.next();  // 2
 ```
 
-The semantics here follows analogously: `#counter` is a private field which belongs only to the single instance `x`, and `#instance` is a method which is only on this instance. In object literal syntax, the instance being constructed is not within scope to "initializers" (the right-hand side of `:`), and there is no equivalent of "return from super", so it's actually unobservable which order the fields are added to the object (though possibly it could be visible from decorators, if the initializer callback is called with the object under construction as the receiver).
+The semantics here follows analogously: `#counter` is a private field which belongs only to the single instance `x`, and `#increment` is a method which is only on this instance. In object literal syntax, the instance being constructed is not within scope to "initializers" (the right-hand side of `:`), and there is no equivalent of "return from super", so it's actually unobservable which order the fields are added to the object (though possibly it could be visible from decorators, if the initializer callback is called with the object under construction as the receiver).
 
 ### Elimination of the `own` token
 
