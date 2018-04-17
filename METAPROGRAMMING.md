@@ -189,7 +189,7 @@ function observed({kind, key, placement, descriptor, initializer}, PrivateName) 
   assert(kind == "field");
   assert(placement == "own");
   // Create a new anonymous private name as a key for a class element
-  let storage = PrivateName();
+  let storage = new PrivateName();
   let underlyingDescriptor = { enumerable: false, configurable: false, writable: true };
   let underlying = { kind, key: storage, placement, descriptor: underlyingDescriptor, initializer };
   return {

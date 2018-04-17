@@ -413,7 +413,8 @@ emu-example pre {
         <h1>%PrivateName%.prototype.get ( _object_ )</h1>
         <p>When invoked, the following steps are taken:</p>
         <emu-alg>
-          1. Let _pn_ be ? ThisPrivateName().
+          1. Let _O_ be the *this* value.
+          1. Let _pn_ be ? GetPrivateName(_O_).
           1. If Type(_object_) is not Object, throw a *TypeError* exception.
           1. Return ? PrivateFieldGet(_pn_, _object_).
         </emu-alg>
@@ -423,7 +424,8 @@ emu-example pre {
         <h1>%PrivateName%.prototype.set ( _object_, _value_ )</h1>
         <p>%PrivateNameSet% is a per-realm built-in function object. When invoked, the following steps are taken:</p>
         <emu-alg>
-          1. Let _pn_ be ? ThisPrivateName().
+          1. Let _O_ be the *this* value.
+          1. Let _pn_ be ? GetPrivateName(_O_).
           1. If Type(_object_) is not Object, throw a *TypeError* exception.
           1. Return ? PrivateFieldSet(_pn_, _object_, _value_).
         </emu-alg>
@@ -433,9 +435,10 @@ emu-example pre {
         <h1>get %PrivateName%.prototype.description ( )</h1>
         <p>The following steps are taken:</p>
         <emu-alg>
-          1. Let _pn_ be ? ThisPrivateName().
-          1. Let _desc_ be _sym_'s [[Description]] value.
-          1. If _desc_ is *undefined*, return _desc_ be the empty string.
+          1. Let _O_ be the *this* value.
+          1. Let _pn_ be ? GetPrivateName(_O_).
+          1. Let _desc_ be _pn_'s [[Description]] value.
+          1. If _desc_ is *undefined*, return the empty string.
           1. Otherwise, return _desc_.
         </emu-alg>
       </emu-clause>
@@ -458,9 +461,8 @@ emu-example pre {
       </emu-clause>
 
       <emu-clause id="sec-private-name-this-private-name" aoid=ThisPrivateName>
-        <h1>ThisPrivateName()</h1>
+        <h1>GetPrivateName ( _O_ )</h1>
         <emu-alg>
-          1. Let _O_ be the *this* value.
           1. If Type(_O_) is not Object, throw a *TypeError* exception.
           1. If _O_ does not have a [[PrivateNameData]] internal slot, throw a *TypeError* exception.
           1. Let _pn_ be _O_.[[PrivateNameData]].
