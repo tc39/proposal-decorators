@@ -121,6 +121,9 @@ emu-example pre {
       ClassDeclaration[Yield, Await, Default] :
         <ins>DecoratorList[?Yield, ?Await]?</ins> `class` BindingIdentifier[?Yield, ?Await] ClassTail[?Yield, ?Await]
         [+Default] <ins>DecoratorList[?Yield, ?Await]?</ins> `class` ClassTail[?Yield, ?Await]
+
+      ClassExpression[Yield, Await] :
+        <ins>DecoratorList[?Yield, ?Await]?</ins> `class` BindingIdentifier[?Yield, ?Await]? ClassTail[?Yield, ?Await]
     </emu-grammar>
   </emu-clause>
 </emu-clause>
@@ -186,7 +189,7 @@ emu-example pre {
 
   <emu-clause id="runtime-semantics-class-definition-evaluation">
     <h1>Runtime Semantics: ClassDefinitionEvaluation</h1>
-    <p>With parameter _className_ and optional parameter _decorators_.</p>
+    <p>With parameters _className_ and _decorators_.</p>
     <emu-grammar>ClassTail : ClassHeritage? `{` ClassBody? `}`</emu-grammar>
     <emu-alg>
       1. Let _lex_ be the LexicalEnvironment of the running execution context.
@@ -302,33 +305,62 @@ emu-example pre {
 
   </emu-clause>
 
+  <!-- es6num="14.5.15" -->
+  <emu-clause id="sec-runtime-semantics-bindingclassdeclarationevaluation">
+    <h1>Runtime Semantics: BindingClassDeclarationEvaluation</h1>
+    <emu-grammar>ClassDeclaration : <ins>DecoratorList?</ins> `class` BindingIdentifier ClassTail</emu-grammar>
+    <emu-alg>
+      1. <ins>If |DecoratorList_opt| is present, let _decorators_ be the result of performing DecoratorListEvaluation of |DecoratorList|.</ins>
+      1. <ins>Otherwise, let _decorators_ be a new empty List.</ins>
+      1. Let _className_ be StringValue of |BindingIdentifier|.
+      1. Let _value_ be the result of ClassDefinitionEvaluation of |ClassTail| with arguments _className_<ins> and _decorators</ins>.
+      1. ReturnIfAbrupt(_value_).
+      1. Let _hasNameProperty_ be ? HasOwnProperty(_value_, `"name"`).
+      1. If _hasNameProperty_ is *false*, perform SetFunctionName(_value_, _className_).
+      1. Let _env_ be the running execution context's LexicalEnvironment.
+      1. Perform ? InitializeBoundName(_className_, _value_, _env_).
+      1. Return _value_.
+    </emu-alg>
+    <emu-grammar>ClassDeclaration : <ins>DecoratorList?</ins> `class` ClassTail</emu-grammar>
+    <emu-alg>
+      1. <ins>If |DecoratorList| is present, let _decorators_ be the result of performing DecoratorListEvaluation of |DecoratorList|.</ins>
+      1. <ins>Otherwise, let _decorators_ be a new empty List.</ins>
+      1. Return the result of ClassDefinitionEvaluation of |ClassTail| with arguments *undefined* <ins>and _decorators_</ins>.
+    </emu-alg>
+    <emu-note>
+      <p><emu-grammar>ClassDeclaration : `class` ClassTail</emu-grammar> only occurs as part of an |ExportDeclaration| and the setting of a name property and establishing its binding are handled as part of the evaluation action for that production. See <emu-xref href="#sec-exports-runtime-semantics-evaluation"></emu-xref>.</p>
+    </emu-note>
+  </emu-clause>
 
-    <!-- es6num="14.5.15" -->
-    <emu-clause id="sec-runtime-semantics-bindingclassdeclarationevaluation">
-      <h1>Runtime Semantics: BindingClassDeclarationEvaluation</h1>
-      <emu-grammar>ClassDeclaration : <ins>DecoratorList?</ins> `class` BindingIdentifier ClassTail</emu-grammar>
-      <emu-alg>
-        1. <ins>If |DecoratorList| is present, let _decorators_ be the result of performing DecoratorListEvaluation of |DecoratorList|.</ins>
-        1. <ins>Otherwise, let _decorators_ be a new empty List.</ins>
-        1. Let _className_ be StringValue of |BindingIdentifier|.
-        1. Let _value_ be the result of ClassDefinitionEvaluation of |ClassTail| with arguments _className_<ins> and _decorators</ins>.
-        1. ReturnIfAbrupt(_value_).
+  <!-- es6num="14.5.16" -->
+  <emu-clause id="sec-class-definitions-runtime-semantics-evaluation">
+    <h1>Runtime Semantics: Evaluation</h1>
+    <emu-grammar>ClassDeclaration : <ins>DecoratorList?</ins> `class` BindingIdentifier ClassTail</emu-grammar>
+    <emu-alg>
+      1. Perform ? BindingClassDeclarationEvaluation of this |ClassDeclaration|.
+      1. Return NormalCompletion(~empty~).
+    </emu-alg>
+    <emu-note>
+      <p><emu-grammar>ClassDeclaration : `class` ClassTail</emu-grammar> only occurs as part of an |ExportDeclaration| and is never directly evaluated.</p>
+    </emu-note>
+    <emu-grammar>ClassExpression : <ins>DecoratorList?</ins> `class` BindingIdentifier? ClassTail</emu-grammar>
+    <emu-alg>
+      1. <ins>If |DecoratorList_opt| is present, let _decorators_ be the result of performing DecoratorListEvaluation of |DecoratorList|.</ins>
+      1. <ins>Otherwise, let _decorators_ be a new empty List.</ins>
+      1. If |BindingIdentifier_opt| is not present, let _className_ be *undefined*.
+      1. Else, let _className_ be StringValue of |BindingIdentifier|.
+      1. Let _value_ be the result of ClassDefinitionEvaluation of |ClassTail| with argument _className_ <ins>and _decorators_</ins>.
+      1. ReturnIfAbrupt(_value_).
+      1. If _className_ is not *undefined*, then
         1. Let _hasNameProperty_ be ? HasOwnProperty(_value_, `"name"`).
-        1. If _hasNameProperty_ is *false*, perform SetFunctionName(_value_, _className_).
-        1. Let _env_ be the running execution context's LexicalEnvironment.
-        1. Perform ? InitializeBoundName(_className_, _value_, _env_).
-        1. Return _value_.
-      </emu-alg>
-      <emu-grammar>ClassDeclaration : <ins>DecoratorList?</ins> `class` ClassTail</emu-grammar>
-      <emu-alg>
-        1. <ins>If |DecoratorList| is present, let _decorators_ be the result of performing DecoratorListEvaluation of |DecoratorList|.</ins>
-        1. <ins>Otherwise, let _decorators_ be a new empty List.</ins>
-        1. Return the result of ClassDefinitionEvaluation of |ClassTail| with arguments *undefined* <ins>and _decorators_</ins>.
-      </emu-alg>
-      <emu-note>
-        <p><emu-grammar>ClassDeclaration : `class` ClassTail</emu-grammar> only occurs as part of an |ExportDeclaration| and the setting of a name property and establishing its binding are handled as part of the evaluation action for that production. See <emu-xref href="#sec-exports-runtime-semantics-evaluation"></emu-xref>.</p>
-      </emu-note>
-    </emu-clause>
+        1. If _hasNameProperty_ is *false*, then
+          1. Perform SetFunctionName(_value_, _className_).
+      1. Return NormalCompletion(_value_).
+    </emu-alg>
+    <emu-note>
+      <p>If the class definition included a `name` static method then that method is not over-written with a `name` data property for the class name.</p>
+    </emu-note>
+  </emu-clause>
 
   <emu-clause id="sec-coalesce-getter-setter" aoid=CoalesceGetterSetter>
     <h1>CoalesceGetterSetter ( _element_, _other_ )</h1>
