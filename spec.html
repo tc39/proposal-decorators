@@ -124,6 +124,16 @@ emu-example pre {
 
       ClassExpression[Yield, Await] :
         <ins>DecoratorList[?Yield, ?Await]?</ins> `class` BindingIdentifier[?Yield, ?Await]? ClassTail[?Yield, ?Await]
+
+      ExportDeclaration :
+        `export` `*` FromClause `;`
+        `export` ExportClause FromClause `;`
+        `export` ExportClause `;`
+        `export` VariableStatement[~Yield, ~Await]
+        `export` Declaration[~Yield, ~Await]
+        `export` `default` HoistableDeclaration[~Yield, ~Await, +Default]
+        `export` `default` ClassDeclaration[~Yield, ~Await, +Default]
+        `export` `default` [lookahead &lt;! {`function`, `async` [no |LineTerminator| here] `function`, `class`, <ins>`@`</ins>}] AssignmentExpression[+In, ~Yield, ~Await] `;`
     </emu-grammar>
   </emu-clause>
 </emu-clause>
