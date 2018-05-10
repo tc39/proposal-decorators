@@ -112,15 +112,26 @@ emu-example pre {
     <h1>Updated Productions</h1>
 
     <emu-grammar>
+      StatementListItem[Yield, Await, Return] :
+        Statement[?Yield, ?Await, ?Return]
+        Declaration[?Yield, ?Await, <ins>+Decorators</ins>]
+        
+      Declaration[Yield, Await, <ins>Decorators</ins>] :
+        HoistableDeclaration[?Yield, ?Await, ~Default]
+        ClassDeclaration[?Yield, ?Await, ~Default, <ins>?Decorators</ins>]
+        LexicalDeclaration[+In, ?Yield, ?Await]
+
       ClassElement[Yield, Await] :
         <ins>DecoratorList[?Yield, ?Await]?</ins> MethodDefinition[?Yield, ?Await]
         <ins>DecoratorList[?Yield, ?Await]?</ins> `static` MethodDefinition[?Yield, ?Await]
         <ins>DecoratorList[?Yield, ?Await]?</ins> FieldDefinition[?Yield, ?Await] `;`
         <ins>DecoratorList[?Yield, ?Await]?</ins> `static` FieldDefinition[?Yield, ?Await] `;`
 
-      ClassDeclaration[Yield, Await, Default] :
-        <ins>DecoratorList[?Yield, ?Await]?</ins> `class` BindingIdentifier[?Yield, ?Await] ClassTail[?Yield, ?Await]
-        [+Default] <ins>DecoratorList[?Yield, ?Await]?</ins> `class` ClassTail[?Yield, ?Await]
+      ClassDeclaration[Yield, Await, Default, <ins>Decorators</ins>] :
+        `class` BindingIdentifier[?Yield, ?Await] ClassTail[?Yield, ?Await]
+        [+Default] `class` ClassTail[?Yield, ?Await]
+        <ins>[+Decorators] DecoratorList[?Yield, ?Await] `class` BindingIdentifier[?Yield, ?Await] ClassTail[?Yield, ?Await]</ins>
+        <ins>[+Decorators, +Default] DecoratorList[?Yield, ?Await] `class` ClassTail[?Yield, ?Await]</ins>
 
       ClassExpression[Yield, Await] :
         <ins>DecoratorList[?Yield, ?Await]?</ins> `class` BindingIdentifier[?Yield, ?Await]? ClassTail[?Yield, ?Await]
@@ -130,11 +141,11 @@ emu-example pre {
         `export` ExportClause FromClause `;`
         `export` ExportClause `;`
         `export` VariableStatement[~Yield, ~Await]
-        `export` <ins>[lookahead &lt;! {`@`}]</ins> Declaration[~Yield, ~Await]
-        <ins>DecoratorList[~Yield, ~Await]</ins> `export` <ins>[lookahead &lt;! {`@`}]</ins> ClassDeclaration[~Yield, ~Await, ~Default]
+        `export` Declaration[~Yield, ~Await, <ins>~Decorators</ins>]
         `export` `default` HoistableDeclaration[~Yield, ~Await, +Default]
-        <ins>DecoratorList[~Yield, ~Await]?</ins> `export` `default` <ins>[lookahead &lt;! {`@`}]</ins> ClassDeclaration[~Yield, ~Await, +Default]
         `export` `default` [lookahead &lt;! {`function`, `async` [no |LineTerminator| here] `function`, `class`, <ins>`@`</ins>}] AssignmentExpression[+In, ~Yield, ~Await] `;`
+        <ins>DecoratorList[~Yield, ~Await]</ins> `export` ClassDeclaration[~Yield, ~Await, ~Default, <ins>~Decorators</ins>]
+        <ins>DecoratorList[~Yield, ~Await]</ins> `export` `default` ClassDeclaration[~Yield, ~Await, +Default, <ins>~Decorators</ins>]
     </emu-grammar>
   </emu-clause>
 </emu-clause>
