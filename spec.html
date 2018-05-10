@@ -524,7 +524,7 @@ emu-example pre {
   <h1>Decorator semantics</h1>
   <emu-clause id=sec-decorator-functions>
     <h1>Decorator Functions</h1>
-    <p>A <dfn>decorator function</dfn> is a function that takes and returns either a element descriptor or a class descriptor. The body of a decorator function modifies and returns the descriptor it receives to change the semantics of the decorated entity. Descriptor types can be differentiated by their `kind` property, which is either `"method"`, `"field"` or `"class"`.</p>
+    <p>A <dfn>decorator function</dfn> is a function that takes and returns either a element descriptor or a class descriptor. The body of a decorator function modifies and returns the descriptor it receives to change the semantics of the decorated entity. Descriptor types can be differentiated by their `kind` property, which is either `"method"`, `"field"` or `"class"`. Descriptors also have a @@toStringTag property which has the value `"Descriptor"`; this property helps differentiate them from other objects.</p>
     <emu-clause id=sec-decorator-functions-element-descriptor>
       <h1>Element Descriptors</h1>
       <p>An <dfn>element descriptor</dfn> describes an element of a class or object literal and has the following shape:</p>
@@ -560,8 +560,7 @@ emu-example pre {
       <emu-alg>
         1. Let _expr_ be the result of reparsing |DecoratorMemberExpression| as a |MemberExpression|.
         1. Let _ref_ be the result of evaluating _expr_.
-        1. Let _func_ be ? GetValue(_ref_).
-        1. Let _value_ be ? EvaluateCall(_func_, _ref_, « », *false*).
+        1. Let _value_ be ? GetValue(_ref_).
         1. Return _value_.
       </emu-alg>
       <emu-grammar>Decorator : `@` DecoratorCallExpression[?Yield]</emu-grammar>
@@ -705,6 +704,8 @@ emu-example pre {
       <emu-alg>
         1. Assert: _element_ is an ElementDescriptor.
         1. Let _obj_ be ! ObjectCreate(%ObjectPrototype%).
+        1. Let _desc_ be PropertyDescriptor{ [[Value]]: `"Descriptor"`, [[Writable]]: *false*, [[Enumerable]]: *false*, [[Configurable]]: *true* }.
+        1. Perform ! DefinePropertyOrThrow(_obj_, @@toStringTag, _desc_).
         1. Perform ! CreateDataPropertyOrThrow(_obj_, `"kind"`, _element_.[[Kind]]).
         1. Perform ! CreateDataPropertyOrThrow(_obj_, `"key"`, _element_.[[Key]]).
         1. Perform ! CreateDataPropertyOrThrow(_obj_, `"placement"`, _element_.[[Placement]]).
@@ -784,6 +785,8 @@ emu-example pre {
         1. Assert: _elements_ is a List of ElementDescriptor.
         1. Let _elementsObjects_ be FromElementDescriptors(_elements_).
         1. Let _obj_ be ! ObjectCreate(%ObjectPrototype%).
+        1. Let _desc_ be PropertyDescriptor{ [[Value]]: `"Descriptor"`, [[Writable]]: *false*, [[Enumerable]]: *false*, [[Configurable]]: *true* }.
+        1. Perform ! DefinePropertyOrThrow(_obj_, @@toStringTag, _desc_).
         1. Perform ! CreateDataPropertyOrThrow(_obj_, `"kind"`, `"class"`).
         1. Perform ! CreateDataPropertyOrThrow(_obj_, `"elements"`, _elementsObjects_).
         1. Return _obj_.
