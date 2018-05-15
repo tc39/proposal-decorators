@@ -142,9 +142,9 @@ emu-example pre {
         `export` VariableStatement[~Yield, ~Await]
         `export` Declaration[~Yield, ~Await, <ins>~Decorators</ins>]
         `export` `default` HoistableDeclaration[~Yield, ~Await, +Default]
+        <ins>DecoratorList[~Yield, ~Await]?</ins> `export` `default` ClassDeclaration[~Yield, ~Await, +Default, <ins>~Decorators</ins>]
         `export` `default` [lookahead &lt;! {`function`, `async` [no |LineTerminator| here] `function`, `class`, <ins>`@`</ins>}] AssignmentExpression[+In, ~Yield, ~Await] `;`
-        <ins>DecoratorList[~Yield, ~Await]</ins> `export` ClassDeclaration[~Yield, ~Await, ~Default, <ins>~Decorators</ins>]
-        <ins>DecoratorList[~Yield, ~Await]</ins> `export` `default` ClassDeclaration[~Yield, ~Await, +Default, <ins>~Decorators</ins>]
+        <ins>DecoratorList[~Yield, ~Await] `export` ClassDeclaration[~Yield, ~Await, ~Default, ~Decorators]</ins>
     </emu-grammar>
   </emu-clause>
 </emu-clause>
