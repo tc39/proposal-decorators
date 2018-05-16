@@ -6,7 +6,7 @@ Previously, metaprogramming within JavaScript was driven by use of dynamic opera
 * Decorators can manipulate private fields and private methods, whereas operations on objects are unable to manipulate the definitions of private names.
 * Decorators do their manipulations at the time the class is defined, rather than when instances are being created and used, so they may lead to patterns which are more amenable to efficient implementation.
 
-Dcorators can be used either to decorate a whole class or an individual class element (field or method).
+Decorators can be used either to decorate a whole class or an individual class element (field or method).
 
 ## Basic Usage
 
