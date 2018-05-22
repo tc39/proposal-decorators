@@ -728,18 +728,18 @@ emu-example pre {
     <emu-clause id="sec-from-element-descriptors" aoid=FromElementDescriptors>
       <h1>FromElementDescriptors ( _elements_ )</h1>
       <emu-alg>
-          1. Assert: _elements_ is a List of ElementDescriptor.
+          1. Assert: _elements_ is a List of ElementDescriptor Records.
           1. Let _elementObjects_ be a new empty List.
           1. For each _element_ in _elements_, do
-            1. Append FromElementDescriptor(_element_) to _elementObjects_.
-          1. Return CreateArrayFromList(_elementObjects_).
+            1. Append ! FromElementDescriptor(_element_) to _elementObjects_.
+          1. Return ! CreateArrayFromList(_elementObjects_).
       </emu-alg>
     </emu-clause>
 
     <emu-clause id=sec-from-element-descriptor aoid=FromElementDescriptor>
       <h1>FromElementDescriptor ( _element_ )</h1>
       <emu-alg>
-        1. Assert: _element_ is an ElementDescriptor.
+        1. Assert: _element_ is an ElementDescriptor Record.
         1. Let _obj_ be ! ObjectCreate(%ObjectPrototype%).
         1. Let _desc_ be PropertyDescriptor{ [[Value]]: `"Descriptor"`, [[Writable]]: *false*, [[Enumerable]]: *false*, [[Configurable]]: *true* }.
         1. Perform ! DefinePropertyOrThrow(_obj_, @@toStringTag, _desc_).
@@ -819,7 +819,7 @@ emu-example pre {
     <emu-clause id=sec-from-class-descriptor aoid=FromClassDescriptor>
       <h1>FromClassDescriptor ( _elements_ )</h1>
       <emu-alg>
-        1. Assert: _elements_ is a List of ElementDescriptor.
+        1. Assert: _elements_ is a List of ElementDescriptor Records.
         1. Let _elementsObjects_ be FromElementDescriptors(_elements_).
         1. Let _obj_ be ! ObjectCreate(%ObjectPrototype%).
         1. Let _desc_ be PropertyDescriptor{ [[Value]]: `"Descriptor"`, [[Writable]]: *false*, [[Enumerable]]: *false*, [[Configurable]]: *true* }.
