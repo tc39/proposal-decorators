@@ -702,6 +702,7 @@ emu-example pre {
           1. Else if _element_.[[Placement]] is `"static"`, then
             1. Let _keys_ be _placements_.[[StaticKeys]].
           1. Else,
+            1. Assert: _element_.[[Placement]] is `"prototype"`.
             1. Let _keys_ be _placements_.[[PrototypeKeys]].
           1. If _element_.[[Key]] is an element of _keys_, then
             1. If _silent_ is not present or is *false*, throw a *TypeError* exception.
@@ -717,6 +718,7 @@ emu-example pre {
           1. Else if _element_.[[Placement]] is `"static"`, then
             1. Let _keys_ be _placements_.[[StaticKeys]].
           1. Else,
+            1. Assert: _element_.[[Placement]] is `"prototype"`.
             1. Let _keys_ be _placements_.[[PrototypeKeys]].
           1. Assert: _element_.[[Key]] is an element of _keys_.
           1. Remove _element_.[[Key]] from _keys_.
