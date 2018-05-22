@@ -173,7 +173,7 @@ emu-example pre {
             <tr> <td>[[Kind]]</td>        <td>One of `"method"` or `"field"`</td>                                  </tr>
             <tr> <td>[[Key]]</td>         <td>A Property Key or %PrivateName% object</td>                          </tr>
             <tr> <td>[[Descriptor]]</td>  <td>A Property Descriptor</td>                                           </tr>
-            <tr> <td>[[Placement]]</td>   <td>One of `"static"`, `"prototype"` or `"own"`</td>                     </tr>
+            <tr> <td>[[Placement]]</td>   <td>One of `"static"`, `"prototype"`, or `"own"`</td>                    </tr>
             <tr> <td>[[Initializer]]</td> <td>A function or ~empty~. This field can be absent.</td>                </tr>
             <tr> <td>[[Decorators]]</td>  <td>A List of ECMAScript language values. This field can be absent.</td> </tr>
           </tbody>
@@ -188,7 +188,7 @@ emu-example pre {
             If _element_.[[Kind]] is `"field"`, then
             <ul>
               <li>_element_.[[Initializer]] is present.</li>
-              <li>_element_.[[Descriptor]]'s [[Get]], [[Set]] and [[Value]] slots are absent.</li>
+              <li>_element_.[[Descriptor]]'s [[Get]], [[Set]], and [[Value]] slots are absent.</li>
             </ul>
           </li>
           <li>
