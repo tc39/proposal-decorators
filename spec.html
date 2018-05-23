@@ -542,7 +542,7 @@ emu-example pre {
         <emu-alg>
           1. If Type(_O_) is not Object, throw a *TypeError* exception.
           1. If _O_ does not have a [[PrivateNameData]] internal slot, throw a *TypeError* exception.
-          1. Let _pn_ be _O_.[[PrivateNameData]].
+          1. Return _O_.[[PrivateNameData]].
         </emu-alg>
       </emu-clause>
     </emu-clause>
