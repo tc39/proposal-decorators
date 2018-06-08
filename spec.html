@@ -311,7 +311,7 @@ emu-example pre {
   <emu-grammar>ClassElement : <ins>DecoratorList?</ins> `static` FieldDefinition `;`</emu-grammar>
   <emu-alg>
       1. <ins>If |DecoratorList| is present, let _decorators_ be the result of performing DecoratorListEvaluation of |DecoratorList|.</ins>
-      1. <del>Return</del><ins>Let _elements_ be ? ClassFieldDefinitionEvaluation of FieldDefinitionList with parameters `"static"` and _homeObject_.</ins>
+      1. <del>Return</del><ins>Let _elements_ be ? ClassFieldDefinitionEvaluation of FieldDefinition with parameters `"static"` and _homeObject_.</ins>
       1. <ins>If |DecoratorList| is present, for _element_ in _elements_, set _element_.[[Decorators]] to _decorators_.</ins>
       1. <ins>Return _elements_.</ins>
   </emu-alg>
@@ -319,7 +319,7 @@ emu-example pre {
   <emu-grammar>ClassElement : <ins>DecoratorList?</ins> FieldDefinition `;`</emu-grammar>
   <emu-alg>
       1. <ins>If |DecoratorList| is present, let _decorators_ be the result of performing DecoratorListEvaluation of |DecoratorList|.</ins>
-      1. <del>Return</del><ins>Let _elements_ be ? ClassFieldDefinitionEvaluation of FieldDefinitionList with parameters `"own"` and ! Get(_homeObject_, `"prototype"`).</ins>
+      1. <del>Return</del><ins>Let _elements_ be ? ClassFieldDefinitionEvaluation of FieldDefinition with parameters `"own"` and ! Get(_homeObject_, `"prototype"`).</ins>
       1. <ins>If |DecoratorList| is present, for _element_ in _elements_, set _element_.[[Decorators]] to _decorators_.</ins>
       1. <ins>Return _elements_.</ins>
   </emu-alg>
