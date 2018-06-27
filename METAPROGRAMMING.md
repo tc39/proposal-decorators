@@ -38,7 +38,7 @@ To implement our decorator function, we need to take the class element descripto
 
 ```js
 function prototypeProp(elementDescriptor) {
-  assert(kind == "field" || kind == "method");
+  assert(elementDescriptor.kind == "field" || elementDescriptor.kind == "method");
   // Note: this decorator would generally be used for fields, not methods, because the
   // 'prototype' placement is already the default for non-static methods. So it would only
   // be useful for methods if you wanted to override the default placement or the placement
