@@ -593,7 +593,7 @@ emu-example pre {
       <h1>Runtime Semantics: DecoratorEvaluation</h1>
       <emu-grammar>Decorator : `@` DecoratorMemberExpression[?Yield]</emu-grammar>
       <emu-alg>
-        1. Let _expr_ be the result of reparsing |DecoratorMemberExpression| as a |MemberExpression|.
+        1. Let _expr_ be the |MemberExpression| that is covered by |DecoratorMemberExpression|.
         1. Let _ref_ be the result of evaluating _expr_.
         1. Let _value_ be ? GetValue(_ref_).
         1. Return _value_.
