@@ -469,6 +469,14 @@ emu-example pre {
           1. If _description_ is *undefined*, let _descString_ be *undefined*.
           1. Else, let _descString_ be ? ToString(_description_).
           1. Let _name_ be NewPrivateName(_descString_).
+          1. Return ? PrivateNameObject(_name_).
+        </emu-alg>
+      </emu-clause>
+
+      <emu-clause id="sec-private-name-object" aiod=PrivateNameObject>
+        <h1>PrivateNameObject ( _name_ )</h1>
+        <p>When PrivateNameObject is called with Private Name _name_, the following steps are taken:</p>
+        <emu-alg>
           1. Let _O_ be ? OrdinaryCreateFromConstructor(NewTarget, `"%PrivateNamePrototype%"`, &laquo; [[PrivateName]] &raquo;).
           1. Set _O_.[[PrivateNameData]] to _name_.
           1. Return _O_.
@@ -744,7 +752,9 @@ emu-example pre {
         1. Let _desc_ be PropertyDescriptor{ [[Value]]: `"Descriptor"`, [[Writable]]: *false*, [[Enumerable]]: *false*, [[Configurable]]: *true* }.
         1. Perform ! DefinePropertyOrThrow(_obj_, @@toStringTag, _desc_).
         1. Perform ! CreateDataPropertyOrThrow(_obj_, `"kind"`, _element_.[[Kind]]).
-        1. Perform ! CreateDataPropertyOrThrow(_obj_, `"key"`, _element_.[[Key]]).
+        1. Let _key_ be _element_.[[Key]].
+        1. If _key_ is a Private Name, set _key_ to ? PrivateNameObject(_key_).
+        1. Perform ! CreateDataPropertyOrThrow(_obj_, `"key"`, _key_).
         1. Perform ! CreateDataPropertyOrThrow(_obj_, `"placement"`, _element_.[[Placement]]).
         1. Perform ! CreateDataPropertyOrThrow(_obj_, `"descriptor"`, ! FromPropertyDescriptor(_element_.[[Descriptor]])).
         1. If _element_.[[Kind]] is `"field"`,
@@ -782,7 +792,8 @@ emu-example pre {
         1. If _kind_ is not one of `"method"` or `"field"`, throw a *TypeError* exception.
         1. Let _key_ be ? Get(_elementObject_, `"key"`).
         1. Set _key_ to ? ToPrimitive(_key_, hint String).
-        1. If _key_ is not a Private Name, set _key_ to ? ToPropertyKey(_key_).
+        1. If _key_ has a [[PrivateName]] internal slot, set _key_ to _key_.[[PrivateName]].
+        1. Otherwise, set _key_ to ? ToPropertyKey(_key_).
         1. Let _placement_ be ? ToString(? Get(_elementObject_, `"placement"`)).
         1. If _placement_ is not one of `"static"`, `"prototype"`, or `"own"`, throw a *TypeError* exception.
         1. Let _descriptor_ be ? ToPropertyDescriptor(? Get(_elementObject_, `"descriptor"`)).
