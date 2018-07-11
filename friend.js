@@ -20,7 +20,7 @@ class PrivateNameMap {
         klass = Object.getPrototypeOf(klass);
         continue;
       } else {
-        assert(typeof possibleKey === "privatename");
+        assert(typeof possibleKey === "object");
         return possibleKey;
       }
     }
@@ -52,7 +52,7 @@ let exposeMap = new PrivateNameMap;
 // Make #foo available to subclasses.
 export function expose(descriptor) {
   let key = descriptor.key;
-  if (typeof key !== "privatename")
+  if (typeof key !== "object")
     throw new TypeError("@expose must be used on #private declarations");
   return {
     finisher(klass) {
@@ -67,7 +67,7 @@ export function expose(descriptor) {
 export function inherit(descriptor) {
   let key = descriptor.key;
   let placement = descriptor.placement;
-  if (typeof key !== "privatename" ||
+  if (typeof key !== "object" ||
       descriptor.kind !== "field" ||
       descriptor.initializer !== undefined) {
     throw new TypeError("invalid declaration for @inherit");
@@ -139,7 +139,7 @@ export class FriendKey {
   expose = descriptor => {
     let key = descriptor.key;
     let string = key.toString();
-    if (typeof key !== "privatename") {
+    if (typeof key !== "object") {
       throw new TypeError(
         "@expose may only be used with private class elements");
     }
@@ -196,7 +196,7 @@ export function abstract(descriptor) {
   let isMethod = descriptor.kind === "method" &&
                  descriptor.value !== undefined;
   let value = descriptor.value;
-  if (typeof key !== "privatename" ||
+  if (typeof key !== "object" ||
       !(isPure || isMethod) ||
       descriptor.placement !== "own") {
    throw new TypeError("invalid declaration for @abstract");
@@ -237,7 +237,7 @@ export function abstract(descriptor) {
 export function override(descriptor) {
   let key = descriptor.key;
   let placement = descriptor.placement;
-  if (typeof key !== "privatename" ||
+  if (typeof key !== "object" ||
       descriptor.kind === "field" ||
       placement !== "own") {
     throw new TypeError("invalid declaration for @override");
