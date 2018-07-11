@@ -36,17 +36,24 @@ class PrivateNameMap {
   }
 }
 
+// There is no built-in PrivateName constructor, but a new private name can
+// be constructed by extracting it from a throwaway class
+function PrivateName() {
+  let name;
+  function extract({key}) { name = key; }
+  class Throwaway { @extract #_; }
+  return name;
+}
+
 let exposeMap = new PrivateNameMap;
-let get, set;
 
 // @expose #foo = bar;
 // @expose #foo() { bar; }
 // Make #foo available to subclasses.
-export function expose(descriptor, g, s) {
+export function expose(descriptor) {
   let key = descriptor.key;
   if (typeof key !== "privatename")
     throw new TypeError("@expose must be used on #private declarations");
-  get = g; set = s;
   return {
     finisher(klass) {
       exposeMap.set(klass, key.toString(), key);
@@ -58,7 +65,6 @@ export function expose(descriptor, g, s) {
 // @inherit #foo;
 // Make #foo, declared in a superclass, available in this subclass.
 export function inherit(descriptor) {
-  assert(typeof get === "function");
   let key = descriptor.key;
   let placement = descriptor.placement;
   if (typeof key !== "privatename" ||
@@ -73,8 +79,8 @@ export function inherit(descriptor) {
     key,
     placement,
     descriptor: {
-      get() { return get(superKey, this); },
-      set(value) { set(superKey, this, value); },
+      get() { return superKey.get(this); },
+      set(value) { set.set(this, value); },
       configurable: false,
       enumerable: false,
     },
@@ -104,15 +110,13 @@ class SubClass extends SuperClass {
 // using a metaprogramming-like API
 export class FriendKey {
   #names = new Map();  // Map<string, PrivateName>
-  #get;
-  #set;
 
   // key.get(this, "#foo")
   // gets the value of the private field #foo
   get(receiver, name) {
     let key = this.#names.get(name);
     if (key === undefined) throw new TypeError;
-    return this.#get(key, receiver);
+    return key.get(receiver);
   }
 
   // key.set(this, "#foo", value)
@@ -120,7 +124,7 @@ export class FriendKey {
   set(receiver, name, value) {
     let key = this.#names.get(name);
     if (key === undefined) throw new TypeError;
-    return this.#get(key, receiver, value);
+    return key.set(receiver, value);
   }
 
   // key.call(this, "#foo", arg)
@@ -132,22 +136,18 @@ export class FriendKey {
 
   // @key.expose #foo
   // Make #foo available externally using the key
-  get expose()
-    return (descriptor, get, set) => {
-      let key = descriptor.key;
-      let string = key.toString();
-      if (typeof key !== "privatename") {
-        throw new TypeError(
-          "@expose may only be used with private class elements");
-      }
-      if (this.#names.has(string)) {
-        throw new TypeError("@expose used on the same name repeatedly");
-      }
-      this.#get = get;
-      this.#set = set;
-      this.#names.set(string, key);
-      return descriptor;
+  expose = descriptor => {
+    let key = descriptor.key;
+    let string = key.toString();
+    if (typeof key !== "privatename") {
+      throw new TypeError(
+        "@expose may only be used with private class elements");
     }
+    if (this.#names.has(string)) {
+      throw new TypeError("@expose used on the same name repeatedly");
+    }
+    this.#names.set(string, key);
+    return descriptor;
   }
 }
 
@@ -189,7 +189,7 @@ let emptySentinel = Symbol();
 // @abstract #foo() { }
 // Declare a virtual protected method which can be used or overridden
 // in subclasses with @override.
-export function abstract(descriptor, g, s) {
+export function abstract(descriptor) {
   let key = descriptor.key;
   let isPure = descriptor.kind === "field" &&
                descriptor.initializer === undefined;
@@ -201,7 +201,6 @@ export function abstract(descriptor, g, s) {
       descriptor.placement !== "own") {
    throw new TypeError("invalid declaration for @abstract");
   }
-  get = g; set = s;
 
   let internalKey = PrivateName();
 
@@ -211,7 +210,7 @@ export function abstract(descriptor, g, s) {
     placement: "own",
     descriptor: {
       get() {
-        return g(this, internalKey);
+        return internalKey.get(this);
       }
       enumerable: false,
       configurable: false,
