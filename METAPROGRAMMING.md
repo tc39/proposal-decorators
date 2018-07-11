@@ -185,11 +185,11 @@ function bound(elementDescriptor) {
 // Whenever a read or write is done to a field, call the render()
 // method afterwards. Implement this by replacing the field with
 // a getter/setter pair.
-function observed({kind, key, placement, descriptor, initializer}, PrivateName) {
+function observed({kind, key, placement, descriptor, initializer}) {
   assert(kind == "field");
   assert(placement == "own");
   // Create a new anonymous private name as a key for a class element
-  let storage = new PrivateName();
+  let storage = PrivateName();
   let underlyingDescriptor = { enumerable: false, configurable: false, writable: true };
   let underlying = { kind, key: storage, placement, descriptor: underlyingDescriptor, initializer };
   return {
@@ -208,6 +208,15 @@ function observed({kind, key, placement, descriptor, initializer}, PrivateName) 
     },
     extras: [underlying]
   };
+}
+
+// There is no built-in PrivateName constructor, but a new private name can
+// be constructed by extracting it from a throwaway class
+function PrivateName() {
+  let name;
+  function extract({key}) { name = key; }
+  class Throwaway { @extract #_; }
+  return name;
 }
 ```
 
