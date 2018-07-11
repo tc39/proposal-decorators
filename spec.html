@@ -449,19 +449,19 @@ emu-example pre {
 </emu-clause>
 
   <emu-clause id="sec-private-name-type-and-objects">
-    <h1>privateName Objects</h1>
+    <h1>PrivateName Objects</h1>
 
     <emu-note type=editor>
       This section refers to <a href="https://tc39.github.io/proposal-class-fields/#sec-private-names">Private Name values</a>, as defined in the class fields proposal.
     </emu-note>
 
     <emu-clause id="sec-private-name-constructor">
-      <h1>The %privateName% factory function</h1>
-      <p>The Private Name factory function is the <dfn>%privateName%</dfn> intrinsic object. When %privateName% is called, it returns a new object which wraps a Private Name value. The %privateName% intrinsic does not have a global name or appear as a property of the global object.</p>
+      <h1>The %PrivateName% factory function</h1>
+      <p>The Private Name factory function is the <dfn>%PrivateName%</dfn> intrinsic object. When %PrivateName% is called, it returns a new object which wraps a Private Name value. The %PrivateName% intrinsic does not have a global name or appear as a property of the global object.</p>
 
       <emu-clause id="sec-private-description" aoid=PrivateName>
-        <h1>%privateName% ( [ _description_ ] )</h1>
-        <p>When %privateName% is called with optional argument _description_, the following steps are taken:</p>
+        <h1>%PrivateName% ( [ _description_ ] )</h1>
+        <p>When %PrivateName% is called with optional argument _description_, the following steps are taken:</p>
         <emu-alg>
           1. If NewTarget is not *undefined*, throw a *TypeError* exception.
           1. If _description_ is *undefined*, let _descString_ be *undefined*.
@@ -471,7 +471,7 @@ emu-example pre {
         </emu-alg>
       </emu-clause>
 
-      <emu-clause id="sec-private-name-object" aiod=PrivateNameObject>
+      <emu-clause id="sec-private-name-object" aoid=PrivateNameObject>
         <h1>PrivateNameObject ( _name_ )</h1>
         <p>When PrivateNameObject is called with Private Name _name_, the following steps are taken:</p>
         <emu-alg>
@@ -626,7 +626,7 @@ emu-example pre {
         1. For each _decorator_ in _element_.[[Decorators]], in reverse list order do
           1. Perform RemoveElementPlacement(_element_, _placements_).
           1. Let _elementObject_ be ? FromElementDescriptor(_element_).
-          1. Let _elementFinisherExtrasObject_ be ? Call(_decorator_, *undefined*, « _elementObject_, %privateName% »).
+          1. Let _elementFinisherExtrasObject_ be ? Call(_decorator_, *undefined*, « _elementObject_, %PrivateName% »).
           1. If _elementFinisherExtrasObject_ is *undefined*, 
             1. Let _elementFinisherExtrasObject_ be _elementObject_.
           1. Let _elementFinisherExtras_ be ? ToElementFinisherExtras(_elementFinisherExtrasObject_).
@@ -650,7 +650,7 @@ emu-example pre {
         1. Let _finishers_ be a new empty List.
         1. For each _decorator_ in _decorators_, in reverse list order do
           1. Let _obj_ be FromClassDescriptor(_elements_).
-          1. Let _result_ be ? Call(_decorator_, *undefined*, « _obj_, %privateName% »).
+          1. Let _result_ be ? Call(_decorator_, *undefined*, « _obj_, %PrivateName% »).
           1. If _result_ is *undefined*, let _result_ be _obj_.
           1. Let _elementsAndFinisher_ be ? ToClassDescriptor(_result_).
           1. If _elementsAndFinisher_.[[Finisher]] is not *undefined*,
