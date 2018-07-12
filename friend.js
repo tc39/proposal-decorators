@@ -56,7 +56,7 @@ export function expose(descriptor) {
     throw new TypeError("@expose must be used on #private declarations");
   return {
     finisher(klass) {
-      exposeMap.set(klass, key.toString(), key);
+      exposeMap.set(klass, key.description, key);
     },
     ...descriptor
   };
@@ -73,7 +73,7 @@ export function inherit(descriptor) {
     throw new TypeError("invalid declaration for @inherit");
   }
   let superKey;
-  let keyString = key.toString();
+  let keyString = key.description;
   return {
     kind: "method",
     key,
@@ -138,7 +138,7 @@ export class FriendKey {
   // Make #foo available externally using the key
   expose = descriptor => {
     let key = descriptor.key;
-    let string = key.toString();
+    let string = key.description;
     if (typeof key !== "object") {
       throw new TypeError(
         "@expose may only be used with private class elements");
@@ -215,7 +215,7 @@ export function abstract(descriptor) {
       enumerable: false,
       configurable: false,
     }
-    finisher(klass) { abstractMap.set(klass, key.toString(), internalKey); }
+    finisher(klass) { abstractMap.set(klass, key.description, internalKey); }
     extras: [
       {
         key: internalKey,
@@ -244,7 +244,7 @@ export function override(descriptor) {
   }
   let body = descriptor.value;
   let internalKey;
-  let keyString = key.toString();
+  let keyString = key.description;
   return {
     kind: "method",
     key,
