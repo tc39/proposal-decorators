@@ -171,7 +171,7 @@ emu-example pre {
           </thead>
           <tbody>
             <tr> <td>[[Kind]]</td>        <td>One of `"method"` or `"field"`</td>                                  </tr>
-            <tr> <td>[[Key]]</td>         <td>A Property Key or object with a `[[PrivateName]]` internal slot</td> </tr>
+            <tr> <td>[[Key]]</td>         <td>A Property Key or %PrivateName% object</td>                          </tr>
             <tr> <td>[[Descriptor]]</td>  <td>A Property Descriptor</td>                                           </tr>
             <tr> <td>[[Placement]]</td>   <td>One of `"static"`, `"prototype"`, or `"own"`</td>                    </tr>
             <tr> <td>[[Initializer]]</td> <td>A function or ~empty~. This field can be absent.</td>                </tr>
@@ -455,29 +455,46 @@ emu-example pre {
       This section refers to <a href="https://tc39.github.io/proposal-class-fields/#sec-private-names">Private Name values</a>, as defined in the class fields proposal.
     </emu-note>
 
+  <emu-clause id="sec-private-name-objects">
+    <h1>Private Name Objects</h1>
     <emu-clause id="sec-private-name-constructor">
-      <h1>Private Name objects</h1>
-      <p>Private Name objects are exposed to decorators when decorating a private class element, or a class with private class elements. There is no explicit constructor to create a new Private Name Object.</p>
+      <h1>The %PrivateName% Constructor</h1>
+      <p>The Private Name constructor is the <dfn>%PrivateName%</dfn> intrinsic object. The %PrivateName% intrinsic does not have a global name or appear as a property of the global object.</p>
+      <p>The PrivateName object is <em>deeply frozen</em>, in the sense that it is frozen, all objects reachable from it are frozen, and PrivateName instances are frozen as well. See the logic in CreateIntrinsics for details.</p>
+      <p>The value of the [[Prototype]] internal slot of %PrivateName% is *null*.</p>
+
+      <emu-clause id="sec-private-description" aoid=PrivateName>
+        <h1>%PrivateName% ( )</h1>
+        <p>When %PrivateName% is called, the following steps are taken:</p>
+        <emu-alg>
+          1. Throw a *TypeError* exception.
+        </emu-alg>
+        <emu-note>New PrivateName instances can be created by decorating private class elements.</emu-note>
+      </emu-clause>
 
       <emu-clause id="sec-private-name-object" aoid=PrivateNameObject>
         <h1>PrivateNameObject ( _name_ )</h1>
         <p>When PrivateNameObject is called with Private Name _name_, the following steps are taken:</p>
         <emu-alg>
-          1. Let _O_ be ? ObjectCreate(*null*, &laquo; [[PrivateName]] &raquo;).
+          1. Let _O_ be ? ObjectCreate(%PrivateNamePrototype%, &laquo; [[PrivateName]] &raquo;).
           1. Set _O_.[[PrivateNameData]] to _name_.
-          1. Let _desc_ be PropertyDescriptor{ [[Value]]: `"Private Name"`, [[Writable]]: *false*, [[Enumerable]]: *false*, [[Configurable]]: *true* }.
-          1. Perform ! DefinePropertyOrThrow(_obj_, @@toStringTag, _desc_).
-          1. Perform ! CreateDataPropertyOrThrow(_obj_, `"get"`, %PrivateNameGet%).
-          1. Perform ! CreateDataPropertyOrThrow(_obj_, `"set"`, %PrivateNameSet%).
-          1. Let _descString_ be _name_'s [[Description]] value.
-          1. Perform ! CreateDataPropertyOrThrow(_obj_, `"description"`, _descString_).
+          1. Perform ! SetIntegrityLevel(_O_, `"frozen"`).
           1. Return _O_.
         </emu-alg>
       </emu-clause>
 
+    <emu-clause id="sec-properties-of-the-private-name-prototype-object">
+      <h1>Properties of the %PrivateNamePrototype% Object</h1>
+      <p>The %PrivateNamePrototype% object is an ordinary object. It is not a %PrivateName% instance and does not have a [[PrivateNameData]] internal slot.</p>
+      <p>The value of the [[Prototype]] internal slot of %PrivateNamePrototype% is *null*.</p>
 
-      <emu-clause id="sec-private-name-get" aoid="%PrivateNameGet%">
-        <h1>%PrivateNameGet% ( _object_ )</h1>
+      <emu-clause id="sec-private-name.prototype.constructor">
+        <h1>%PrivateName%.prototype.constructor</h1>
+        <p>The initial value of `PrivateName.prototype.constructor` is the intrinsic object %PrivateName%.</p>
+      </emu-clause>
+
+      <emu-clause id="sec-private-name-get">
+        <h1>%PrivateName%.prototype.get ( _object_ )</h1>
         <p>When invoked, the following steps are taken:</p>
         <emu-alg>
           1. Let _O_ be the *this* value.
@@ -487,8 +504,8 @@ emu-example pre {
         </emu-alg>
       </emu-clause>
 
-      <emu-clause id="sec-private-name-set" aoid="%PrivateNameSet%">
-        <h1>%PrivateNameSet%( _object_, _value_ )</h1>
+      <emu-clause id="sec-private-name-set">
+        <h1>%PrivateName%.prototype.set ( _object_, _value_ )</h1>
         <p>%PrivateNameSet% is a per-realm built-in function object. When invoked, the following steps are taken:</p>
         <emu-alg>
           1. Let _O_ be the *this* value.
@@ -496,6 +513,35 @@ emu-example pre {
           1. If Type(_object_) is not Object, throw a *TypeError* exception.
           1. Return ? PrivateFieldSet(_pn_, _object_, _value_).
         </emu-alg>
+      </emu-clause>
+
+      <emu-clause id="sec-private-name.prototype.description">
+        <h1>get %PrivateName%.prototype.description ( )</h1>
+        <p>The following steps are taken:</p>
+        <emu-alg>
+          1. Let _O_ be the *this* value.
+          1. Let _pn_ be ? GetPrivateName(_O_).
+          1. Let _desc_ be _pn_'s [[Description]] value.
+          1. If _desc_ is *undefined*, return the empty string.
+          1. Otherwise, return _desc_.
+        </emu-alg>
+      </emu-clause>
+
+      <emu-clause id="sec-private-name.prototype.tostring">
+        <h1>%PrivateName%.prototype.toString ( )</h1>
+        <p>The following steps are taken:</p>
+        <emu-alg>
+          1. Throw a *TypeError* exception.
+        </emu-alg>
+        <emu-note>
+          Because conversion to a string throws, ToPropertyKey applied to a %PrivateName% object throws as well. This property is important to ensure that Private Names are not incorrectly used by decorators using property access, rather than with their `get` and `set` methods.
+        </emu-note>
+      </emu-clause>
+
+      <emu-clause id="sec-private-name.prototype-@@tostringtag">
+        <h1>PrivateName.prototype [ @@toStringTag ]</h1>
+        <p>The initial value of the @@toStringTag property is the String value `"PrivateName"`.</p>
+        <p>This property has the attributes { [[Writable]]: *false*, [[Enumerable]]: *false*, [[Configurable]]: *false* }.</p>
       </emu-clause>
 
       <emu-clause id="sec-private-name-this-private-name" aoid=ThisPrivateName>
@@ -506,8 +552,42 @@ emu-example pre {
           1. Return _O_.[[PrivateNameData]].
         </emu-alg>
       </emu-clause>
+    </emu-clause>
 
+    <emu-clause id="sec-properties-of-private-name-instances">
+      <h1>Properties of PrivateName Instances</h1>
+      <p>PrivateName instances are ordinary objects that inherit properties from the PrivateName prototype object. PrivateName instances have a [[PrivateNameData]] internal slot. The [[PrivateNameData]] internal slot is the Private Name value represented by this Private Name object.</p>
+    </emu-clause>
+    </emu-clause>
   </emu-clause>
+
+    <emu-clause id="sec-createintrinsics" aoid="CreateIntrinsics">
+      <h1>CreateIntrinsics ( _realmRec_ )</h1>
+      <p>The abstract operation CreateIntrinsics with argument _realmRec_ performs the following steps:</p>
+      <emu-alg>
+        1. Let _intrinsics_ be a new Record.
+        1. Set _realmRec_.[[Intrinsics]] to _intrinsics_.
+        1. Let _objProto_ be ObjectCreate(*null*).
+        1. Set _intrinsics_.[[%ObjectPrototype%]] to _objProto_.
+        1. Let _throwerSteps_ be the algorithm steps specified in <emu-xref href="#sec-%throwtypeerror%"></emu-xref> for the %ThrowTypeError% function.
+        1. Let _thrower_ be CreateBuiltinFunction(_throwerSteps_, &laquo; &raquo;, _realmRec_, *null*).
+        1. Set _intrinsics_.[[%ThrowTypeError%]] to _thrower_.
+        1. Let _noSteps_ be an empty sequence of algorithm steps.
+        1. Let _funcProto_ be CreateBuiltinFunction(_noSteps_, &laquo; &raquo;, _realmRec_, _objProto_).
+        1. Set _intrinsics_.[[%FunctionPrototype%]] to _funcProto_.
+        1. Call _thrower_.[[SetPrototypeOf]](_funcProto_).
+        1. Perform AddRestrictedFunctionProperties(_funcProto_, _realmRec_).
+        1. Set fields of _intrinsics_ with the values listed in <emu-xref href="#table-7"></emu-xref> that have not already been handled above. The field names are the names listed in column one of the table. The value of each field is a new object value fully and recursively populated with property values as defined by the specification of each object in clauses 18-26. All object property values are newly created object values. All values that are built-in function objects are created by performing CreateBuiltinFunction(&lt;steps&gt;, &lt;slots&gt;, _realmRec_, &lt;prototype&gt;) where &lt;steps&gt; is the definition of that function provided by this specification, &lt;slots&gt; is a list of the names, if any, of the function's specified internal slots, and &lt;prototype&gt; is the specified value of the function's [[Prototype]] internal slot. The creation of the intrinsics and their properties must be ordered to avoid any dependencies upon objects that have not yet been created.
+        1. <ins>For each property of %PrivateNamePrototype%, do<ins>
+          1. <ins>Let _desc_ be the data property descriptor for this property.</ins>
+          1. <ins>If _desc_ has a [[Get]], [[Set]], or [[Value]] field, then for each value _value_ of such fields,</ins>
+            1. <ins>Perform ! SetIntegrityLevel(_value_, `"frozen"`).</ins>
+        1. <ins>Perform ! SetIntegrityLevel(%PrivateNamePrototype%, `"frozen"`).</ins>
+        1. <ins>Assert: The only own property of %PrivateName% is the `"prototype"` property, whose [[Value]] is %PrivateNamePrototype%.
+        1. <ins>Perform ! SetIntegrityLevel(%PrivateName%, `"frozen"`).</ins>
+        1. Return _intrinsics_.
+      </emu-alg>
+    </emu-clause>
 </emu-clause>
 
 <emu-clause id="decorator-semantics">
