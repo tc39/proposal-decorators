@@ -4,7 +4,7 @@ This proposal introduces new metaprogramming concepts on private fields and meth
 
 Previous documentation used the term "hard private" to explain the guarantees, but that term may lead some to false conclusions. Here, we use the term *hidden*, defined as follows:
 
-> A class element is *hidden* with the syntax `#name`, which makes it inaccessible except to those granted explicit access to it.
+> A class element is *hidden* with the syntax `#name`, which makes it inaccessible (for reads, writes and observing its presence) except to those granted explicit access to it.
 
 In this proposal, the following mechanisms grant access to hidden elements:
 - Being lexically contained inside the place where the hidden element is defined, e.g., `class { #x; method() { this.#x } }`, the body of `method()` can see `#x`.
