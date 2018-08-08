@@ -30,17 +30,18 @@ function restrict(decorator) {
     assert(descriptor[Symbol.toStringTag] === "Descriptor");
     switch (descriptor.kind) {
       case "class":
-        let elements, privateElements;
+        let elements = [], privateElements = [];
         for (let i = 0; i < descriptor.elements.length; i++) {
           let element = descriptor.elements[i];
           let arr = typeof element.key === "object" ? privateElements : elements;
           arr[arr.length] = element;
         }
         let result = decorator({...descriptor, elements});
+        let resultElements = [...result.elements];
         for (let i = 0; i < privateElements.length; i++) {
-          result.elements[result.elements.length] = privateElements[i];
+          resultElements[resultElements.length] = privateElements[i];
         }
-        return result;
+        return {...result, elements: resultElements};
       case "method":
       case "field":
         assert(typeof descriptor.key !== "object");
