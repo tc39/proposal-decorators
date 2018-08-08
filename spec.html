@@ -467,6 +467,7 @@ emu-example pre {
           1. If Type(_object_) is not Object, throw a *TypeError* exception.
           1. Return ? PrivateFieldGet(_pn_, _object_).
         </emu-alg>
+        <p>The value of the [[Prototype]] internal slot of %PrivateName%.prototype.get is *null*.</p>
       </emu-clause>
 
       <emu-clause id="sec-private-name-set">
@@ -478,6 +479,7 @@ emu-example pre {
           1. If Type(_object_) is not Object, throw a *TypeError* exception.
           1. Return ? PrivateFieldSet(_pn_, _object_, _value_).
         </emu-alg>
+        <p>The value of the [[Prototype]] internal slot of %PrivateName%.prototype.set is *null*.</p>
       </emu-clause>
 
       <emu-clause id="sec-private-name.prototype.description">
@@ -490,6 +492,7 @@ emu-example pre {
           1. If _desc_ is *undefined*, return the empty string.
           1. Otherwise, return _desc_.
         </emu-alg>
+        <p>The value of the [[Prototype]] internal slot of get %PrivateName%.prototype.description is *null*.</p>
       </emu-clause>
 
       <emu-clause id="sec-private-name.prototype.tostring">
@@ -498,6 +501,7 @@ emu-example pre {
         <emu-alg>
           1. Throw a *TypeError* exception.
         </emu-alg>
+        <p>The value of the [[Prototype]] internal slot of %PrivateName%.prototype.toString is *null*.</p>
         <emu-note>
           Because conversion to a string throws, ToPropertyKey applied to a %PrivateName% object throws as well. This property is important to ensure that Private Names are not incorrectly used by decorators using property access, rather than with their `get` and `set` methods.
         </emu-note>
