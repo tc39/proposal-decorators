@@ -13,7 +13,10 @@ class PrivateNameMap {
   get(klass, keyString) {
     while (klass !== null) {
       let classMap = this.#map.get(klass);
-      if (classMap === undefined) continue;
+      if (classMap === undefined) {
+        klass = Object.getPrototypeOf(klass);
+        continue;
+      }
       assert(classMap instanceof Map);
       let possibleKey = classMap.get(keyString);
       if (possibleKey === undefined) {
