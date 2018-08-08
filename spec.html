@@ -681,14 +681,16 @@ emu-example pre {
       <emu-alg>
         1. Let _finishers_ be a new empty List.
         1. For each _decorator_ in _decorators_, in reverse list order do
-          1. Let _obj_ be FromClassDescriptor(_elements_).
+          1. Let _privateElements_ be a List consisting of the ordered subsequence of _elements_ for each _element_ where _element_.[[Key]] is a Private Name.
+          1. Let _publicElements_ be a List consisting of the ordered subsequence of _elements_ for each _element_ where _element_.[[Key]] is not a Private Name.
+          1. Let _obj_ be FromClassDescriptor(_publicElements_).
           1. Let _result_ be ? Call(_decorator_, *undefined*, « _obj_ »).
           1. If _result_ is *undefined*, let _result_ be _obj_.
           1. Let _elementsAndFinisher_ be ? ToClassDescriptor(_result_).
           1. If _elementsAndFinisher_.[[Finisher]] is not *undefined*,
             1. Append _elementsAndFinisher_.[[Finisher]] to _finishers_.
           1. If _elementsAndFinisher_.[[Elements]] is not *undefined*,
-            1. Set _elements_ to _elementsAndFinisher_.[[Elements]].
+            1. Set _elements_ to the concatenation of _elementsAndFinisher_.[[Elements]] and _privateElements_.
             1. If there are two class elements _a_ and _b_ in _elements_ such that _a_.[[Key]] is _b_.[[Key]] and _a_.[[Placement]] is _b_.[[Placement]], throw a *TypeError* exception.
         1. Return the Record { [[Elements]]: _elements_, [[Finishers]]: _finishers_ }.
       </emu-alg>
