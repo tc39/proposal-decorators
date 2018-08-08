@@ -438,11 +438,12 @@ emu-example pre {
       </emu-clause>
 
       <emu-clause id="sec-private-name-object" aoid=PrivateNameObject>
-        <h1>PrivateNameObject ( _name_ )</h1>
+        <h1>PrivateNameObject ( _name_, _restricted_ )</h1>
         <p>When PrivateNameObject is called with Private Name _name_, the following steps are taken:</p>
         <emu-alg>
-          1. Let _O_ be ? ObjectCreate(%PrivateNamePrototype%, &laquo; [[PrivateName]] &raquo;).
+          1. Let _O_ be ? ObjectCreate(%PrivateNamePrototype%, &laquo; [[PrivateNameData]], [[PrivateNameRestricted]] &raquo;).
           1. Set _O_.[[PrivateNameData]] to _name_.
+          1. Set _O_.[[PrivateNameRestricted]] to _restricted_.
           1. Perform ! SetIntegrityLevel(_O_, `"frozen"`).
           1. Return _O_.
         </emu-alg>
@@ -464,6 +465,7 @@ emu-example pre {
         <emu-alg>
           1. Let _O_ be the *this* value.
           1. Let _pn_ be ? GetPrivateName(_O_).
+          1. If _pn_.[[PrivateNameRestricted]] is *true*, throw a *TypeError* exception.
           1. If Type(_object_) is not Object, throw a *TypeError* exception.
           1. Return ? PrivateFieldGet(_pn_, _object_).
         </emu-alg>
@@ -475,6 +477,7 @@ emu-example pre {
         <emu-alg>
           1. Let _O_ be the *this* value.
           1. Let _pn_ be ? GetPrivateName(_O_).
+          1. If _pn_.[[PrivateNameRestricted]] is *true*, throw a *TypeError* exception.
           1. If Type(_object_) is not Object, throw a *TypeError* exception.
           1. Return ? PrivateFieldSet(_pn_, _object_, _value_).
         </emu-alg>
@@ -521,7 +524,7 @@ emu-example pre {
 
     <emu-clause id="sec-properties-of-private-name-instances">
       <h1>Properties of PrivateName Instances</h1>
-      <p>PrivateName instances are ordinary objects that inherit properties from the PrivateName prototype object. PrivateName instances have a [[PrivateNameData]] internal slot. The [[PrivateNameData]] internal slot is the Private Name value represented by this Private Name object.</p>
+      <p>PrivateName instances are ordinary objects that inherit properties from the PrivateName prototype object. PrivateName instances have [[PrivateNameData]] and [[PrivateNameRestricted]] internal slots. The [[PrivateNameData]] internal slot is the Private Name value represented by this Private Name object. [[PrivateNameRestricted]] is a boolean, indicating whether `get` and `set` operations are permitted. </p>
     </emu-clause>
     </emu-clause>
   </emu-clause>
@@ -657,7 +660,7 @@ emu-example pre {
         1. Let _finishers_ be a new empty List.
         1. For each _decorator_ in _element_.[[Decorators]], in reverse list order do
           1. Perform RemoveElementPlacement(_element_, _placements_).
-          1. Let _elementObject_ be ? FromElementDescriptor(_element_).
+          1. Let _elementObject_ be ? FromElementDescriptor(_element_, *false*).
           1. Let _elementFinisherExtrasObject_ be ? Call(_decorator_, *undefined*, « _elementObject_ »).
           1. If _elementFinisherExtrasObject_ is *undefined*, 
             1. Let _elementFinisherExtrasObject_ be _elementObject_.
@@ -731,13 +734,13 @@ emu-example pre {
           1. Assert: _elements_ is a List of ElementDescriptor Records.
           1. Let _elementObjects_ be a new empty List.
           1. For each _element_ in _elements_, do
-            1. Append ! FromElementDescriptor(_element_) to _elementObjects_.
+            1. Append ! FromElementDescriptor(_element_, *true*) to _elementObjects_.
           1. Return ! CreateArrayFromList(_elementObjects_).
       </emu-alg>
     </emu-clause>
 
     <emu-clause id=sec-from-element-descriptor aoid=FromElementDescriptor>
-      <h1>FromElementDescriptor ( _element_ )</h1>
+      <h1>FromElementDescriptor ( _element_, _restricted_ )</h1>
       <emu-alg>
         1. Assert: _element_ is an ElementDescriptor Record.
         1. Let _obj_ be ! ObjectCreate(%ObjectPrototype%).
@@ -745,7 +748,7 @@ emu-example pre {
         1. Perform ! DefinePropertyOrThrow(_obj_, @@toStringTag, _desc_).
         1. Perform ! CreateDataPropertyOrThrow(_obj_, `"kind"`, _element_.[[Kind]]).
         1. Let _key_ be _element_.[[Key]].
-        1. If _key_ is a Private Name, set _key_ to ? PrivateNameObject(_key_).
+        1. If _key_ is a Private Name, set _key_ to ? PrivateNameObject(_key_, _restricted_).
         1. Perform ! CreateDataPropertyOrThrow(_obj_, `"key"`, _key_).
         1. Perform ! CreateDataPropertyOrThrow(_obj_, `"placement"`, _element_.[[Placement]]).
         1. Perform ! CreateDataPropertyOrThrow(_obj_, `"descriptor"`, ! FromPropertyDescriptor(_element_.[[Descriptor]])).
