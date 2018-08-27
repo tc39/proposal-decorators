@@ -167,15 +167,16 @@ emu-example pre {
       <emu-table id="table-element-descriptor-fields" caption="ElementDescriptor fields">
         <table>
           <thead>
-            <tr> <th>Field Name</th>      <th>Value</th>                                                          </tr>
+            <tr> <th>Field Name</th>                        <th>Value</th>                                                          </tr>
           </thead>
           <tbody>
-            <tr> <td>[[Kind]]</td>        <td>One of `"method"` or `"field"`</td>                                  </tr>
-            <tr> <td>[[Key]]</td>         <td>A Property Key or %PrivateName% object</td>                          </tr>
-            <tr> <td>[[Descriptor]]</td>  <td>A Property Descriptor</td>                                           </tr>
-            <tr> <td>[[Placement]]</td>   <td>One of `"static"`, `"prototype"`, or `"own"`</td>                    </tr>
-            <tr> <td>[[Initializer]]</td> <td>A function or ~empty~. This field can be absent.</td>                </tr>
-            <tr> <td>[[Decorators]]</td>  <td>A List of ECMAScript language values. This field can be absent.</td> </tr>
+            <tr> <td>[[Kind]]</td>                          <td>One of `"method"` or `"field"`</td>                                  </tr>
+            <tr> <td>[[Key]]</td>                           <td>A Property Key or %PrivateName% object</td>                          </tr>
+            <tr> <td>[[Descriptor]]</td>                    <td>A Property Descriptor</td>                                           </tr>
+            <tr> <td>[[Placement]]</td>                     <td>One of `"static"`, `"prototype"`, or `"own"`</td>                    </tr>
+            <tr> <td>[[Initializer]]</td>                   <td>A function or ~empty~. This field can be absent.</td>                </tr>
+            <tr> <td>[[Decorators]]</td>                    <td>A List of ECMAScript language values. This field can be absent.</td> </tr>
+            <tr> <td>[[IsAnonymousFunctionDefinition]]</td> <td>A Boolean value</td>                                                   </tr>
           </tbody>
         </table>
       </emu-table>
@@ -269,12 +270,12 @@ emu-example pre {
           1. <del>Let _status_ be the result of performing PropertyDefinitionEvaluation for _m_ with arguments _proto_ and *false*.</del>
         1. <del>Else,</del>
           1. <del>Let _status_ be the result of performing PropertyDefinitionEvaluation for _m_ with arguments _F_ and *false*.</del>
-        1. <ins>Let _newElements_ be the result of performing ClassElementEvaluation for _d_ with arguments _F_, _true_, and ~empty~.</ins>
-        1. If <del>_status_</del><ins>_newElements_</ins> is an abrupt completion, then
+        1. <ins>Let _newElement_ be the result of performing ClassElementEvaluation for _d_ with arguments _F_, _true_, and ~empty~.</ins>
+        1. If <del>_status_</del><ins>_newElement_</ins> is an abrupt completion, then
           1. Set the running execution context's LexicalEnvironment to _lex_.
           1. <ins>Set the running execution context's PrivateNameEnvironment to _outerPrivateEnvironment_.</ins>
           1. Return Completion(_status_).
-        1. <ins>Append _newElements_ to _elements_</ins>
+        1. <ins>Append _newElement_ to _elements_</ins>
       1. <ins>Let _elements_ be CoalesceClassElements(_elements_).</ins>
       1. <ins>If _decorators_ is not provided, let _decorators_ be a new empty List.</ins>
       1. <ins>Let _decorated_ be ? DecorateClass(_elements_, _decorators_).</ins>
@@ -297,31 +298,31 @@ emu-example pre {
     <emu-grammar>ClassElement : <ins>DecoratorList?</ins> MethodDefinition</emu-grammar>
     <emu-alg>
       1. <ins>If |DecoratorList| is present, let _decorators_ be the result of performing DecoratorListEvaluation of |DecoratorList|.</ins>
-      1. <del>Return</del><ins>Let _elements_ be ?</ins> ClassElementEvaluation of |MethodDefinition| with arguments ! Get(_homeObject_, `"prototype"`),_enumerable_, and `"prototype"`.
-      1. <ins>If |DecoratorList| is present, for _element_ in _elements_, set _element_.[[Decorators]] to _decorators_.</ins>
-      1. <ins>Return _elements_.</ins>
+      1. <del>Return</del><ins>Let _method_ be first element of result of ?</ins> ClassElementEvaluation of |MethodDefinition| with arguments ! Get(_homeObject_, `"prototype"`),_enumerable_, and `"prototype"`.
+      1. <ins>Let _element_ be ToElementDescriptor ( _method_, _decorators_, "method", _enumerable_ )</ins>
+      1. <ins>Return _element_.</ins>
     </emu-alg>
     <emu-grammar>ClassElement : <ins>DecoratorList?</ins> `static` MethodDefinition</emu-grammar>
     <emu-alg>
       1. <ins>If |DecoratorList| is present, let _decorators_ be the result of performing DecoratorListEvaluation of |DecoratorList|.</ins>
-      1. <del>Return</del><ins>Let _elements_ be ?</ins> ClassElementEvaluation of |MethodDefinition| with arguments _homeObject_, _enumerable_ and `"static"`.
-      1. <ins>If |DecoratorList| is present, for _element_ in _elements_, set _element_.[[Decorators]] to _decorators_.</ins>
-      1. <ins>Return _elements_.</ins>
+      1. <del>Return</del><ins>Let _method_ be first element of result of ?</ins> ClassElementEvaluation of |MethodDefinition| with arguments _homeObject_, _enumerable_ and `"static"`.
+      1. <ins>Let _element_ be ToElementDescriptor ( _method_, _decorators_, "method", _enumerable_ )</ins>
+      1. <ins>Return _element_.</ins>
     </emu-alg>
   <emu-grammar>ClassElement : <ins>DecoratorList?</ins> `static` FieldDefinition `;`</emu-grammar>
   <emu-alg>
       1. <ins>If |DecoratorList| is present, let _decorators_ be the result of performing DecoratorListEvaluation of |DecoratorList|.</ins>
-      1. <del>Return</del><ins>Let _elements_ be ? ClassFieldDefinitionEvaluation of FieldDefinition with parameters `"static"` and _homeObject_.</ins>
-      1. <ins>If |DecoratorList| is present, for _element_ in _elements_, set _element_.[[Decorators]] to _decorators_.</ins>
-      1. <ins>Return _elements_.</ins>
+      1. <del>Return</del><ins>Let _field_ be first element of result of ? ClassFieldDefinitionEvaluation of FieldDefinition with parameters `"static"` and ! Get(_homeObject_, `"prototype"`).</ins>
+      1. <ins>Let _element_ be ToElementDescriptor ( _field_, _decorators_, "field", _enumerable_ )</ins>
+      1. <ins>Return _element_.</ins>
   </emu-alg>
 
   <emu-grammar>ClassElement : <ins>DecoratorList?</ins> FieldDefinition `;`</emu-grammar>
   <emu-alg>
       1. <ins>If |DecoratorList| is present, let _decorators_ be the result of performing DecoratorListEvaluation of |DecoratorList|.</ins>
-      1. <del>Return</del><ins>Let _elements_ be ? ClassFieldDefinitionEvaluation of FieldDefinition with parameters `"own"` and ! Get(_homeObject_, `"prototype"`).</ins>
-      1. <ins>If |DecoratorList| is present, for _element_ in _elements_, set _element_.[[Decorators]] to _decorators_.</ins>
-      1. <ins>Return _elements_.</ins>
+      1. <del>Return</del><ins>Let _field_ be first element of result of ? ClassFieldDefinitionEvaluation of FieldDefinition with parameters `"own"` and ! Get(_homeObject_, `"prototype"`).</ins>
+      1. <ins>Let _element_ be ToElementDescriptor ( _field_, _decorators_, "field", _enumerable_ )</ins>
+      1. <ins>Return _element_.</ins>
   </emu-alg>
 
   </emu-clause>
@@ -416,6 +417,28 @@ emu-example pre {
       1. Return _newElements_.
     </emu-alg>
     <emu-note>In the case of public class elements, coalescing corresponds in semantics to ValidateAndApplyPropertyDescriptor. Note that this algorithm only coalesces method and accessor declarations, and it leaves field declarations as is.</emu-note>
+  </emu-clause>
+
+  <emu-clause id="sec-to-element-descriptor" aoid="ToElementDescriptor">
+    <h1>ToElementDescriptor ( _field_, _decorators_, _kind_, _enumerable_ )</h1>
+    <emu-alg>
+      1. Assert: _field_ is a <a href="https://tc39.github.io/ecma262/#sec-list-and-record-specification-type">Record</a> as created by <a href="https://tc39.github.io/proposal-private-methods/#runtime-semantics-class-field-definition-evaluation">ClassFieldDefinitionEvaluation</a>.
+      1. Assert: _decorators_ is a List of Decorator or empty List.
+      1. Assert: _kind_ is `"method"` or `"field"`.
+      1. Assert: _enumerable_ is ECMAScript Boolean value.
+      1. let _element_ is newly created ElementDescriptor Record.
+      1. Set _element_.[[Kind]] to _kind_.
+      1. Set _element_.[[Key]] to _field_.[[Name]].
+      1. Set _element_.[[Descriptor]] to Record { [[Enumerable]]: _enumerable_, [[Configurable]]: `"true"` }.
+      1. Set _element_.[[Placement]] to _field_.[[Placement]].
+      1. Set _element_.[[Initializer]] to _field_.[[Initializer]].
+      1. Set _element_.[[Decorators]] to _decorators_.
+      1. If _decorators_ is not empty List, then
+        1. Set _element_.[[IsAnonymousFunctionDefinition]] to false.
+      1. Else,
+        1. Set _element_.[[IsAnonymousFunctionDefinition]] to _field_.[[IsAnonymousFunctionDefinition]].
+      1. Return _element_.
+    </emu-alg>
   </emu-clause>
 
 </emu-clause>
