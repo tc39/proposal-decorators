@@ -188,7 +188,7 @@ class Parent {
   }
 }
 
-class Child {
+class Child extends Parent {
   constructor() {
     super();
     // Logs "Parent", not "Child"
