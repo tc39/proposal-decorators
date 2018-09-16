@@ -426,7 +426,6 @@ emu-example pre {
       <h1>The %PrivateName% Constructor</h1>
       <p>The Private Name constructor is the <dfn>%PrivateName%</dfn> intrinsic object. The %PrivateName% intrinsic does not have a global name or appear as a property of the global object.</p>
       <p>The PrivateName object is <em>deeply frozen</em>, in the sense that it is frozen, all objects reachable from it are frozen, and PrivateName instances are frozen as well. See the logic in CreateIntrinsics for details.</p>
-      <p>The value of the [[Prototype]] internal slot of %PrivateName% is *null*.</p>
 
       <emu-clause id="sec-private-description" aoid=PrivateName>
         <h1>%PrivateName% ( )</h1>
@@ -451,7 +450,6 @@ emu-example pre {
     <emu-clause id="sec-properties-of-the-private-name-prototype-object">
       <h1>Properties of the %PrivateNamePrototype% Object</h1>
       <p>The %PrivateNamePrototype% object is an ordinary object. It is not a %PrivateName% instance and does not have a [[PrivateNameData]] internal slot.</p>
-      <p>The value of the [[Prototype]] internal slot of %PrivateNamePrototype% is *null*.</p>
 
       <emu-clause id="sec-private-name.prototype.constructor">
         <h1>%PrivateName%.prototype.constructor</h1>
