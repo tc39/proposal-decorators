@@ -8,6 +8,8 @@ This introductory document proposes a combined vision for how the proposed class
 
 This page is an overview of the features and their interaction from a user perspective. For detailed semantics, see [DETAILS.md](https://github.com/tc39/proposal-decorators/blob/master/DETAILS.md). Decorators were previously developed [in this repository](https://github.com/tc39/proposal-decorators-previous/).
 
+[Reference implementation (Babel 7)](https://www.npmjs.com/package/@babel/plugin-proposal-decorators)
+
 ## A guiding example: Custom elements with classes
 
 To define a counter widget which increments when clicked, you can define the following with ES2015:
