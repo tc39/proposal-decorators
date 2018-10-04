@@ -562,7 +562,7 @@ emu-example pre {
       <h1>Element Descriptors</h1>
       <p>An <dfn>element descriptor</dfn> describes an element of a class or object literal and has the following shape:</p>
       <pre><code class=typescript>
-        interface ElementDesciptor {
+        interface ElementDescriptor {
           kind: "method" or "field"
           key: String, Symbol or Private Name,
           placement: "static", "prototype", or "own"
@@ -578,7 +578,7 @@ emu-example pre {
       <h1>Class Descriptors</h1>
       <p>A <dfn>class descriptor</dfn> describes a class and has the following shape:</p>
       <pre><code class=typescript>
-        interface ClassDesciptor {
+        interface ClassDescriptor {
           kind: "class"
           elements: ElementDescriptor[]
           finisher?: (klass): undefined or constructor;
