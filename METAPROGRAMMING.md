@@ -131,7 +131,6 @@ A class descriptor with the following properties:
 ```js
 {
   elements: Possibly modified class elements (can include additional class elements)
-  constructor: (optional) The function which should act as the construtor
   finisher: (optional) A callback that is called at the end of class creation
 }
 ```
