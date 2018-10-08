@@ -130,6 +130,7 @@ A class descriptor with the following properties:
 
 ```js
 {
+  kind: "class"
   elements: Possibly modified class elements (can include additional class elements)
   finisher: (optional) A callback that is called at the end of class creation
 }
