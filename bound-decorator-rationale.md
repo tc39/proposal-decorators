@@ -110,7 +110,7 @@ class SpecialCounter extends Counter {
 }
 ```
 
-### Comparison with `@bind` decorator
+### Comparison with `@bound` decorator
 
 Let's consider some alternative implementations of the original example from the readme:
 
@@ -188,7 +188,7 @@ class Parent {
   }
 }
 
-class Child {
+class Child extends Parent {
   constructor() {
     super();
     // Logs "Parent", not "Child"

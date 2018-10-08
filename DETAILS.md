@@ -55,10 +55,10 @@ However, in normal usage which does not reference these runtime metaprogramming-
 
 Private state is not keyed on property keys--Strings or Symbols--but instead on Private Names. Literal references like `#x` are lexically bound to a Private Name which is textually present in the definition of a class, but decorators can create new, anonymous private fields by imperatively creating Private Names and adding them to the List of fields defined for the class.
 
-To create and use private names, a new function `PrivateName` is created:
-- `PrivateName(description)` creates a new Private Name primitive, analogous to Symbol except that it's not a property key
-- `PrivateName.prototype.get(object)` gets the private field or method value from the object, or invokes a getter, or throws a *ReferenceError* if it is not present.
-- `PrivateName.prototype.set(object)` sets the private field value in the object, or invokes a setter, or throws a *ReferenceError* if it is not present or if it is a private method.
+There is no direct interface for creating a PrivateName, but they are passed into decorators in as a `key`, and are objects with the following properties:
+- *privateName*.`get`(*object*) gets the private field or method value from the object, or invokes a getter, or throws a *ReferenceError* if it is not present.
+- *privateName*.`get`(*object*, *value*) sets the private field value in the object, or invokes a setter, or throws a *ReferenceError* if it is not present or if it is a private method.
+- *privateName*.`description` is a string which represents the PrivateName; for example, it would be `x` for a PrivateName which is textually `#x`.
 
 The interface for adding a private field to an object is to add a field descriptor using a decorator. A particular private name may be used just once, to define a single field. With this pattern, each private field is added by exactly one class.
 
@@ -89,7 +89,7 @@ x.next();  // 1
 x.next();  // 2
 ```
 
-The semantics here follows analogously: `#counter` is a private field which belongs only to the single instance `x`, and `#instance` is a method which is only on this instance. In object literal syntax, the instance being constructed is not within scope to "initializers" (the right-hand side of `:`), and there is no equivalent of "return from super", so it's actually unobservable which order the fields are added to the object (though possibly it could be visible from decorators, if the initializer callback is called with the object under construction as the receiver).
+The semantics here follows analogously: `#counter` is a private field which belongs only to the single instance `x`, and `#increment` is a method which is only on this instance. In object literal syntax, the instance being constructed is not within scope to "initializers" (the right-hand side of `:`), and there is no equivalent of "return from super", so it's actually unobservable which order the fields are added to the object (though possibly it could be visible from decorators, if the initializer callback is called with the object under construction as the receiver).
 
 ### Elimination of the `own` token
 

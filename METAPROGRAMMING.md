@@ -6,7 +6,7 @@ Previously, metaprogramming within JavaScript was driven by use of dynamic opera
 * Decorators can manipulate private fields and private methods, whereas operations on objects are unable to manipulate the definitions of private names.
 * Decorators do their manipulations at the time the class is defined, rather than when instances are being created and used, so they may lead to patterns which are more amenable to efficient implementation.
 
-Dcorators can be used either to decorate a whole class or an individual class element (field or method).
+Decorators can be used either to decorate a whole class or an individual class element (field or method).
 
 ## Basic Usage
 
@@ -38,7 +38,7 @@ To implement our decorator function, we need to take the class element descripto
 
 ```js
 function prototypeProp(elementDescriptor) {
-  assert(kind == "field" || kind == "method");
+  assert(elementDescriptor.kind == "field" || elementDescriptor.kind == "method");
   // Note: this decorator would generally be used for fields, not methods, because the
   // 'prototype' placement is already the default for non-static methods. So it would only
   // be useful for methods if you wanted to override the default placement or the placement
@@ -131,7 +131,6 @@ A class descriptor with the following properties:
 ```js
 {
   elements: Possibly modified class elements (can include additional class elements)
-  constructor: (optional) The function which should act as the construtor
   finisher: (optional) A callback that is called at the end of class creation
 }
 ```
@@ -185,7 +184,7 @@ function bound(elementDescriptor) {
 // Whenever a read or write is done to a field, call the render()
 // method afterwards. Implement this by replacing the field with
 // a getter/setter pair.
-function observed({kind, key, placement, descriptor, initializer}, get, set) {
+function observed({kind, key, placement, descriptor, initializer}) {
   assert(kind == "field");
   assert(placement == "own");
   // Create a new anonymous private name as a key for a class element
@@ -197,15 +196,10 @@ function observed({kind, key, placement, descriptor, initializer}, get, set) {
     key,
     placement,
     descriptor: {
-      get() { get(this, storage); },
+      get() { return storage.get(this); },
       set(value) {
-        set(this, storage, value);
-        if (!this.hasOwnProperty("render")) {
-          throw Error(
-            "@observed decorator assumes that render() is a bound method."
-            + " Please use the @bound decorator on the render method."
-          );
-        }
+        storage.set(this, value);
+        // Assume the @bound decorator was used on render
         window.requestAnimationFrame(this.render);
       },
       enumerable: descriptor.enumerable,
@@ -213,6 +207,15 @@ function observed({kind, key, placement, descriptor, initializer}, get, set) {
     },
     extras: [underlying]
   };
+}
+
+// There is no built-in PrivateName constructor, but a new private name can
+// be constructed by extracting it from a throwaway class
+function PrivateName() {
+  let name;
+  function extract({key}) { name = key; }
+  class Throwaway { @extract #_; }
+  return name;
 }
 ```
 
