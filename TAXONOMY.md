@@ -58,11 +58,11 @@ Decorator reification
   key: "foo",
   placement: "static",
   descriptor: {
-    initializer: () => bar;
     writable: true,
     enumerable: true,
     configurable: true
-  }
+  },
+  initializer: () => bar
 }
 ```
 
@@ -151,11 +151,11 @@ Decorator reification
   key: "foo",
   placement: "own",
   descriptor: {
-    initializer: () => bar;
     writable: true,
     enumerable: true,
     configurable: true
-  }
+  },
+  initializer: () => bar
 }
 ```
 
@@ -246,11 +246,11 @@ Decorator reification
   key: decorators.PrivateName("foo"),
   placement: "static",
   descriptor: {
-    initializer: () => bar;
     writable: false,
     enumerable: false,
     configurable: false
-  }
+  },
+  initializer: () => bar
 }
 ```
 
@@ -335,11 +335,11 @@ Decorator reification:
   key: decorators.PrivateName("foo"),
   placement: "own",
   descriptor: {
-    initializer: () => bar;
     writable: true,
     enumerable: false,
     configurable: false
-  }
+  },
+  initializer: () => bar
 }
 ```
 
