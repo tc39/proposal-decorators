@@ -8,8 +8,6 @@ This introductory document proposes a combined vision for how the proposed class
 
 This page is an overview of the features and their interaction from a user perspective. For detailed semantics, see [DETAILS.md](https://github.com/tc39/proposal-decorators/blob/master/DETAILS.md). Decorators were previously developed [in this repository](https://github.com/tc39/proposal-decorators-previous/).
 
-[Reference implementation (Babel 7)](https://www.npmjs.com/package/@babel/plugin-proposal-decorators)
-
 ## A guiding example: Custom elements with classes
 
 To define a counter widget which increments when clicked, you can define the following with ES2015:
@@ -135,3 +133,6 @@ Here, decorators are used for:
 You can decorate the whole class, as well as declarations of fields, getters, setters and methods. Arguments and function declarations cannot be decorated.
 
 To learn how to define your own decorators, see [METAPROGRAMMING.md](https://github.com/littledan/proposal-unified-class-features/blob/master/METAPROGRAMMING.md). To see how each form looks syntactically and how it's represented in decorators, see [TAXONOMY.md](https://github.com/littledan/proposal-unified-class-features/blob/master/TAXONOMY.md).
+
+## Implementation status
+- [Babel](https://www.npmjs.com/package/@babel/plugin-proposal-decorators) -- included in 7.1+
