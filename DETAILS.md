@@ -57,7 +57,7 @@ Private state is not keyed on property keys--Strings or Symbols--but instead on 
 
 There is no direct interface for creating a PrivateName, but they are passed into decorators in as a `key`, and are objects with the following properties:
 - *privateName*.`get`(*object*) gets the private field or method value from the object, or invokes a getter, or throws a *ReferenceError* if it is not present.
-- *privateName*.`get`(*object*, *value*) sets the private field value in the object, or invokes a setter, or throws a *ReferenceError* if it is not present or if it is a private method.
+- *privateName*.`set`(*object*, *value*) sets the private field value in the object, or invokes a setter, or throws a *ReferenceError* if it is not present or if it is a private method.
 - *privateName*.`description` is a string which represents the PrivateName; for example, it would be `x` for a PrivateName which is textually `#x`.
 
 The interface for adding a private field to an object is to add a field descriptor using a decorator. A particular private name may be used just once, to define a single field. With this pattern, each private field is added by exactly one class.
