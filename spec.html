@@ -183,7 +183,7 @@ emu-example pre {
           <li>
             If _element_.[[Key]] is a Private Name, then
             <ul>
-              <li>_element_.[[Placement]] is `"own"`.</li>
+              <li>_element_.[[Placement]] is `"own"` or `"static"`.</li>
               <li>_element_.[[Descriptor]].[[Enumerable]] is *false*.</li>
               <li>_element_.[[Descriptor]].[[Configurable]] is *false*.</li>
             </ul>
@@ -796,7 +796,7 @@ emu-example pre {
         1. If _key_ is a Private Name,
           1. If _descriptor_.[[Enumerable]] is *true*, throw a *TypeError* exception.
           1. If _descriptor_.[[Configurable]] is *true*, throw a *TypeError* exception.
-          1. If _placement_ is `"prototype"` or `"static"`, throw a *TypeError* exception.
+          1. If _placement_ is `"prototype"`, throw a *TypeError* exception.
         1. If _kind_ is `"field"`,
           1. If _descriptor_ has a [[Get]], [[Set]] or [[Value]] internal slot, throw a *TypeError* exception.
         1. Let _element_ be the ElementDescriptor { [[Kind]]: _kind_, [[Key]]: _key_, [[Placement]]: _placement_, [[Descriptor]]: _descriptor_ }.
