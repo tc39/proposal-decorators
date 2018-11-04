@@ -193,7 +193,6 @@ emu-example pre {
             <ul>
               <li>_element_.[[Key]] absent.</li>
               <li>_element_.[[Descriptor]] is absent.</li>
-              <li>_element_.[[Placement]] is `"own"`.</li>
               <li>_element_.[[Initializer]] is present.</li>
               <li>_element_.[[Decorators]] is absent.</li>
             </ul>
@@ -432,11 +431,35 @@ emu-example pre {
       1. If _element_.[[Placement]] is `"own"` and _element_.[[Kind]] is `"field"`,
         1. Assert: _element_.[[Descriptor]] does not have a [[Value]], [[Get]] or [[Set]] slot.
         1. Perform ? DefineClassElement(_O_, _element_).
-      1. <ins>If _element_.[[Kind]] is `"initializer"`,</ins>
-        1. <ins>Assert: _element_.[[Placement]] is `"own"`.</ins>
+      1. <ins>If _element_.[[Kind]] is `"initializer"` and _element_.[[Placement]] is `"own"`,</ins>
         1. <ins>Perform ? Call(_element_.[[Initializer]], _O_).</ins>
     1. Return.
   </emu-alg>
+</emu-clause>
+
+<emu-clause id="initialize-class-elements" aoid="InitializeClassElements">
+  <h1>InitializeClassElements(_F_, _proto_)</h1>
+
+  <emu-alg>
+    1. Assert: Type(_F_) is Object and Type(_proto_) is Object.
+    1. Assert: _F_ is an ECMAScript function object.
+    1. Assert: _proto_ is ! Get(_F_, `"prototype"`).
+    1. Let _elements_ be the value of _F_'s [[Elements]] internal slot.
+    1. For each item _element_ in order from _elements_,
+      1. Assert: If _element_.[[Placement]] is `"prototype"` <del>or `"static"`</del>, then _element_.[[Key]] is not a Private Name.
+      1. If _element_.[[Kind]] is `"method"`,
+        1. Let _receiver_ be _F_ if _element_.[[Placement]] is `"static"`, else let _receiver_ be _proto_.
+        1. Perform ? DefineClassElement(_receiver_, _element_).
+    1. For each item _element_ in order from _elements_,
+      1. If _element_.[[Kind]] is `"field"` and _element_.[[Placement]] is `"static"` or `"prototype"`,
+        1. Assert: _element_.[[Descriptor]] does not have a [[Value]], [[Get]] or [[Set]] slot.
+        1. Let _receiver_ be _F_ if _element_.[[Placement]] is `"static"`, else let _receiver_ be _proto_.
+        1. Perform ? DefineClassElement(_receiver_, _element_).
+      1. <ins>If _element_.[[Placement]] is `"prototype"` or `"static"` and _element_.[[Kind]] is `"initializer"`,</ins>
+        1. <ins>Perform ? Call(_element_.[[Initializer]], _O_).</ins>
+    1. Return.
+  </emu-alg>
+  <emu-note type=editor>Value properties are added before initializers so that all methods are visible from all initializers</emu-note>
 </emu-clause>
 
 </emu-clause>
@@ -819,33 +842,32 @@ emu-example pre {
       <emu-alg>
         1. Assert: _elementObject_ is an ECMAScript language value.
         1. Let _kind_ be ? ToString(? Get(_elementObject_, `"kind"`)).
-        1. If _kind_ is not one of `"method"` or `"field"`, throw a *TypeError* exception.
+        1. If _kind_ is not one of `"initializer"`, `"method"` or `"field"`, throw a *TypeError* exception.
         1. Let _key_ be ? Get(_elementObject_, `"key"`).
+        1. If _kind_ is `"initializer"`,
+          1. If _key_ is not *undefined*, throw a *TypeError* exception.
         1. If _key_ has a [[PrivateName]] internal slot, set _key_ to _key_.[[PrivateName]].
         1. Otherwise, set _key_ to ? ToPropertyKey(_key_).
         1. Let _placement_ be ? ToString(? Get(_elementObject_, `"placement"`)).
         1. If _placement_ is not one of `"static"`, `"prototype"`, or `"own"`, throw a *TypeError* exception.
-        1. If _kind_ is `"initializer"`,
-          1. If _placement_ is not `"own"`, throw a *TypeError* exception.
         1. Let _descriptor_ be ? Get(_elementObject_, `"descriptor"`)
         1. If _kind_ is `"initializer"`,
           1. If _descriptor_ is not *undefined*, throw a *TypeError* exception.
         1. Otherwise,
           1. Set _descriptor_ to ? ToPropertyDescriptor(_descriptor_).
-        1. Let _initializer_ be ? Get(_elementObject_, `"initializer"`).
-        1. If _kind_ is `"initializer"` and _initializer_ is *undefined*, throw a *TypeError* exception
-        1. Let _elements_ be ? Get(_elementObject_, `"elements"`).
-        1. If _kind_ is `"initializer"`,
-          1. If _key_ is not *undefined*, throw a *TypeError* exception.
-        1. If _elements_ is not *undefined*, throw a *TypeError* exception.
-        1. If _kind_ is not `"field"` or `"initializer"`,
-          1. If _initializer_ is not *undefined*, throw a *TypeError* exception.
         1. If _key_ is a Private Name,
           1. If _descriptor_.[[Enumerable]] is *true*, throw a *TypeError* exception.
           1. If _descriptor_.[[Configurable]] is *true*, throw a *TypeError* exception.
           1. If _placement_ is `"prototype"`, throw a *TypeError* exception.
         1. If _kind_ is `"field"`,
           1. If _descriptor_ has a [[Get]], [[Set]] or [[Value]] internal slot, throw a *TypeError* exception.
+        1. Let _initializer_ be ? Get(_elementObject_, `"initializer"`).
+        1. If _kind_ is `"initializer"`,
+          1. If _initializer_ is *undefined*, throw a *TypeError* exception
+        1. If _kind_ is `"method"`,
+          1. If _initializer_ is not *undefined*, throw a *TypeError* exception.
+        1. Let _elements_ be ? Get(_elementObject_, `"elements"`).
+        1. If _elements_ is not *undefined*, throw a *TypeError* exception.
         1. Let _element_ be the ElementDescriptor { [[Kind]]: _kind_, [[Placement]]: _placement_ }.
         1. If _kind_ is `"method"` or `"field",
            1. Set _element_.[[Key]] to _key_.
