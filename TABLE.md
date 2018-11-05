@@ -1,21 +1,21 @@
 
-| **parameter descriptor**              | **<code>@decorator<br/>class</code>**    | **<code>@decorator<br/>method()</code>**    | **<code>@decorator<br/>field</code>**               | **<code>@decorator<br/>get field()<br/>set field()</code>**|
-|---------------------------------------|------------------------------------------|---------------------------------------------|-----------------------------------------------------|------------------------------------------------------------|
-|`{`                                    |                                          |                                             |                                                     |                                                            |
-|&nbsp;&nbsp;`kind:`                    |`"class"`                                 |`"method"`                                   |`"field"`                                            |`"method"` <sup>4</sup>                                     |
-|&nbsp;&nbsp;`elements:`                |*Array of member descriptors* <sup>1</sup>| -                                           | -                                                   | -                                                          |
-|&nbsp;&nbsp;`key:`                     | -                                        |  *method name*                              |*method name*                                        |*property name*                                             |
-|&nbsp;&nbsp;`placement:`               | -                                        |`"prototype" || "static"`                    |`"own" || "static"`                                  |`"prototype" || "static"`                                   |
-|&nbsp;&nbsp;`initializer:`             | -                                        | -                                           |*function than return the initial value* <sup>2</sup>| -                                                          |
-|&nbsp;&nbsp;`descriptor:{`             | -                                        |                                             |                                                     |                                                            |
-|&nbsp;&nbsp;&nbsp;&nbsp;`value:`       | -                                        |  *method function*                          | - <sup>3</sup>                                      | -                                                          |
-|&nbsp;&nbsp;&nbsp;&nbsp;`get:`         | -                                        | -                                           | -                                                   |*getter function*                                           |
-|&nbsp;&nbsp;&nbsp;&nbsp;`set:`         | -                                        | -                                           | -                                                   |*setter function*                                           |
-|&nbsp;&nbsp;&nbsp;&nbsp;`writable:`    | -                                        |`true`                                       |`true`                                               | - <sup>5</sup>                                             |
-|&nbsp;&nbsp;&nbsp;&nbsp;`configurable:`| -                                        |`true`                                       |`true`                                               |`true`                                                      |
-|&nbsp;&nbsp;&nbsp;&nbsp;`enumerable:`  | -                                        |`false`                                      |`false`                                              |`false`                                                     |
-|&nbsp;&nbsp;`}`                        | -                                        |                                             |                                                     |                                                            |
-|`}`                                    |                                          |                                             |                                                     |                                                            |
+| **parameter descriptor**   | **`@decorator`<br/>`class`**             | **`@decorator`<br/>`method()`**             | **`@decorator`<br/>`field`**                        | **`@decorator`<br/>`get field()`<br/>`set field()`**|
+|----------------------------|------------------------------------------|---------------------------------------------|-----------------------------------------------------|-----------------------------------------------------|
+|`{`                         |                                          |                                             |                                                     |                                                     |
+|`  kind:`                   |`"class"`                                 |`"method"`                                   |`"field"`                                            |`"method"` <sup>4</sup>                              |
+|`  elements:`               |*Array of member descriptors* <sup>1</sup>| -                                           | -                                                   | -                                                   |
+|`  key:`                    | -                                        |  *method name*                              |*method name*                                        |*property name*                                      |
+|`  placement:`              | -                                        |`"prototype" || "static"`                    |`"own" || "static"`                                  |`"prototype" || "static"`                            |
+|`  initializer:`            | -                                        | -                                           |*function than return the initial value* <sup>2</sup>| -                                                   |
+|`  descriptor:{`            | -                                        |                                             |                                                     |                                                     |
+|`    value:`                | -                                        |  *method function*                          | - <sup>3</sup>                                      | -                                                   |
+|`    get:`                  | -                                        | -                                           | -                                                   |*getter function*                                    |
+|`    set:`                  | -                                        | -                                           | -                                                   |*setter function*                                    |
+|`    writable:`             | -                                        |`true`                                       |`true`                                               | - <sup>5</sup>                                      |
+|`    configurable:`         | -                                        |`true`                                       |`true`                                               |`true`                                               |
+|`    enumerable:`           | -                                        |`false`                                      |`false`                                              |`false`                                              |
+|`  }`                       | -                                        |                                             |                                                     |                                                     |
+|`}`                         |                                          |                                             |                                                     |                                                     |
 </table>
 
 <sup>1</sup> `element` is an array of decorator descriptors, not to be confused with property descriptors.
@@ -28,25 +28,25 @@
 
 <sup>5</sup> when `descriptor.get` or `descriptor.set` has value, the property descriptor don't include `writable` value.
 
-| **return descriptor (optional)**      | **`class`**                               | **`method()`**                           | **`field`**                              | **`getter/setter`**                      |
-|---------------------------------------|-------------------------------------------|------------------------------------------|------------------------------------------|------------------------------------------|
-|`{`                                    |                                           |                                          |                                          |                                          |
-|&nbsp;&nbsp;`kind:`                    |`"class"`                                  |`"method"`                                |`"field"`                                 |`"method"`                                |
-|&nbsp;&nbsp;`elements:`                |*Array of member descriptors* <sup>6</sup> | -                                        | -                                        | -                                        |
-|&nbsp;&nbsp;`key:`                     | -                                         |  *method name*    <sup>8</sup>           |*field name* <sup>8</sup>                 |*field name* <sup>8</sup>                 |
-|&nbsp;&nbsp;`placement:`               | -                                         |`"prototype" || "static" || "own"`        |`"prototype" || "static" || "own"`        |`"prototype" || "static" || "own"`        |
-|&nbsp;&nbsp;`extras:`                  | -                                         |*Array of member descriptors* <sup>7</sup>|*Array of member descriptors* <sup>7</sup>|*Array of member descriptors* <sup>7</sup>|
-|&nbsp;&nbsp;`initializer:`             | -                                         |                                          |*function than return the initial value*  | - <sup>10</sup>                          |
-|&nbsp;&nbsp;`descriptor:{`             | -                                         | <sup>9</sup>                             | <sup>9</sup>                             | <sup>9</sup>                             |
-|&nbsp;&nbsp;&nbsp;&nbsp;`value:`       | -                                         |*method function*                         | -                                        | - <sup>10</sup>                          |
-|&nbsp;&nbsp;&nbsp;&nbsp;`get:`         | -                                         | -                                        | -                                        |*getter*                                  |
-|&nbsp;&nbsp;&nbsp;&nbsp;`set:`         | -                                         | -                                        | -                                        |*setter*                                  |
-|&nbsp;&nbsp;&nbsp;&nbsp;`writable:`    | -                                         |`true || false`                           |`true || false`                           | - <sup>10</sup>                          |
-|&nbsp;&nbsp;&nbsp;&nbsp;`configurable:`| -                                         |`true || false`                           |`true || false`                           |`true || false`                           |
-|&nbsp;&nbsp;&nbsp;&nbsp;`enumerable:`  | -                                         |`false || true`                           |`false || true`                           |`false || true`                           |
-|&nbsp;&nbsp;`}`                        | -                                         |                                          |                                          |                                          |
-|&nbsp;&nbsp;`finisher:`                |*callback* <sup>11</sup>                   |  *callback* <sup>11</sup>                |  *callback* <sup>11</sup>                |  *callback*    <sup>3</sup>              |
-|`}`                                    |                                           |                                          |                                          |                                          |
+| **return descriptor (optional)** | **`class`**                               | **`method()`**                           | **`field`**                              | **`getter/setter`**                      |
+|----------------------------------|-------------------------------------------|------------------------------------------|------------------------------------------|------------------------------------------|
+|`{`                               |                                           |                                          |                                          |                                          |
+|`  kind:`                         |`"class"`                                  |`"method"`                                |`"field"`                                 |`"method"`                                |
+|`  elements:`                     |*Array of member descriptors* <sup>6</sup> | -                                        | -                                        | -                                        |
+|`  key:`                          | -                                         |  *method name*    <sup>8</sup>           |*field name* <sup>8</sup>                 |*field name* <sup>8</sup>                 |
+|`  placement:`                    | -                                         |`"prototype" || "static" || "own"`        |`"prototype" || "static" || "own"`        |`"prototype" || "static" || "own"`        |
+|`  extras:`                       | -                                         |*Array of member descriptors* <sup>7</sup>|*Array of member descriptors* <sup>7</sup>|*Array of member descriptors* <sup>7</sup>|
+|`  initializer:`                  | -                                         |                                          |*function than return the initial value*  | - <sup>10</sup>                          |
+|`  descriptor:{`                  | -                                         | <sup>9</sup>                             | <sup>9</sup>                             | <sup>9</sup>                             |
+|`    value:`                      | -                                         |*method function*                         | -                                        | - <sup>10</sup>                          |
+|`    get:`                        | -                                         | -                                        | -                                        |*getter*                                  |
+|`    set:`                        | -                                         | -                                        | -                                        |*setter*                                  |
+|`    writable:`                   | -                                         |`true || false`                           |`true || false`                           | - <sup>10</sup>                          |
+|`    configurable:`               | -                                         |`true || false`                           |`true || false`                           |`true || false`                           |
+|`    enumerable:`                 | -                                         |`false || true`                           |`false || true`                           |`false || true`                           |
+|`  }`                             | -                                         |                                          |                                          |                                          |
+|`  finisher:`                     |*callback* <sup>11</sup>                   |  *callback* <sup>11</sup>                |  *callback* <sup>11</sup>                |  *callback*    <sup>3</sup>              |
+|`}`                               |                                           |                                          |                                          |                                          |
 </tbody>    
 </table>
 
