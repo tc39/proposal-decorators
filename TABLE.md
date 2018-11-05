@@ -45,7 +45,7 @@
 |`    configurable:`               | -                                         |`true || false`                           |`true || false`                           |`true || false`                           |
 |`    enumerable:`                 | -                                         |`false || true`                           |`false || true`                           |`false || true`                           |
 |`  }`                             | -                                         |                                          |                                          |                                          |
-|`  finisher:`                     |*callback* <sup>11</sup>                   |  *callback* <sup>11</sup>                |  *callback* <sup>11</sup>                |  *callback*    <sup>3</sup>              |
+|`  finisher:`                     |*callback* <sup>11</sup>                   |  *callback* <sup>11</sup>                |  *callback* <sup>11</sup>                |  *callback*    <sup>11</sup>             |
 |`}`                               |                                           |                                          |                                          |                                          |
 </tbody>    
 </table>
