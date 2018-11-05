@@ -432,7 +432,8 @@ emu-example pre {
         1. Assert: _element_.[[Descriptor]] does not have a [[Value]], [[Get]] or [[Set]] slot.
         1. Perform ? DefineClassElement(_O_, _element_).
       1. <ins>If _element_.[[Kind]] is `"initializer"` and _element_.[[Placement]] is `"own"`,</ins>
-        1. <ins>Perform ? Call(_element_.[[Initializer]], _O_).</ins>
+        1. <ins>Let _res_ be ? Call(_element_.[[Initializer]], _O_).</ins>
+        1. <ins>If _res_ is not *undefined*, throw a *TypeError* exception.</ins>
     1. Return.
   </emu-alg>
 </emu-clause>
@@ -456,7 +457,9 @@ emu-example pre {
         1. Let _receiver_ be _F_ if _element_.[[Placement]] is `"static"`, else let _receiver_ be _proto_.
         1. Perform ? DefineClassElement(_receiver_, _element_).
       1. <ins>If _element_.[[Placement]] is `"prototype"` or `"static"` and _element_.[[Kind]] is `"initializer"`,</ins>
-        1. <ins>Perform ? Call(_element_.[[Initializer]], _O_).</ins>
+        1. <ins>Let _receiver_ be _F_ if _element_.[[Placement]] is `"static"`, else let _receiver_ be _proto_.</ins>
+        1. <ins>Let _res_ be ? Call(_element_.[[Initializer]], _receiver_).</ins>
+        1. <ins>If _res_ is not *undefined*, throw a *TypeError* exception.</ins>
     1. Return.
   </emu-alg>
   <emu-note type=editor>Value properties are added before initializers so that all methods are visible from all initializers</emu-note>
