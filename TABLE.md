@@ -1,26 +1,21 @@
 
-<table>
-<tr><td><b>parameter descriptor</b>                       </td><td><b><code>@decorator
-class</code></b>      </td><td><b><code>@decorator
-method()</code></b>  </td><td><b><code>@decorator
-field</code></b>                  </td><td><b><code>@decorator
-get field()
-set field()</code></b> </td></tr>
-<tr><td>`{`                                               </td><td>                                              </td><td>                                             </td><td>                                                          </td><td>                                                              </td></tr>
-<tr><td>&nbsp;&nbsp;<code>kind:</code>                    </td><td><code>"class"</code>                          </td><td><code>"method"</code>                        </td><td><code>"field"</code>                                      </td><td><code>"method"</code> <sup>4</sup>                            </td></tr>
-<tr><td>&nbsp;&nbsp;<code>elements:</code>                </td><td><i>Array of member descriptors</i><sup>1</sup></td><td> -                                           </td><td> -                                                        </td><td> -                                                            </td></tr>
-<tr><td>&nbsp;&nbsp;<code>key:</code>                     </td><td> -                                            </td><td><i>method name</i>                           </td><td><i>method name</i>                                        </td><td><i>property name</i>                                          </td></tr>
-<tr><td>&nbsp;&nbsp;<code>placement:</code>               </td><td> -                                            </td><td><code>"prototype" || "static"</code>         </td><td><code>"own" || "static"</code>                            </td><td><code>"prototype" || "static"</code>                          </td></tr>
-<tr><td>&nbsp;&nbsp;<code>initializer:</code>             </td><td> -                                            </td><td> -                                           </td><td><i>function than return the initial value</i> <sup>2</sup></td><td> -                                                            </td></tr>
-<tr><td>&nbsp;&nbsp;<code>descriptor:{</code>             </td><td> -                                            </td><td>                                             </td><td>                                                          </td><td>                                                              </td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;<code>value:</code>       </td><td> -                                            </td><td><i>method function</i>                       </td><td> - <sup>3</sup>                                           </td><td> -                                                            </td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;<code>get:</code>         </td><td> -                                            </td><td> -                                           </td><td> -                                                        </td><td> <i>getter function</i>                                       </td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;<code>set:</code>         </td><td> -                                            </td><td> -                                           </td><td> -                                                        </td><td> <i>setter function</i>                                       </td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;<code>writable:</code>    </td><td> -                                            </td><td><code>true</code>                            </td><td><code>true</code>                                         </td><td> - <sup>5</sup>                                               </td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;<code>configurable:</code></td><td> -                                            </td><td><code>true</code>                            </td><td><code>true</code>                                         </td><td><code>true</code>                                             </td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;<code>enumerable:</code>  </td><td> -                                            </td><td><code>false</code>                           </td><td><code>false</code>                                        </td><td><code>false || true</code> <sup>12</sup>                                           </td></tr>
-<tr><td>&nbsp;&nbsp;<code>}</code>                        </td><td> -                                            </td><td>                                             </td><td>                                                          </td><td>                                                              </td></tr>
-<tr><td><code>}</code>                                    </td><td>                                              </td><td>                                             </td><td>                                                          </td><td>                                                              </td></tr>
+| **parameter descriptor**              | **<code>@decorator<br/>class</code>**    | **<code>@decorator<br/>method()</code>**    | **<code>@decorator<br/>field</code>**               | **<code>@decorator<br/>get field()<br/>set field()</code>**|
+|---------------------------------------|------------------------------------------|---------------------------------------------|-----------------------------------------------------|------------------------------------------------------------|
+|`{`                                    |                                          |                                             |                                                     |                                                            |
+|&nbsp;&nbsp;`kind:`                    |`"class"`                                 |`"method"`                                   |`"field"`                                            |`"method"` <sup>4</sup>                                     |
+|&nbsp;&nbsp;`elements:`                |*Array of member descriptors* <sup>1</sup>| -                                           | -                                                   | -                                                          |
+|&nbsp;&nbsp;`key:`                     | -                                        |  *method name*                              |*method name*                                        |*property name*                                             |
+|&nbsp;&nbsp;`placement:`               | -                                        |`"prototype" || "static"`                    |`"own" || "static"`                                  |`"prototype" || "static"`                                   |
+|&nbsp;&nbsp;`initializer:`             | -                                        | -                                           |*function than return the initial value* <sup>2</sup>| -                                                          |
+|&nbsp;&nbsp;`descriptor:{`             | -                                        |                                             |                                                     |                                                            |
+|&nbsp;&nbsp;&nbsp;&nbsp;`value:`       | -                                        |  *method function*                          | - <sup>3</sup>                                      | -                                                          |
+|&nbsp;&nbsp;&nbsp;&nbsp;`get:`         | -                                        | -                                           | -                                                   |*getter function*                                           |
+|&nbsp;&nbsp;&nbsp;&nbsp;`set:`         | -                                        | -                                           | -                                                   |*setter function*                                           |
+|&nbsp;&nbsp;&nbsp;&nbsp;`writable:`    | -                                        |`true`                                       |`true`                                               | - <sup>5</sup>                                             |
+|&nbsp;&nbsp;&nbsp;&nbsp;`configurable:`| -                                        |`true`                                       |`true`                                               |`true`                                                      |
+|&nbsp;&nbsp;&nbsp;&nbsp;`enumerable:`  | -                                        |`false`                                      |`false`                                              |`false`                                                     |
+|&nbsp;&nbsp;`}`                        | -                                        |                                             |                                                     |                                                            |
+|`}`                                    |                                          |                                             |                                                     |                                                            |
 </table>
 
 <sup>1</sup> `element` is an array of decorator descriptors, not to be confused with property descriptors.
@@ -33,27 +28,25 @@ set field()</code></b> </td></tr>
 
 <sup>5</sup> when `descriptor.get` or `descriptor.set` has value, the property descriptor don't include `writable` value.
 
-<sup>12</sup> `descriptor.enumerable` is `true` if `placement` is `"own"`.
-
-<table>
-<tr><td><b>return descriptor (optional)</b>               </td><td><b><code>class</code></b>                       </td><td><b><code>method()</code></b>                   </td><td><b><code>field</code></b>                      </td><td><b><code>getter/setter</code></b>              </td></tr>
-<tr><td>`{`                                               </td><td>                                                </td><td>                                               </td><td>                                               </td><td>                                               </td></tr>
-<tr><td>&nbsp;&nbsp;<code>kind:</code>                    </td><td><code>"class"</code>                            </td><td><code>"method"</code>                          </td><td><code>"field"</code>                           </td><td><code>"method"</code>                          </td></tr>
-<tr><td>&nbsp;&nbsp;<code>elements:</code>                </td><td><i>Array of member descriptors</i> <sup>6</sup></td><td> -                                              </td><td> -                                             </td><td> -                                             </td></tr>
-<tr><td>&nbsp;&nbsp;<code>key:</code>                     </td><td> -                                              </td><td><i>method name</i> or <code>decorators.PrivateName(name)</code> <sup>8</sup>                </td><td><i>field name</i> or <code>decorators.PrivateName(name)</code> <sup>8</sup>                 </td><td><i>field name</i> or <code>decorators.PrivateName(name)</code><sup>8</sup>                 </td></tr>
-<tr><td>&nbsp;&nbsp;<code>placement:</code>               </td><td> -                                              </td><td><code>"prototype" || "static" || "own"</code>  </td><td><code>"prototype" || "static" || "own"</code>  </td><td><code>"prototype" || "static" || "own"</code>  </td></tr>
-<tr><td>&nbsp;&nbsp;<code>extras:</code>                  </td><td> -                                              </td><td><i>Array of member descriptors</i> <sup>7</sup></td><td><i>Array of member descriptors</i> <sup>7</sup></td><td><i>Array of member descriptors</i> <sup>7</sup></td></tr>
-<tr><td>&nbsp;&nbsp;<code>initializer:</code>             </td><td> -                                              </td><td>                                               </td><td><i>function than return the initial value</i>  </td><td> - <sup>10</sup>                               </td></tr>
-<tr><td>&nbsp;&nbsp;<code>descriptor:{</code>             </td><td> -                                              </td><td> <sup>9</sup>                                  </td><td> <sup>9</sup>                                  </td><td> <sup>9</sup>                                  </td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;<code>value:</code>       </td><td> -                                              </td><td><i>method function</i>                         </td><td> -                                             </td><td> - <sup>10</sup>                               </td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;<code>get:</code>         </td><td> -                                              </td><td> -                                             </td><td> -                                             </td><td><i>getter</i>                                  </td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;<code>set:</code>         </td><td> -                                              </td><td> -                                             </td><td> -                                             </td><td><i>setter</i>                                  </td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;<code>writable:</code>    </td><td> -                                              </td><td><code>true || false</code>                     </td><td><code>true || false</code>                     </td><td> - <sup>10</sup>                               </td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;<code>configurable:</code></td><td> -                                              </td><td><code>true || false</code>                     </td><td><code>true || false</code>                     </td><td><code>true || false</code>                     </td></tr>
-<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;<code>enumerable:</code>  </td><td> -                                              </td><td><code>false || true</code>                     </td><td><code>false || true</code>                     </td><td><code>false || true</code>                     </td></tr>
-<tr><td>&nbsp;&nbsp;<code>}</code>                        </td><td> -                                              </td><td>                                               </td><td>                                               </td><td>                                               </td></tr>
-<tr><td>&nbsp;&nbsp;<code>finisher:</code>                </td><td><i>callback</i> <sup>3</sup>                    </td><td><i>callback</i> <sup>3</sup>                   </td><td><i>callback</i> <sup>3</sup>                   </td><td><i>callback</i> <sup>3</sup>                   </td></tr>
-<tr><td><code>}</code>                                    </td><td>                                                </td><td>                                               </td><td>                                               </td><td>                                               </td></tr>
+| **return descriptor (optional)**      | **`class`**                               | **`method()`**                           | **`field`**                              | **`getter/setter`**                      |
+|---------------------------------------|-------------------------------------------|------------------------------------------|------------------------------------------|------------------------------------------|
+|`{`                                    |                                           |                                          |                                          |                                          |
+|&nbsp;&nbsp;`kind:`                    |`"class"`                                  |`"method"`                                |`"field"`                                 |`"method"`                                |
+|&nbsp;&nbsp;`elements:`                |*Array of member descriptors* <sup>6</sup> | -                                        | -                                        | -                                        |
+|&nbsp;&nbsp;`key:`                     | -                                         |  *method name*    <sup>8</sup>           |*field name* <sup>8</sup>                 |*field name* <sup>8</sup>                 |
+|&nbsp;&nbsp;`placement:`               | -                                         |`"prototype" || "static" || "own"`        |`"prototype" || "static" || "own"`        |`"prototype" || "static" || "own"`        |
+|&nbsp;&nbsp;`extras:`                  | -                                         |*Array of member descriptors* <sup>7</sup>|*Array of member descriptors* <sup>7</sup>|*Array of member descriptors* <sup>7</sup>|
+|&nbsp;&nbsp;`initializer:`             | -                                         |                                          |*function than return the initial value*  | - <sup>10</sup>                          |
+|&nbsp;&nbsp;`descriptor:{`             | -                                         | <sup>9</sup>                             | <sup>9</sup>                             | <sup>9</sup>                             |
+|&nbsp;&nbsp;&nbsp;&nbsp;`value:`       | -                                         |*method function*                         | -                                        | - <sup>10</sup>                          |
+|&nbsp;&nbsp;&nbsp;&nbsp;`get:`         | -                                         | -                                        | -                                        |*getter*                                  |
+|&nbsp;&nbsp;&nbsp;&nbsp;`set:`         | -                                         | -                                        | -                                        |*setter*                                  |
+|&nbsp;&nbsp;&nbsp;&nbsp;`writable:`    | -                                         |`true || false`                           |`true || false`                           | - <sup>10</sup>                          |
+|&nbsp;&nbsp;&nbsp;&nbsp;`configurable:`| -                                         |`true || false`                           |`true || false`                           |`true || false`                           |
+|&nbsp;&nbsp;&nbsp;&nbsp;`enumerable:`  | -                                         |`false || true`                           |`false || true`                           |`false || true`                           |
+|&nbsp;&nbsp;`}`                        | -                                         |                                          |                                          |                                          |
+|&nbsp;&nbsp;`finisher:`                |*callback* <sup>11</sup>                   |  *callback* <sup>11</sup>                |  *callback* <sup>11</sup>                |  *callback*    <sup>3</sup>              |
+|`}`                                    |                                           |                                          |                                          |                                          |
 </tbody>    
 </table>
 
@@ -61,10 +54,11 @@ set field()</code></b> </td></tr>
 
 <sup>7</sup> `extra` is an array of decorator descriptors, not to be confused with property descriptors. You can add new member when a method or field is decorated.
 
-<sup>8</sup> `key` can be change from the original. It's a mandatory field. It the member is private (`#name`) a `decorators.PrivateName(name)` is included in this property.
+<sup>8</sup> `key` can be change from the original. It's a mandatory field. If the member is private (#name) a `decorators.PrivateName(name)` is included in this property. key can be change from the original. It's a mandatory field.
 
 <sup>9</sup> `descriptor` is a mandatory field, but can be an empty object.
 
 <sup>10</sup> cannot include `initializaer`, `descriptor.value` or `descriptor.writable` when `descriptor.get` or `descriptor.set` are defined.
 
-<sup>11</sup> `finisher` function is a callback that is called at the end of  class creation. It's optional.
+<sup>11</sup> `finisher` function is a callback that is called at the end of class creation. It's optional.
+
