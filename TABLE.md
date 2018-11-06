@@ -52,13 +52,13 @@
 
 <sup>6</sup> `element` is an array of decorator descriptors, not to be confused with property descriptors. You can add (include new object descriptor in this array), remove elements (delete existed object descriptor from this array) or change elements (modify object descriptor elements).
 
-<sup>7</sup> `extra` is an array of decorator descriptors, not to be confused with property descriptors. You can add new member when a method or field is decorated.
+<sup>7</sup> `extra` is an array of decorator descriptors, not to be confused with property descriptors. You can add other new members when a method or field is decorated.
 
-<sup>8</sup> `key` can be change from the original. It's a mandatory field. If the member is private (#name) a `decorators.PrivateName(name)` is included in this property. key can be change from the original. It's a mandatory field.
+<sup>8</sup> `key` can be change from the original. If the member is private (`#name`) a `decorators.PrivateName(name)` is included in this property. It's a mandatory field.
 
 <sup>9</sup> `descriptor` is a mandatory field, but can be an empty object.
 
-<sup>10</sup> cannot include `initializaer`, `descriptor.value` or `descriptor.writable` when `descriptor.get` or `descriptor.set` are defined.
+<sup>10</sup> cannot include `initializer`, `descriptor.value` or `descriptor.writable` when `descriptor.get` or `descriptor.set` are defined.
 
 <sup>11</sup> `finisher` function is a callback that is called at the end of class creation. It's optional.
 
