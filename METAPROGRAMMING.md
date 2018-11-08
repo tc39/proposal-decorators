@@ -138,6 +138,22 @@ A class descriptor with the following properties:
 
 Note: finishers run once per class (at class creation time), not once per instance.
 
+### Initializers
+
+The `extras` array can also contain stand-alone initializers, of the following form:
+
+```js
+{
+  kind: "initializer"
+  placement: "static", "prototype" or "own",
+  initializer() { /* ... */ }
+}
+```
+
+The initializers added here are just like field initializers, except that they don't result in defining a field.
+
+These can be used, e.g., to make a decorator which defines fields through `[[Set]]` rather than `[[DefineOwnProperty]]`, or to store the field in some other place.
+
 ## Examples
 
 The three decorators from [README.md](README.md) could be defined as follows:
