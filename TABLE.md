@@ -62,6 +62,6 @@
 
 <sup>11</sup> `finisher` function is a callback that is called at the end of class creation. It's optional.
 
-<sup>12</sup> `kind: "initializer"` permits to define a `finisher` callback to be used purely for perform a side effect when instantiating a class. This descriptor don't create new members. Do not confuse with the `initializer` property used to set the initial value to a field.
+<sup>12</sup> `kind: "initializer"` don't create new members. Do not confuse with the `initializer` property used to set the initial value to a field. You can use the `finisher` field to include a callback to be used purely for perform a side effect. 
 
 **Note**: you can replace a field decorator with a method descriptor, or a getter, or vice-versa, but you can't interchange those with classes.
