@@ -4,7 +4,7 @@
 |`{`                         |                                          |                                             |                                                                  |                                                     |
 |`  kind:`                   |`"class"`                                 |`"method"`                                   |`"field"`                                                         |`"method"` <sup>4</sup>                              |
 |`  elements:`               |*Array of member descriptors* <sup>1</sup>| -                                           | -                                                                | -                                                   |
-|`  key:`                    | -                                        |  *method name*                              |*method name*                                                     |*property name*                                      |
+|`  key:`                    | -                                        |  *method name*                              |*property name*                                                   |*property name*                                      |
 |`  placement:`              | -                                        |`"prototype" \|\| "static"`                  |`"own" \|\| "static"`                                             |`"prototype" \|\| "static"`                          |
 |`  initializer:`            | -                                        | -                                           |*Function used to set the initial value of the field* <sup>2</sup>| -                                                   |
 |`  descriptor:{`            | -                                        |                                             |                                                                  |                                                     |
@@ -28,25 +28,25 @@
 
 <sup>5</sup> when `descriptor.get` or `descriptor.set` has value, the property descriptor don't include `writable` value.
 
-| **return descriptor (optional)** | **`class`**                               | **`method()`**                           | **`field`**                                         | **`getter/setter`**                      |
-|----------------------------------|-------------------------------------------|------------------------------------------|-----------------------------------------------------|------------------------------------------|
-|`{`                               |                                           |                                          |                                                     |                                          |
-|`  kind:`                         |`"class"`                                  |`"method"`                                |`"field"`                                            |`"method"`                                |
-|`  elements:`                     |*Array of member descriptors* <sup>6</sup> | -                                        | -                                                   | -                                        |
-|`  key:`                          | -                                         |  *method name*    <sup>8</sup>           |*field name* <sup>8</sup>                            |*field name* <sup>8</sup>                 |
-|`  placement:`                    | -                                         |`"prototype" \|\| "static" \|\| "own"`    |`"prototype" \|\| "static" \|\| "own"`               |`"prototype" \|\| "static" \|\| "own"`    |
-|`  extras:`                       | -                                         |*Array of member descriptors* <sup>7</sup>|*Array of member descriptors* <sup>7</sup>           |*Array of member descriptors* <sup>7</sup>|
-|`  initializer:`                  | -                                         |                                          |*Function used to set the initial value of the field*| - <sup>10</sup>                          |
-|`  descriptor:{`                  | -                                         | <sup>9</sup>                             | <sup>9</sup>                                        | <sup>9</sup>                             |
-|`    value:`                      | -                                         |*method function*                         | -                                                   | - <sup>10</sup>                          |
-|`    get:`                        | -                                         | -                                        | -                                                   |*getter*                                  |
-|`    set:`                        | -                                         | -                                        | -                                                   |*setter*                                  |
-|`    writable:`                   | -                                         |`true \|\| false`                         |`true \|\| false`                                    | - <sup>10</sup>                          |
-|`    configurable:`               | -                                         |`true \|\| false`                         |`true \|\| false`                                    |`true \|\| false`                         |
-|`    enumerable:`                 | -                                         |`false \|\| true`                         |`false \|\| true`                                    |`false \|\| true`                         |
-|`  }`                             | -                                         |                                          |                                                     |                                          |
-|`  finisher:`                     |*callback* <sup>11</sup>                   |  *callback* <sup>11</sup>                |  *callback* <sup>11</sup>                           |  *callback*    <sup>11</sup>             |
-|`}`                               |                                           |                                          |                                                     |                                          |
+| **return descriptor (optional)** | **`class`**                               | **`method()`**                           | **`field`**                                         | **`getter/setter`**                      | **Initializers**                         |
+|----------------------------------|-------------------------------------------|------------------------------------------|-----------------------------------------------------|------------------------------------------|------------------------------------------|
+|`{`                               |                                           |                                          |                                                     |                                          |                                          |
+|`  kind:`                         |`"class"`                                  |`"method"`                                |`"field"`                                            |`"method"`                                |`"initializer"` <sup>12</sup>             |
+|`  elements:`                     |*Array of member descriptors* <sup>6</sup> | -                                        | -                                                   | -                                        | -                                        |
+|`  key:`                          | -                                         |  *method name*    <sup>8</sup>           |*field name* <sup>8</sup>                            |*field name* <sup>8</sup>                 | -                                        |
+|`  placement:`                    | -                                         |`"prototype" \|\| "static" \|\| "own"`    |`"prototype" \|\| "static" \|\| "own"`               |`"prototype" \|\| "static" \|\| "own"`    |`"prototype" \|\| "static" \|\| "own"`    |
+|`  extras:`                       | -                                         |*Array of member descriptors* <sup>7</sup>|*Array of member descriptors* <sup>7</sup>           |*Array of member descriptors* <sup>7</sup>| -                                        |
+|`  initializer:`                  | -                                         |                                          |*Function used to set the initial value of the field*| - <sup>10</sup>                          | <sup>12</sup>                            |
+|`  descriptor:{`                  | -                                         | <sup>9</sup>                             | <sup>9</sup>                                        | <sup>9</sup>                             |                                          |
+|`    value:`                      | -                                         |*method function*                         | -                                                   | - <sup>10</sup>                          | -                                        |
+|`    get:`                        | -                                         | -                                        | -                                                   |*getter*                                  | -                                        |
+|`    set:`                        | -                                         | -                                        | -                                                   |*setter*                                  | -                                        |
+|`    writable:`                   | -                                         |`true \|\| false`                         |`true \|\| false`                                    | - <sup>10</sup>                          | -                                        |
+|`    configurable:`               | -                                         |`true \|\| false`                         |`true \|\| false`                                    |`true \|\| false`                         | -                                        |
+|`    enumerable:`                 | -                                         |`false \|\| true`                         |`false \|\| true`                                    |`false \|\| true`                         | -                                        |
+|`  }`                             | -                                         |                                          |                                                     |                                          |                                          |
+|`  finisher:`                     |*callback* <sup>11</sup>                   |  *callback* <sup>11</sup>                |  *callback* <sup>11</sup>                           |  *callback*    <sup>11</sup>             | -                                        |
+|`}`                               |                                           |                                          |                                                     |                                          |                                          |
 </tbody>    
 </table>
 
@@ -61,5 +61,7 @@
 <sup>10</sup> cannot include `initializer`, `descriptor.value` or `descriptor.writable` when `descriptor.get` or `descriptor.set` are defined.
 
 <sup>11</sup> `finisher` function is a callback that is called at the end of class creation. It's optional.
+
+<sup>12</sup> `kind: "initializer"` don't create new members. You can use the `initializer` field to include a callback to be used purely for perform a side effect. Do not confuse with the `initializer` property used to set the initial value to a field. 
 
 **Note**: you can replace a field decorator with a method descriptor, or a getter, or vice-versa, but you can't interchange those with classes.
