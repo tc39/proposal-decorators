@@ -711,6 +711,7 @@ emu-example pre {
         1. Let _extras_ be a new empty List.
         1. Let _finishers_ be a new empty List.
         1. For each _decorator_ in _element_.[[Decorators]], in reverse list order do
+          1. If _element_.[[Kind]] is `"initializer"`, throw a TypeError.
           1. Perform RemoveElementPlacement(_element_, _placements_).
           1. Let _elementObject_ be ? FromElementDescriptor(_element_).
           1. Let _elementFinisherExtrasObject_ be ? Call(_decorator_, *undefined*, « _elementObject_ »).
