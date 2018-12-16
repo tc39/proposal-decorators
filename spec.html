@@ -150,21 +150,23 @@ emu-example pre {
       <p>
         The <dfn>ElementDescriptor</dfn> is a Record used to represent class elements at runtime.
         Values of the ElementDescriptor type are Record values whose fields are defined as by <emu-xref href="#table-element-descriptor-fields"></emu-xref>.
-        Unless otherwise specified, every field is always present.
       </p>
 
       <emu-table id="table-element-descriptor-fields" caption="ElementDescriptor fields">
         <table>
           <thead>
-            <tr> <th>Field Name</th>      <th>Value</th>                                                          </tr>
+            <tr> <th>Field Name</th>      <th>Value</th>                                                                                          </tr>
           </thead>
           <tbody>
-            <tr> <td>[[Kind]]</td>        <td>One of `"method"`, `"field"` or `"initializer"`</td>                 </tr>
-            <tr> <td>[[Key]]</td>         <td>A Property Key or %PrivateName% object</td>                          </tr>
-            <tr> <td>[[Descriptor]]</td>  <td>A Property Descriptor</td>                                           </tr>
-            <tr> <td>[[Placement]]</td>   <td>One of `"static"`, `"prototype"`, or `"own"`</td>                    </tr>
-            <tr> <td>[[Initializer]]</td> <td>A function or ~empty~. This field can be absent.</td>                </tr>
-            <tr> <td>[[Decorators]]</td>  <td>A List of ECMAScript language values. This field can be absent.</td> </tr>
+            <tr> <td>[[Kind]]</td>        <td>One of `"method"`, `"field"`, `"initializer"` or `"internal"`.</td>                                 </tr>
+            <tr> <td>[[Key]]</td>         <td>A Property Key or %PrivateName% object</td>                                                         </tr>
+            <tr> <td>[[Descriptor]]</td>  <td>A Property Descriptor</td>                                                                          </tr>
+            <tr> <td>[[Placement]]</td>   <td>One of `"static"`, `"prototype"`, or `"own"`</td>                                                   </tr>
+            <tr> <td>[[Initializer]]</td> <td>A function or ~empty~</td>                                                                          </tr>
+            <tr> <td>[[Decorators]]</td>  <td>A List of ECMAScript language values.</td>                                                          </tr>
+            <tr> <td>[[Element]]</td>     <td>An ElementDescriptor, used to store the original `"internal"` element descriptor.</td>              </tr>
+            <tr> <td>[[Brand]]</td>       <td>A Symbol used to uniquely identify the current class decorator execution.</td>                      </tr>
+            <tr> <td>[[Index]]</td>       <td>A number representing the position where the element descriptor appears in the `elements` list.</td></tr>
           </tbody>
         </table>
       </emu-table>
@@ -172,11 +174,17 @@ emu-example pre {
       <p>
         In addition, given an ElementDescriptor _element_, the following conditions are always respected:
         <ul>
-          <li>If _element_.[[Kind]] is `"method"`, then _element_.[[Initializer]] is not present.</li>
+          <li>_element_.[[Kind]] is present.</li>
+          <li>_element_.[[Key]] is present if and only if _element_.[[Kind]] is `"field"` or `"method"`.</li>
+          <li>_element_.[[Descriptor]] is present if and only if _element_.[[Kind]] is `"field"` or `"method"`.</li>
+          <li>_element_.[[Placement]] is present if and only if _element_.[[Kind]] is not `"internal"`.</li>
+          <li>_element_.[[Initializer]] is present if and only if _element_.[[Kind]] is `"field"` or `"initializer"`.</li>
+          <li>_element_.[[Decorators]] is present if and only if _element_.[[Kind]] is `"field"` or `"method"`.</li>
+          <li>_element_.[[Element]] is present if and only if _element_.[[Kind]] is `"internal"`.</li>
+          <li>_element_.[[Brand]] is present if and only id _element_.[[Index]] is present.</li>
           <li>
             If _element_.[[Kind]] is `"field"`, then
             <ul>
-              <li>_element_.[[Initializer]] is present.</li>
               <li>_element_.[[Descriptor]]'s [[Get]], [[Set]], and [[Value]] slots are absent.</li>
             </ul>
           </li>
@@ -189,12 +197,9 @@ emu-example pre {
             </ul>
           </li>
           <li>
-            If _element_.[[Kind]] is `"initializer", then
+            If _element_.[[Kind]] is `"internal"`, then
             <ul>
-              <li>_element_.[[Key]] absent.</li>
-              <li>_element_.[[Descriptor]] is absent.</li>
-              <li>_element_.[[Initializer]] is present.</li>
-              <li>_element_.[[Decorators]] is absent.</li>
+              <li>Either _element_.[[Element]].[[Key]] is a %PrivateName% object, or _element_.[[Element]].[[Kind]] is `"initializer"`.</li>
             </ul>
           </li>
         </ul>
@@ -737,16 +742,22 @@ emu-example pre {
       <emu-alg>
         1. Let _finishers_ be a new empty List.
         1. For each _decorator_ in _decorators_, in reverse list order do
-          1. Let _privateElements_ be a List consisting of the ordered subsequence of _elements_ for each _element_ where _element_.[[Key]] is a Private Name.
-          1. Let _publicElements_ be a List consisting of the ordered subsequence of _elements_ for each _element_ where _element_.[[Key]] is not a Private Name.
-          1. Let _obj_ be FromClassDescriptor(_publicElements_).
+          1. Let _internalElements_ be an empty List.
+          1. Let _visibleElements_ be an empty List.
+          1. For each _element_ in _elements_,
+            1. If _element_.[[Kind]] is `"initializer"` or _element_.[[Key]] is a Private Name,
+              1. Add _element_ to _internalElements_.
+              1. Set _element_ to the ElementDescriptor { [[Kind]]: `"internal"`, [[Element]]: _element_ }.
+            1. Add _element_ to _visibleElements_.
+          1. Let _brand_ be a new unique Symbol value.
+          1. Let _obj_ be FromClassDescriptor(_visibleElements_, _brand_).
           1. Let _result_ be ? Call(_decorator_, *undefined*, « _obj_ »).
           1. If _result_ is *undefined*, let _result_ be _obj_.
-          1. Let _elementsAndFinisher_ be ? ToClassDescriptor(_result_).
+          1. Let _elementsAndFinisher_ be ? ToClassDescriptor(_result_, _brand, _internalElements_).
           1. If _elementsAndFinisher_.[[Finisher]] is not *undefined*,
             1. Append _elementsAndFinisher_.[[Finisher]] to _finishers_.
           1. If _elementsAndFinisher_.[[Elements]] is not *undefined*,
-            1. Set _elements_ to the concatenation of _elementsAndFinisher_.[[Elements]] and _privateElements_.
+            1. Set _elements_ to _elementsAndFinisher_.[[Elements]].
             1. If there are two class elements _a_ and _b_ in _elements_ such that all of the following are true:
               1. _a_.[[Kind]] is not `"initializer"`
               1. _b_.[[Kind]] is not `"initializer"`
@@ -789,24 +800,32 @@ emu-example pre {
     </emu-clause>
 
     <emu-clause id="sec-from-element-descriptors" aoid=FromElementDescriptors>
-      <h1>FromElementDescriptors ( _elements_ )</h1>
+      <h1>FromElementDescriptors ( _elements_, _brand_ )</h1>
       <emu-alg>
           1. Assert: _elements_ is a List of ElementDescriptor Records.
           1. Let _elementObjects_ be a new empty List.
+          1. Let _index_ be 0.
           1. For each _element_ in _elements_, do
-            1. Append ! FromElementDescriptor(_element_) to _elementObjects_.
+            1. Append ! FromElementDescriptor(_element_, _brand_, _index_) to _elementObjects_.
+            1. Set _index_ to _index_ + 1.
           1. Return ! CreateArrayFromList(_elementObjects_).
       </emu-alg>
     </emu-clause>
 
     <emu-clause id=sec-from-element-descriptor aoid=FromElementDescriptor>
-      <h1>FromElementDescriptor ( _element_ )</h1>
+      <h1>FromElementDescriptor ( _element_ [ , _brand_, _index_ ] )</h1>
       <emu-alg>
         1. Assert: _element_ is an ElementDescriptor Record.
         1. Let _obj_ be ! ObjectCreate(%ObjectPrototype%).
         1. Let _desc_ be PropertyDescriptor{ [[Value]]: `"Descriptor"`, [[Writable]]: *false*, [[Enumerable]]: *false*, [[Configurable]]: *true* }.
         1. Perform ! DefinePropertyOrThrow(_obj_, @@toStringTag, _desc_).
         1. Perform ! CreateDataPropertyOrThrow(_obj_, `"kind"`, _element_.[[Kind]]).
+        1. If _brand_ is set, 
+          1. Set _obj_.[[Brand]] to _brand_.
+          1. Set _obj_.[[Index]] to _index_.
+        1. If _element_.[[Kind]] is `"internal"`,
+          1. Set _obj_.[[Element]] to _element_.[[Element]]
+          1. Return _obj_.
         1. If _element_.[[Kind]] is `"method"` or `"field"`,
           1. Let _key_ be _element_.[[Key]].
           1. If _key_ is a Private Name, set _key_ to ? PrivateNameObject(_key_).
@@ -823,30 +842,43 @@ emu-example pre {
     </emu-clause>
 
     <emu-clause id="sec-to-element-descriptors" aoid=ToElementDescriptors>
-      <h1>ToElementDescriptors ( _elementObjects_ )</h1>
+      <h1>ToElementDescriptors ( _elementObjects_ [ , _brand_, _internalElements_ ] )</h1>
       <emu-alg>
         1. Assert: _elementObject_ is an ECMAScript language value.
         1. If _elementObjects_ is *undefined*, return *undefined*.
         1. Let _elements_ be a new empty List.
+        1. Let _lastOriginalIndex_ be -1.
         1. Let _elementObjectsList_ be ? IterableToList(_elementObjects_).
         1. For each _elementObject_ in _elementObjectsList_, do
-          1. Let _element_ be ? ToElementDescriptor(_elementObject_).
+          1. If _elementObject_ has an [[Index]] internal slot and _elementObject_.[[Brand]] is equal to _brand_,
+            1. If _elementObject_.[[Index]] &le; _lastOriginalIndex_, throw a TypeError.
+            1. Set _lastOriginalIndex_ to _elementObject_.[[Index]].
+          1. Let _element_ be ? ToElementDescriptor(_elementObject_, _brand_, _internalElements_).
           1. Let _finisher_ be ? Get(_elementObject_, `"finisher"`).
           1. If _finisher_ is not *undefined*, throw a *TypeError* exception.
           1. Let _extras_ be ? Get(_elementObject_, `"extras"`).
           1. If _extras_ is not *undefined*, throw a *TypeError* exception.
           1. Append _element_ to _elements_.
+        1. If _internalElements_ is set and it is not empty, throw a TypeError.
         1. Return _elements_.
       </emu-alg>
+
+      <emu-note>
+        Internal elements are removed from the _internalElements_ Set as they are found in the _elementObjectList_ list. If after iterating over every _elementObject_ it still isn't empty, it is because some internal elements have been removed.
+      </emu-note>
     </emu-clause>
 
     <emu-clause id=sec-to-element-descriptor aoid=ToElementDescriptor>
-      <h1>ToElementDescriptor ( _elementObject_ )</h1>
+      <h1>ToElementDescriptor ( _elementObject_ [, _brand_, _internalElements_ ] )</h1>
       <p>With parameter _elementObject_, returns an ElementDescriptor.</p>
       <emu-alg>
         1. Assert: _elementObject_ is an ECMAScript language value.
         1. Let _kind_ be ? ToString(? Get(_elementObject_, `"kind"`)).
-        1. If _kind_ is not one of `"initializer"`, `"method"`, or `"field"`, throw a *TypeError* exception.
+        1. If _kind_ is not one of `"initializer"`, `"method"`, `"field"`, or `"internal"`, throw a *TypeError* exception.
+        1. If _kind_ is `"internal"`,
+          1. If one of _brand_ and _elementObject_.[[Brand]] is not set or if they are not equal, throw a TypeError.
+          1. Remove _elementObject_.[[Element]] from _internalElements_.
+          1. Return _elementObject_.[[Element]].
         1. Let _key_ be ? Get(_elementObject_, `"key"`).
         1. If _kind_ is `"initializer"`,
           1. If _key_ is not *undefined*, throw a *TypeError* exception.
@@ -896,10 +928,10 @@ emu-example pre {
     </emu-clause>
 
     <emu-clause id=sec-from-class-descriptor aoid=FromClassDescriptor>
-      <h1>FromClassDescriptor ( _elements_ )</h1>
+      <h1>FromClassDescriptor ( _elements_, _brand_)</h1>
       <emu-alg>
         1. Assert: _elements_ is a List of ElementDescriptor Records.
-        1. Let _elementsObjects_ be FromElementDescriptors(_elements_).
+        1. Let _elementsObjects_ be FromElementDescriptors(_elements_, _brand_).
         1. Let _obj_ be ! ObjectCreate(%ObjectPrototype%).
         1. Let _desc_ be PropertyDescriptor{ [[Value]]: `"Descriptor"`, [[Writable]]: *false*, [[Enumerable]]: *false*, [[Configurable]]: *true* }.
         1. Perform ! DefinePropertyOrThrow(_obj_, @@toStringTag, _desc_).
@@ -910,7 +942,7 @@ emu-example pre {
     </emu-clause>
 
     <emu-clause id=sec-to-class-descriptor aoid=ToClassDescriptor>
-      <h1>ToClassDescriptor ( _classDescriptor_ )</h1>
+      <h1>ToClassDescriptor ( _classDescriptor_, _brand_, _internalElements_ )</h1>
       <emu-alg>
         1. Let _kind_ be ? ToString(? Get(_classDescriptor_, `"kind"`).
         1. If _kind_ is not `"class"`, throw a *TypeError* exception.
@@ -928,7 +960,7 @@ emu-example pre {
         1. If _finisher_ is not *undefined*,
           1. If IsCallable(_finisher_) is *false*, throw a *TypeError* exception.
         1. Let _elementsObject_ be ? Get(_classDescriptor_, `"elements"`).
-        1. Let _elements_ be ? ToElementDescriptors(_elementsObject_).
+        1. Let _elements_ be ? ToElementDescriptors(_elementsObject_, _brand_, _internalElements_).
         1. Return the Record { [[Elements]]: _elements_, [[Finisher]]: _finisher_ }.
       </emu-alg>
     </emu-clause>
