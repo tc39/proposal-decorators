@@ -136,6 +136,18 @@ emu-example pre {
         `export` `default` [lookahead &lt;! {`function`, `async` [no |LineTerminator| here] `function`, `class`, <ins>`@`</ins>}] AssignmentExpression[+In, ~Yield, ~Await] `;`
     </emu-grammar>
   </emu-clause>
+
+  <emu-clause id="sec-syntax-early-errors">
+    <h1>Static Semantics: Early Errors</h1>
+    <emu-grammar>
+        DecoratorList[?Yield, ?Await]? MethodDefinition[?Yield, ?Await]
+    </emu-grammar>
+    <ul>
+      <li>
+        It is a Syntax Error if |DecoratorList| is present and PropName of |MethodDefinition| is `"constructor"`.
+      </li>
+    </ul>
+  </emu-clause>
 </emu-clause>
 
 <emu-clause id="sec-new-ecmascript-specification-types">
