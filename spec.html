@@ -416,11 +416,11 @@ emu-example pre {
           1. If IsDataDescriptor(_element_.[[Descriptor]]) is *true* or IsDataDescriptor(_other_.[[Descriptor]]) is *true*, then
             1. Assert: _element_.[[Key]] is not a Private Name.
             1. Assert: _element_.[[Descriptor]].[[Configurable]] is *true*, and _other_.[[Descriptor]].[[Configurable]] is *true*.
-            1. If _element_.[[Decorators]] is present or _other_.[[Decorators]] is present, throw a *ReferenceError* exception.
+            1. If _element_.[[Decorators]] is present or _other_.[[Decorators]] is present, throw a *TypeError* exception.
             1. Set _other_.[[Descriptor]] to _element_.[[Descriptor]].
           1. Else,
             1. If _element_.[[Decorators]] is present,
-              1. If _other_.[[Decorators]] is present, throw a *ReferenceError* exception.
+              1. If _other_.[[Decorators]] is present, throw a *TypeError* exception.
               1. Set _other_.[[Decorators]] to _element_.[[Decorators]].
             1. Perform ! CoalesceGetterSetter(_element_, _other_).
         1. Otherwise, append _element_ to _newElements_.
@@ -885,6 +885,7 @@ emu-example pre {
         1. If _kind_ is `"field"`,
           1. If _descriptor_ has a [[Get]], [[Set]] or [[Value]] field, throw a *TypeError* exception.
         1. Let _initializer_ be ? Get(_elementObject_, `"initializer"`).
+        1. If _initializer_ is not *undefined* and IsCallable(_initializer_) is *false*, throw a *TypeError*.
         1. If _kind_ is `"initializer"`,
           1. If _initializer_ is *undefined*, throw a *TypeError* exception
         1. If _kind_ is `"method"`,
