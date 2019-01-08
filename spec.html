@@ -459,8 +459,8 @@ emu-example pre {
     1. Assert: _proto_ is ! Get(_F_, `"prototype"`).
     1. Let _elements_ be the value of _F_'s [[Elements]] internal slot.
     1. For each item _element_ in order from _elements_,
-      1. Assert: If _element_.[[Placement]] is `"prototype"` <del>or `"static"`</del>, then _element_.[[Key]] is not a Private Name.
-      1. If _element_.[[Kind]] is `"method"`,
+      1. Assert: If _element_.[[Placement]] is `"prototype"` <del>or `"static"`, and if _element_.[[Kind]] is not `"initializer"`</del>, then _element_.[[Key]] is not a Private Name.
+      1. If _element_.[[Kind]] is `"method"` <ins>and _element_.[[Placement]] is `"static"` or `"prototype"`</ins>,
         1. Let _receiver_ be _F_ if _element_.[[Placement]] is `"static"`, else let _receiver_ be _proto_.
         1. Perform ? DefineClassElement(_receiver_, _element_).
     1. For each item _element_ in order from _elements_,
@@ -509,7 +509,7 @@ emu-example pre {
         <h1>PrivateNameObject ( _name_ )</h1>
         <p>When PrivateNameObject is called with Private Name _name_, the following steps are taken:</p>
         <emu-alg>
-          1. Let _O_ be ? ObjectCreate(%PrivateNamePrototype%, &laquo; [[PrivateName]] &raquo;).
+          1. Let _O_ be ? ObjectCreate(%PrivateNamePrototype%, &laquo; [[PrivateNameData]] &raquo;).
           1. Set _O_.[[PrivateNameData]] to _name_.
           1. Perform ! SetIntegrityLevel(_O_, `"frozen"`).
           1. Return _O_.
@@ -722,13 +722,14 @@ emu-example pre {
       <emu-alg>
         1. Let _extras_ be a new empty List.
         1. Let _finishers_ be a new empty List.
-        1. For each _decorator_ in _element_.[[Decorators]], in reverse list order do
+        1. If _element_ has a [[Decorators]] field, then for each _decorator_ in _element_.[[Decorators]], in reverse list order do
           1. If _element_.[[Kind]] is `"initializer"`, throw a TypeError.
           1. Perform RemoveElementPlacement(_element_, _placements_).
           1. Let _elementObject_ be ? FromElementDescriptor(_element_).
           1. Let _elementFinisherExtrasObject_ be ? Call(_decorator_, *undefined*, « _elementObject_ »).
           1. If _elementFinisherExtrasObject_ is *undefined*, 
             1. Let _elementFinisherExtrasObject_ be _elementObject_.
+          1. Otherwise, set _elementFinisherExtrasObject_ to ? ToObject(_elementFinisherExtrasObject_).
           1. Let _elementFinisherExtras_ be ? ToElementFinisherExtras(_elementFinisherExtrasObject_).
           1. Let _element_ be _elementFinisherExtras_.[[Element]].
           1. Perform ? AddElementPlacement(_element_, _placements_).
@@ -754,6 +755,7 @@ emu-example pre {
           1. Let _obj_ be FromClassDescriptor(_publicElements_).
           1. Let _result_ be ? Call(_decorator_, *undefined*, « _obj_ »).
           1. If _result_ is *undefined*, let _result_ be _obj_.
+          1. Otherwise, set _result_ to ? ToObject(_result_).
           1. Let _elementsAndFinisher_ be ? ToClassDescriptor(_result_).
           1. If _elementsAndFinisher_.[[Finisher]] is not *undefined*,
             1. Append _elementsAndFinisher_.[[Finisher]] to _finishers_.
@@ -772,6 +774,7 @@ emu-example pre {
     <emu-clause id=sec-add-element-placement aoid=AddElementPlacement>
       <h1>AddElementPlacement (_element_, _placements_ [, _silent_])</h1>
       <emu-alg>
+          1. If _element_ does not have a [[Key]] field, return.
           1. If _element_.[[Placement]] is `"own"`, then
             1. Let _keys_ be _placements_.[[OwnKeys]].
           1. Else if _element_.[[Placement]] is `"static"`, then
@@ -788,6 +791,7 @@ emu-example pre {
     <emu-clause id=sec-remove-element-placement aoid=RemoveElementPlacement>
       <h1>RemoveElementPlacement (_element_, _placements_)</h1>
       <emu-alg>
+          1. If _element_ does not have a [[Key]] field, return.
           1. If _element_.[[Placement]] is `"own"`, then
             1. Let _keys_ be _placements_.[[OwnKeys]].
           1. Else if _element_.[[Placement]] is `"static"`, then
@@ -840,15 +844,18 @@ emu-example pre {
         1. Assert: _elementObject_ is an ECMAScript language value.
         1. If _elementObjects_ is *undefined*, return *undefined*.
         1. Let _elements_ be a new empty List.
-        1. Let _elementObjectsList_ be ? IterableToList(_elementObjects_).
-        1. For each _elementObject_ in _elementObjectsList_, do
+        1. Let _iteratorRecord_ be ? GetIterator(_elementObjects_).
+        1. Repeat,
+          1. Let _next_ be ? IteratorStep(_iteratorRecord_).
+          1. If _next_ is false, return _elements_.
+          1. Let _elementsObject_ be ? ToObject(? IteratorValue(_next_)).
           1. Let _element_ be ? ToElementDescriptor(_elementObject_).
           1. Let _finisher_ be ? Get(_elementObject_, `"finisher"`).
           1. If _finisher_ is not *undefined*, throw a *TypeError* exception.
           1. Let _extras_ be ? Get(_elementObject_, `"extras"`).
           1. If _extras_ is not *undefined*, throw a *TypeError* exception.
           1. Append _element_ to _elements_.
-        1. Return _elements_.
+        1. If the above steps contained an abrupt completion _status_ outside of IteratorStep, return ? IteratorClose(iteratorRecord, status).
       </emu-alg>
     </emu-clause>
 
@@ -856,13 +863,13 @@ emu-example pre {
       <h1>ToElementDescriptor ( _elementObject_ )</h1>
       <p>With parameter _elementObject_, returns an ElementDescriptor.</p>
       <emu-alg>
-        1. Assert: _elementObject_ is an ECMAScript language value.
+        1. Assert: Type(_elementObject_) is Object.
         1. Let _kind_ be ? ToString(? Get(_elementObject_, `"kind"`)).
         1. If _kind_ is not one of `"initializer"`, `"method"`, or `"field"`, throw a *TypeError* exception.
         1. Let _key_ be ? Get(_elementObject_, `"key"`).
         1. If _kind_ is `"initializer"`,
           1. If _key_ is not *undefined*, throw a *TypeError* exception.
-        1. If _key_ has a [[PrivateName]] internal slot, set _key_ to _key_.[[PrivateName]].
+        1. If _key_ has a [[PrivateNameData]] internal slot, set _key_ to _key_.[[PrivateNameData]].
         1. Otherwise, set _key_ to ? ToPropertyKey(_key_).
         1. Let _placement_ be ? ToString(? Get(_elementObject_, `"placement"`)).
         1. If _placement_ is not one of `"static"`, `"prototype"`, or `"own"`, throw a *TypeError* exception.
@@ -872,11 +879,11 @@ emu-example pre {
         1. Otherwise,
           1. Set _descriptor_ to ? ToPropertyDescriptor(_descriptor_).
         1. If _key_ is a Private Name,
-          1. If _descriptor_.[[Enumerable]] is *true*, throw a *TypeError* exception.
-          1. If _descriptor_.[[Configurable]] is *true*, throw a *TypeError* exception.
+          1. If _descriptor_ has an [[Enumerable]] field and _descriptor_.[[Enumerable]] is *true*, throw a *TypeError* exception.
+          1. If _descriptor_ has an [[Configurable]] field and _descriptor_.[[Configurable]] is *true*, throw a *TypeError* exception.
           1. If _placement_ is `"prototype"`, throw a *TypeError* exception.
         1. If _kind_ is `"field"`,
-          1. If _descriptor_ has a [[Get]], [[Set]] or [[Value]] internal slot, throw a *TypeError* exception.
+          1. If _descriptor_ has a [[Get]], [[Set]] or [[Value]] field, throw a *TypeError* exception.
         1. Let _initializer_ be ? Get(_elementObject_, `"initializer"`).
         1. If _kind_ is `"initializer"`,
           1. If _initializer_ is *undefined*, throw a *TypeError* exception
@@ -898,6 +905,7 @@ emu-example pre {
       <h1>ToElementFinisherExtras ( _elementObject_ )</h1>
       <p>With parameter _elementObject_, returns a Record containing three values: { [[Element]]: ElementDescriptor, [[Extras]]: an iterable of other Element Descriptors, [[Finisher]]: a Function or *undefined* }.</p>
       <emu-alg>
+        1. Assert: Type(_elementObject_) is Object.
         1. Let _element_ be ? ToElementDescriptor(_elementObject_).
         1. Let _finisher_ be ? Get(_elementObject_, `"finisher"`).
         1. If IsCallable(_finisher_) is *false* and _finisher_ is not *undefined*, throw a *TypeError* exception.
@@ -939,7 +947,7 @@ emu-example pre {
         1. Let _finisher_ be ? Get(_classDescriptor_, `"finisher"`).
         1. If _finisher_ is not *undefined*,
           1. If IsCallable(_finisher_) is *false*, throw a *TypeError* exception.
-        1. Let _elementsObject_ be ? Get(_classDescriptor_, `"elements"`).
+        1. Let _elementsObject_ be ? ToObject(? Get(_classDescriptor_, `"elements"`)).
         1. Let _elements_ be ? ToElementDescriptors(_elementsObject_).
         1. Return the Record { [[Elements]]: _elements_, [[Finisher]]: _finisher_ }.
       </emu-alg>
