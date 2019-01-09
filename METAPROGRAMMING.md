@@ -29,7 +29,9 @@ The public field `x` above would be represented as the following class element d
   key: "x",
   placement: "own",
   // property descriptor for Object.defineProperty
-  descriptor: { configurable: false, enumerable: true, writable: true },
+  configurable: false,
+  enumerable: true,
+  writable: true,
   initializer: () => 1
 }
 ```
@@ -72,7 +74,7 @@ A class element descriptor with the following properties:
   kind: "field"
   key: String, Symbol or Private Name,
   placement: "static", "prototype" or "own",
-  descriptor: Property Descriptor (argument to Object.defineProperty),
+  ...Property Descriptor (argument to Object.defineProperty),
   initializer: A method used to set the initial state of the field
 }
 ```
@@ -101,7 +103,7 @@ A class element descriptor with the following properties:
   kind: "method"
   key: String, Symbol or Private Name,
   placement: "static", "prototype" or "own",
-  descriptor: Property Descriptor (argument to Object.defineProperty),
+  ...Property Descriptor (argument to Object.defineProperty),
 }
 ```
 
@@ -189,11 +191,10 @@ function bound(elementDescriptor) {
   // Return both the original method and a bound function field that calls the method.
   // (That way the original method will still exist on the prototype, avoiding
   // confusing side-effects.)
-  let boundFieldDescriptor = { ...descriptor, value: undefined }
   return {
     ...elementDescriptor,
     extras: [
-      { kind: "field", key, placement: "own", descriptor: boundFieldDescriptor, initializer }
+      { kind: "field", key, placement: "own", ...descriptor, value: undefined, initializer }
     ]
   }
 }
@@ -206,22 +207,19 @@ function observed({kind, key, placement, descriptor, initializer}) {
   assert(placement == "own");
   // Create a new anonymous private name as a key for a class element
   let storage = PrivateName();
-  let underlyingDescriptor = { enumerable: false, configurable: false, writable: true };
-  let underlying = { kind, key: storage, placement, descriptor: underlyingDescriptor, initializer };
+  let underlying = { kind, key: storage, placement, writable: true, initializer };
   return {
     kind: "method",
     key,
     placement,
-    descriptor: {
-      get() { return storage.get(this); },
-      set(value) {
-        storage.set(this, value);
-        // Assume the @bound decorator was used on render
-        window.requestAnimationFrame(this.render);
-      },
-      enumerable: descriptor.enumerable,
-      configurable: descriptor.configurable
+    get() { return storage.get(this); },
+    set(value) {
+      storage.set(this, value);
+      // Assume the @bound decorator was used on render
+      window.requestAnimationFrame(this.render);
     },
+    enumerable: descriptor.enumerable,
+    configurable: descriptor.configurable
     extras: [underlying]
   };
 }

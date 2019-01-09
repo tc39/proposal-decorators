@@ -27,12 +27,10 @@ Decorator reification (from the existing decorator proposal):
   kind: "method",
   key: "foo",
   placement: "static",
-  descriptor: {
-    value: function foo() {},
-    writable: true,
-    enumerable: false,
-    configurable: true
-  }
+  value: function foo() {},
+  writable: true,
+  enumerable: false,
+  configurable: true
 }
 ```
 
@@ -57,11 +55,9 @@ Decorator reification
   kind: "field",
   key: "foo",
   placement: "static",
-  descriptor: {
-    writable: true,
-    enumerable: true,
-    configurable: true
-  },
+  writable: true,
+  enumerable: true,
+  configurable: true
   initializer: () => bar
 }
 ```
@@ -88,12 +84,10 @@ Decorator reification (from the existing decorator proposal):
   kind: "method",
   key: "foo",
   placement: "static",
-  descriptor: {
-    get: function foo() {},
-    set: function foo(value) {},
-    enumerable: false,
-    configurable: true
-  }
+  get: function foo() {},
+  set: function foo(value) {},
+  enumerable: false,
+  configurable: true
 }
 ```
 
@@ -120,12 +114,10 @@ Decorator reification (from the existing decorator proposal):
   kind: "method",
   key: "foo",
   placement: "prototype",
-  descriptor: {
-    value: function foo() {},
-    writable: true,
-    enumerable: false,
-    configurable: true
-  }
+  value: function foo() {},
+  writable: true,
+  enumerable: false,
+  configurable: true
 }
 ```
 
@@ -150,11 +142,9 @@ Decorator reification
   kind: "field",
   key: "foo",
   placement: "own",
-  descriptor: {
-    writable: true,
-    enumerable: true,
-    configurable: true
-  },
+  writable: true,
+  enumerable: true,
+  configurable: true
   initializer: () => bar
 }
 ```
@@ -181,12 +171,10 @@ Decorator reification (from the existing decorator proposal):
   kind: "method",
   key: "foo",
   placement: "prototype",
-  descriptor: {
-    get: function foo() {},
-    set: function foo(value) {},
-    enumerable: false,
-    configurable: true
-  }
+  get: function foo() {},
+  set: function foo(value) {},
+  enumerable: false,
+  configurable: true
 }
 ```
 
@@ -217,12 +205,10 @@ Decorator reification:
   kind: "method",
   key: decorators.PrivateName("foo"),
   placement: "static",
-  descriptor: {
-    value: function foo() {},
-    writable: false,
-    enumerable: false,
-    configurable: false
-  }
+  value: function foo() {},
+  writable: false,
+  enumerable: false,
+  configurable: false
 }
 ```
 
@@ -245,11 +231,9 @@ Decorator reification
   kind: "field",
   key: decorators.PrivateName("foo"),
   placement: "static",
-  descriptor: {
-    writable: false,
-    enumerable: false,
-    configurable: false
-  },
+  writable: false,
+  enumerable: false,
+  configurable: false
   initializer: () => bar
 }
 ```
@@ -274,12 +258,10 @@ Decorator reification:
   kind: "method",
   key: decorators.PrivateName("foo"),
   placement: "static",
-  descriptor: {
-    get: function foo() {},
-    set: function foo(value) {},
-    enumerable: false,
-    configurable: false
-  }
+  get: function foo() {},
+  set: function foo(value) {},
+  enumerable: false,
+  configurable: false
 }
 ```
 
@@ -304,12 +286,10 @@ Decorator reification:
   kind: "method",
   key: decorators.PrivateName("foo"),
   placement: "own",
-  descriptor: {
-    value: function foo() {},
-    writable: true,
-    enumerable: false,
-    configurable: false
-  }
+  value: function foo() {},
+  writable: true,
+  enumerable: false,
+  configurable: false
 }
 ```
 
@@ -334,11 +314,9 @@ Decorator reification:
   kind: "field",
   key: decorators.PrivateName("foo"),
   placement: "own",
-  descriptor: {
-    writable: true,
-    enumerable: false,
-    configurable: false
-  },
+  writable: true,
+  enumerable: false,
+  configurable: false
   initializer: () => bar
 }
 ```
@@ -363,12 +341,10 @@ Decorator reification:
   kind: "method",
   key: decorators.PrivateName("foo"),
   placement: "own",
-  descriptor: {
-    get: function foo() {},
-    set: function foo(value) {},
-    enumerable: false,
-    configurable: false
-  }
+  get: function foo() {},
+  set: function foo(value) {},
+  enumerable: false,
+  configurable: false
 }
 ```
 
