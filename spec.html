@@ -274,7 +274,7 @@ emu-example pre {
       1. If |ClassBody_opt| is not present, let <del>_methods_</del><ins>_elements_</ins> be a new empty List.
       1. Else, let <del>_methods_</del><ins>_definitions_</ins> be <del>NonConstructorMethodDefinitions</del><ins>NonConstructorElementDefinitions</ins> of |ClassBody|. <ins>NOTE: Simply renaming this internal algorithm will be enough; it includes fields.</ins>
       1. <ins>Let _elements_ be a new empty List.</ins>
-      1. For each |ClassElement| <del>_m_</del><ins>_d_</ins> in order from <del>_methods_</del><ins>_definitions_</del>,
+      1. For each |ClassElement| <del>_m_</del><ins>_d_</ins> in order from <del>_methods_</del><ins>_definitions_</ins>,
         1. <del>If IsStatic of _m_ is *false*, then</del>
           1. <del>Let _status_ be the result of performing PropertyDefinitionEvaluation for _m_ with arguments _proto_ and *false*.</del>
         1. <del>Else,</del>
