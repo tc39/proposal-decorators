@@ -81,12 +81,10 @@ export function inherit(descriptor) {
     kind: "method",
     key,
     placement,
-    descriptor: {
-      get() { return superKey.get(this); },
-      set(value) { set.set(this, value); },
-      configurable: false,
-      enumerable: false,
-    },
+    get() { return superKey.get(this); },
+    set(value) { set.set(this, value); },
+    configurable: false,
+    enumerable: false,
     finisher(klass) {
       superKey = exposeMap.get(klass, keyString);
       if (typeof superKey === undefined) {
@@ -211,25 +209,21 @@ export function abstract(descriptor) {
     key,
     kind: "method",
     placement: "own",
-    descriptor: {
-      get() {
-        return internalKey.get(this);
-      }
-      enumerable: false,
-      configurable: false,
+    get() {
+      return internalKey.get(this);
     }
-    finisher(klass) { abstractMap.set(klass, key.description, internalKey); }
+    enumerable: false,
+    configurable: false,
+    finisher(klass) { abstractMap.set(klass, key.description, internalKey); },
     extras: [
       {
         key: internalKey,
         kind: "method",
         placement: "own",
-        descriptor: {
-          value: isPure ? emptySentinel : value,
-          writable: true,
-          configurable: false,
-          enumerable: false,
-        }
+        value: isPure ? emptySentinel : value,
+        writable: true,
+        configurable: false,
+        enumerable: false,
       }
     ]
   }
@@ -252,14 +246,12 @@ export function override(descriptor) {
     kind: "method",
     key,
     placement,
-    descriptor: {
-      // All reads of the method read the underlying shared internal
-      // private name. This means that if the subclass is subclassed
-      // again, then it will still act as virtual.
-      get() { return get(internalKey, this); },
-      configurable: false,
-      enumerable: false,
-    },
+    // All reads of the method read the underlying shared internal
+    // private name. This means that if the subclass is subclassed
+    // again, then it will still act as virtual.
+    get() { return get(internalKey, this); },
+    configurable: false,
+    enumerable: false,
     finisher(klass) {
       internalKey = privateNameMap.get(klass, keyString);
       if (typeof internalKey === undefined) {
@@ -276,11 +268,9 @@ export function override(descriptor) {
         initializer() {
           set(internalKey, this, body);
         }
-        descriptor: {
-          writable: true,
-          configurable: false,
-          enumerable: false,
-        }
+        writable: true,
+        configurable: false,
+        enumerable: false,
       }
     ]
   };

@@ -635,7 +635,7 @@ emu-example pre {
           kind: "method", "initializer", or "field"
           key: String, Symbol or Private Name,
           placement: "static", "prototype", or "own"
-          descriptor: PropertyDescriptor,
+          ...PropertyDescriptor,
           initializer?: Function
           extras?: ElementDescriptor[]
           finisher?: (klass): undefined or constructor;
@@ -817,7 +817,10 @@ emu-example pre {
       <h1>FromElementDescriptor ( _element_ )</h1>
       <emu-alg>
         1. Assert: _element_ is an ElementDescriptor Record.
-        1. Let _obj_ be ! ObjectCreate(%ObjectPrototype%).
+        1. If _element_.[[Kind]] is `"method"` or `"field"`,
+          1. Let _obj_ be ! FromPropertyDescriptor(_element_.[[Descriptor]])).
+        1. Otherwise,
+          1. Let _obj_ be ! ObjectCreate(%ObjectPrototype%).
         1. Let _desc_ be PropertyDescriptor{ [[Value]]: `"Descriptor"`, [[Writable]]: *false*, [[Enumerable]]: *false*, [[Configurable]]: *true* }.
         1. Perform ! DefinePropertyOrThrow(_obj_, @@toStringTag, _desc_).
         1. Perform ! CreateDataPropertyOrThrow(_obj_, `"kind"`, _element_.[[Kind]]).
@@ -826,8 +829,6 @@ emu-example pre {
           1. If _key_ is a Private Name, set _key_ to ? PrivateNameObject(_key_).
           1. Perform ! CreateDataPropertyOrThrow(_obj_, `"key"`, _key_).
         1. Perform ! CreateDataPropertyOrThrow(_obj_, `"placement"`, _element_.[[Placement]]).
-        1. If _element_.[[Kind]] is `"method"` or `"field"`,
-          1. Perform ! CreateDataPropertyOrThrow(_obj_, `"descriptor"`, ! FromPropertyDescriptor(_element_.[[Descriptor]])).
         1. If _element_.[[Kind]] is `"field"` or `"initializer"`,
           1. Let _initializer_ be _element_.[[Initializer]].
           1. If _initializer_ is ~empty~, set _initializer_ to *undefined*.
@@ -871,11 +872,7 @@ emu-example pre {
         1. Otherwise, set _key_ to ? ToPropertyKey(_key_).
         1. Let _placement_ be ? ToString(? Get(_elementObject_, `"placement"`)).
         1. If _placement_ is not one of `"static"`, `"prototype"`, or `"own"`, throw a *TypeError* exception.
-        1. Let _descriptor_ be ? Get(_elementObject_, `"descriptor"`)
-        1. If _kind_ is `"initializer"`,
-          1. If _descriptor_ is not *undefined*, throw a *TypeError* exception.
-        1. Otherwise,
-          1. Set _descriptor_ to ? ToPropertyDescriptor(_descriptor_).
+        1. Let _descriptor_ be ? ToPropertyDescriptor(_elementObject_)
         1. If _key_ is a Private Name,
           1. If _descriptor_ has an [[Enumerable]] field and _descriptor_.[[Enumerable]] is *true*, throw a *TypeError* exception.
           1. If _descriptor_ has an [[Configurable]] field and _descriptor_.[[Configurable]] is *true*, throw a *TypeError* exception.
@@ -937,8 +934,8 @@ emu-example pre {
         1. If _key_ is not *undefined*, throw a *TypeError* exception.
         1. Let _placement_ be ? Get(_classDescriptor_, `"placement"`).
         1. If _placement_ is not *undefined*, throw a *TypeError* exception.
-        1. Let _descriptor_ be ? Get(_classDescriptor_, `"descriptor"`).
-        1. If _descriptor_ is not *undefined*, throw a *TypeError* exception.
+        1. Let _descriptor_ be ? ToPropertyDescriptor(_classDescriptor_).
+        1. If _descriptor_ has any fields, throw a *TypeError* exception.
         1. Let _initializer_ be ? Get(_classDescriptor_, `"initializer"`).
         1. If _initializer_ is not *undefined*, throw a *TypeError* exception.
         1. Let _extras_ be ? Get(_classDescriptor_, `"extras"`).
