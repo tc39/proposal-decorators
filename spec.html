@@ -171,7 +171,7 @@ emu-example pre {
             <tr> <th>Field Name</th>      <th>Value</th>                                                          </tr>
           </thead>
           <tbody>
-            <tr> <td>[[Kind]]</td>        <td>One of `"method"`, `"field"` or `"hook"`</td>                        </tr>
+            <tr> <td>[[Kind]]</td>        <td>One of `"method"`, `"accessor"`, `"field"` or `"hook"`</td>          </tr>
             <tr> <td>[[Key]]</td>         <td>A Property Key or %PrivateName% object</td>                          </tr>
             <tr> <td>[[Descriptor]]</td>  <td>A Property Descriptor</td>                                           </tr>
             <tr> <td>[[Placement]]</td>   <td>One of `"static"`, `"prototype"`, or `"own"`</td>                    </tr>
@@ -187,7 +187,7 @@ emu-example pre {
       <p>
         In addition, given an ElementDescriptor _element_, the following conditions are always respected:
         <ul>
-          <li>If _element_.[[Kind]] is `"method"`, then
+          <li>If _element_.[[Kind]] is `"method"` or `"accessor"`, then
             <ul>
               <li>_element_.[[Initializer]] is absent.</li>
               <li>_element_.[[Start]] is absent.</li>
@@ -225,6 +225,18 @@ emu-example pre {
               <li>At least one of _element_.[[Start]], _element_.[[Replace]], and _element_.[[Finish]] is present.</li>
               <li>_element_.[[Replace]] and _element_.[[Finish]] are not both present.</li>
               <li>_element_.[[Decorators]] is absent.</li>
+            </ul>
+          </li>
+          <li>
+            If _element_.[[Kind]] is `"method"`, then
+            <ul>
+              <li>IsDataDescriptor(_element_.[[Descriptor]]) is *true*.</li>
+            </ul>
+          </li>
+          <li>
+            If _element_.[[Kind]] is `"accessor"`, then
+            <ul>
+              <li>IsAccessorDescriptor(_element_.[[Descriptor]]) is *true*.</li>
             </ul>
           </li>
         </ul>
@@ -429,7 +441,7 @@ emu-example pre {
       1. Assert: _elements_ is a List of ElementDescriptor Records.
       1. Let _newElements_ be an empty List.
       1. For _element_ in _elements_,
-        1. If _element_.[[Kind]] is `"method"` and _newElements_ contains a Record _other_ where _other_.[[Kind]] is `"method"`, _other_.[[Key]] is _element_.[[Key]], and _other_.[[Placement]] is _element_.[[Placement]],
+        1. If _element_.[[Kind]] is `"method"` or `"accessor"`, and _newElements_ contains a Record _other_ where _other_.[[Kind]] is `"method"` or `"accessor"`, _other_.[[Key]] is _element_.[[Key]], and _other_.[[Placement]] is _element_.[[Placement]],
           1. If IsDataDescriptor(_element_.[[Descriptor]]) is *true* or IsDataDescriptor(_other_.[[Descriptor]]) is *true*, then
             1. Assert: _element_.[[Key]] is not a Private Name.
             1. Assert: _element_.[[Descriptor]].[[Configurable]] is *true*, and _other_.[[Descriptor]].[[Configurable]] is *true*.
@@ -454,7 +466,7 @@ emu-example pre {
     1. Assert: Assert _constructor_ is an ECMAScript function object.
     1. Let _elements_ be the value of _F_'s [[Elements]] internal slot.
     1. For each item _element_ in order from _elements_,
-      1. If _element_.[[Placement]] is `"own"` and _element_.[[Kind]] is `"method"`,
+      1. If _element_.[[Placement]] is `"own"` and _element_.[[Kind]] is `"method"` or `"accessor"`,
         1. Perform ? DefineClassElement(_O_, _element_).
     1. For each item _element_ in order from _elements_,
       1. If _element_.[[Placement]] is `"own"` and _element_.[[Kind]] is `"field"`,
@@ -477,7 +489,7 @@ emu-example pre {
     1. Let _elements_ be the value of _F_'s [[Elements]] internal slot.
     1. For each item _element_ in order from _elements_,
       1. Assert: If _element_.[[Placement]] is `"prototype"` <del>or `"static"`, and if _element_.[[Kind]] is not `"hook"`</del>, then _element_.[[Key]] is not a Private Name.
-      1. If _element_.[[Kind]] is `"method"` <ins>and _element_.[[Placement]] is `"static"` or `"prototype"`</ins>,
+      1. If _element_.[[Kind]] is `"method"` or `"accessor"` <ins>and _element_.[[Placement]] is `"static"` or `"prototype"`</ins>,
         1. Let _receiver_ be _F_ if _element_.[[Placement]] is `"static"`, else let _receiver_ be _proto_.
         1. Perform ? DefineClassElement(_receiver_, _element_).
     1. For each item _element_ in order from _elements_,
@@ -654,13 +666,13 @@ emu-example pre {
   <h1>Decorator semantics</h1>
   <emu-clause id=sec-decorator-functions>
     <h1>Decorator Functions</h1>
-    <p>A <dfn>decorator function</dfn> is a function that takes and returns either a element descriptor or a class descriptor. The body of a decorator function modifies and returns the descriptor it receives to change the semantics of the decorated entity. Descriptor types can be differentiated by their `kind` property, which is either `"method"`, `"field"` or `"class"`. Descriptors also have a @@toStringTag property which has the value `"Descriptor"`; this property helps differentiate them from other objects.</p>
+    <p>A <dfn>decorator function</dfn> is a function that takes and returns either a element descriptor or a class descriptor. The body of a decorator function modifies and returns the descriptor it receives to change the semantics of the decorated entity. Descriptor types can be differentiated by their `kind` property, which is either `"method"`, `"accessor"`, `"field"`, or `"class"`. Descriptors also have a @@toStringTag property which has the value `"Descriptor"`; this property helps differentiate them from other objects.</p>
     <emu-clause id=sec-decorator-functions-element-descriptor>
       <h1>Element Descriptors</h1>
       <p>An <dfn>element descriptor</dfn> describes an element of a class or object literal and has the following shape:</p>
       <pre><code class=typescript>
         interface ElementDescriptor {
-          kind: "method", "hook", or "field"
+          kind: "method", "accessor", "hook", or "field"
           key: String, Symbol or Private Name,
           placement: "static", "prototype", or "own"
           ...PropertyDescriptor,
@@ -826,14 +838,14 @@ emu-example pre {
       <h1>FromElementDescriptor ( _element_ )</h1>
       <emu-alg>
         1. Assert: _element_ is an ElementDescriptor Record.
-        1. If _element_.[[Kind]] is `"method"` or `"field"`,
+        1. If _element_.[[Kind]] is `"method"`, `"accessor"`, or `"field"`,
           1. Let _obj_ be ! FromPropertyDescriptor(_element_.[[Descriptor]])).
         1. Otherwise,
           1. Let _obj_ be ! ObjectCreate(%ObjectPrototype%).
         1. Let _desc_ be PropertyDescriptor{ [[Value]]: `"Descriptor"`, [[Writable]]: *false*, [[Enumerable]]: *false*, [[Configurable]]: *true* }.
         1. Perform ! DefinePropertyOrThrow(_obj_, @@toStringTag, _desc_).
         1. Perform ! CreateDataPropertyOrThrow(_obj_, `"kind"`, _element_.[[Kind]]).
-        1. If _element_.[[Kind]] is `"method"` or `"field"`,
+        1. If _element_.[[Kind]] is `"method"`, `"accessor"`, or `"field"`,
           1. Let _key_ be _element_.[[Key]].
           1. If _key_ is a Private Name, set _key_ to ? PrivateNameObject(_key_).
           1. Perform ! CreateDataPropertyOrThrow(_obj_, `"key"`, _key_).
@@ -875,7 +887,7 @@ emu-example pre {
       <emu-alg>
         1. Assert: Type(_elementObject_) is Object.
         1. Let _kind_ be ? ToString(? Get(_elementObject_, `"kind"`)).
-        1. If _kind_ is not one of `"hook"`, `"method"`, or `"field"`, throw a *TypeError* exception.
+        1. If _kind_ is not one of `"hook"`, `"method"`, `"accessor"` or `"field"`, throw a *TypeError* exception.
         1. Let _key_ be ? Get(_elementObject_, `"key"`).
         1. If _kind_ is `"hook"`,
           1. If _key_ is not *undefined*, throw a *TypeError* exception.
@@ -888,8 +900,9 @@ emu-example pre {
           1. If _descriptor_ has an [[Enumerable]] field and _descriptor_.[[Enumerable]] is *true*, throw a *TypeError* exception.
           1. If _descriptor_ has an [[Configurable]] field and _descriptor_.[[Configurable]] is *true*, throw a *TypeError* exception.
           1. If _placement_ is `"prototype"`, throw a *TypeError* exception.
-        1. If _kind_ is `"field"`,
-          1. If _descriptor_ has a [[Get]], [[Set]] or [[Value]] field, throw a *TypeError* exception.
+        1. If _kind_ is `"accessor"` or `"hook"` and IsDataDescriptor(_descriptor_) is *true*, throw a *TypeError* exception.
+        1. If _kind_ is `"field"`, `"method"` or `"hook"`, and IsAccessorDescriptor(_descriptor_) is *true*, throw a *TypeError* exception.
+        1. If _kind_ is `"field"` and _descriptor_ has a [[Value]] field, throw a *TypeError* exception.
         1. Let _initialize_ be ? Get(_elementObject_, `"initialize"`).
         1. If _initialize_ is not *undefined* and IsCallable(_initialize_) is *false*, throw a *TypeError*.
         1. If _kind_ is not `"field"`,
@@ -912,7 +925,7 @@ emu-example pre {
         1. Let _elements_ be ? Get(_elementObject_, `"elements"`).
         1. If _elements_ is not *undefined*, throw a *TypeError* exception.
         1. Let _element_ be the ElementDescriptor { [[Kind]]: _kind_, [[Placement]]: _placement_ }.
-        1. If _kind_ is `"method"` or `"field",
+        1. If _kind_ is `"method"`, `"accessor"`, or `"field",
            1. Set _element_.[[Key]] to _key_.
            1. Set _element_.[[Descriptor]] to _descriptor_.
         1. If _kind_ is `"field"`,

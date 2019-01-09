@@ -81,7 +81,7 @@ Decorator reification (from the existing decorator proposal):
 
 ```js
 {
-  kind: "method",
+  kind: "accessor",
   key: "foo",
   placement: "static",
   get: function foo() {},
@@ -168,7 +168,7 @@ Decorator reification (from the existing decorator proposal):
 
 ```js
 {
-  kind: "method",
+  kind: "accessor",
   key: "foo",
   placement: "prototype",
   get: function foo() {},
@@ -255,7 +255,7 @@ Decorator reification:
 
 ```js
 {
-  kind: "method",
+  kind: "accessor",
   key: decorators.PrivateName("foo"),
   placement: "static",
   get: function foo() {},
@@ -338,7 +338,7 @@ Decorator reification:
 
 ```js
 {
-  kind: "method",
+  kind: "accessor",
   key: decorators.PrivateName("foo"),
   placement: "own",
   get: function foo() {},

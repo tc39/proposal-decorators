@@ -78,7 +78,7 @@ export function inherit(descriptor) {
   let superKey;
   let keyString = key.description;
   return {
-    kind: "method",
+    kind: "accessor",
     key,
     placement,
     get() { return superKey.get(this); },
@@ -207,7 +207,7 @@ export function abstract(descriptor) {
 
   return {
     key,
-    kind: "method",
+    kind: "accessor",
     placement: "own",
     get() {
       return internalKey.get(this);
@@ -249,7 +249,7 @@ export function override(descriptor) {
   let internalKey;
   let keyString = key.description;
   return {
-    kind: "method",
+    kind: "accessor",
     key,
     placement,
     // All reads of the method read the underlying shared internal
