@@ -85,7 +85,7 @@ For private fields or accessors, the `key` will be a Private Name--this is simil
 
 A class element descriptor with the following properties (optional properties are indicated with `?`):
 
-`{ kind, key, placement, descriptor, initializer, extras?, finisher? }`
+`{ kind, key, placement, ...descriptor, initializer, extras?, finisher? }`
 
 The optional additional properties:
 
@@ -111,7 +111,7 @@ A class element descriptor with the following properties:
 
 A class element descriptor with the following properties:
 
-`{ kind, key, placement, descriptor, extras?, finisher? }`
+`{ kind, key, placement, ...descriptor, extras?, finisher? }`
 
 ### Class Decorator
 
@@ -182,9 +182,8 @@ function defineElement(tagName) {
 
 // Create a bound version of the method as a field
 function bound(elementDescriptor) {
-  let { kind, key, descriptor } = elementDescriptor;
+  let { kind, key, value, enumerable, configurable, writable } = elementDescriptor;
   assert(kind == "method");
-  let { value } = descriptor
   function initializer() {
     return value.bind(this);
   }
@@ -194,7 +193,7 @@ function bound(elementDescriptor) {
   return {
     ...elementDescriptor,
     extras: [
-      { kind: "field", key, placement: "own", ...descriptor, value: undefined, initializer }
+      { kind: "field", key, placement: "own", enumerable, configurable, writable, value: undefined, initializer }
     ]
   }
 }
@@ -202,7 +201,7 @@ function bound(elementDescriptor) {
 // Whenever a read or write is done to a field, call the render()
 // method afterwards. Implement this by replacing the field with
 // a getter/setter pair.
-function observed({kind, key, placement, descriptor, initializer}) {
+function observed({kind, key, placement, enumerable, configurable, writable, initializer}) {
   assert(kind == "field");
   assert(placement == "own");
   // Create a new anonymous private name as a key for a class element
@@ -218,8 +217,8 @@ function observed({kind, key, placement, descriptor, initializer}) {
       // Assume the @bound decorator was used on render
       window.requestAnimationFrame(this.render);
     },
-    enumerable: descriptor.enumerable,
-    configurable: descriptor.configurable
+    enumerable,
+    configurable,
     extras: [underlying]
   };
 }
