@@ -2,7 +2,7 @@
 | **parameter descriptor**   | **`@decorator`<br/>`class`**             | **`@decorator`<br/>`method()`**             | **`@decorator`<br/>`field`**                                     | **`@decorator`<br/>`get field()`<br/>`set field()`**|
 |----------------------------|------------------------------------------|---------------------------------------------|------------------------------------------------------------------|-----------------------------------------------------|
 |`{`                         |                                          |                                             |                                                                  |                                                     |
-|`  kind:`                   |`"class"`                                 |`"method"`                                   |`"field"`                                                         |`"method"` <sup>4</sup>                              |
+|`  kind:`                   |`"class"`                                 |`"method"`                                   |`"field"`                                                         |`"accessor"` <sup>4</sup>                            |
 |`  elements:`               |*Array of member descriptors* <sup>1</sup>| -                                           | -                                                                | -                                                   |
 |`  key:`                    | -                                        |  *method name*                              |*property name*                                                   |*property name*                                      |
 |`  placement:`              | -                                        |`"prototype" \|\| "static"`                  |`"own" \|\| "static"`                                             |`"prototype" \|\| "static"`                          |
@@ -22,14 +22,14 @@
 
 <sup>3</sup> when `kind` is `field`, don't include the value into the `value` and the value, if it exists, is returned by `initialize` function.
 
-<sup>4</sup> when the decorator is apply over a getter/setter `kind` is `method` and `get` or `set` has value. 
+<sup>4</sup> when the decorator is apply over a getter/setter `kind` is `accessor` and `get` or `set` has value. 
 
 <sup>5</sup> when `get` or `set` has value, the property descriptor doesn't include `writable` value.
 
 | **return descriptor (optional)** | **`class`**                               | **`method()`**                           | **`field`**                                         | **`getter/setter`**                      | **Hooks**                                |
 |----------------------------------|-------------------------------------------|------------------------------------------|-----------------------------------------------------|------------------------------------------|------------------------------------------|
 |`{`                               |                                           |                                          |                                                     |                                          |                                          |
-|`  kind:`                         |`"class"`                                  |`"method"`                                |`"field"`                                            |`"method"`                                |`"hook"` <sup>11</sup>                    |
+|`  kind:`                         |`"class"`                                  |`"method"`                                |`"field"`                                            |`"accessor"`                              |`"hook"` <sup>11</sup>                    |
 |`  elements:`                     |*Array of member descriptors* <sup>6</sup> | -                                        | -                                                   | -                                        | -                                        |
 |`  key:`                          | -                                         |  *method name*    <sup>8</sup>           |*field name* <sup>8</sup>                            |*field name* <sup>8</sup>                 | -                                        |
 |`  placement:`                    | -                                         |`"prototype" \|\| "static" \|\| "own"`    |`"prototype" \|\| "static" \|\| "own"`               |`"prototype" \|\| "static" \|\| "own"`    |`"prototype" \|\| "static" \|\| "own"`    |
