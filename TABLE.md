@@ -26,10 +26,10 @@
 
 <sup>5</sup> when `get` or `set` has value, the property descriptor doesn't include `writable` value.
 
-| **return descriptor (optional)** | **`class`**                               | **`method()`**                           | **`field`**                                         | **`getter/setter`**                      | **Initializers**                         |
+| **return descriptor (optional)** | **`class`**                               | **`method()`**                           | **`field`**                                         | **`getter/setter`**                      | **Hooks**                                |
 |----------------------------------|-------------------------------------------|------------------------------------------|-----------------------------------------------------|------------------------------------------|------------------------------------------|
 |`{`                               |                                           |                                          |                                                     |                                          |                                          |
-|`  kind:`                         |`"class"`                                  |`"method"`                                |`"field"`                                            |`"method"`                                |`"initializer"` <sup>11</sup>             |
+|`  kind:`                         |`"class"`                                  |`"method"`                                |`"field"`                                            |`"method"`                                |`"hook"` <sup>11</sup>                    |
 |`  elements:`                     |*Array of member descriptors* <sup>6</sup> | -                                        | -                                                   | -                                        | -                                        |
 |`  key:`                          | -                                         |  *method name*    <sup>8</sup>           |*field name* <sup>8</sup>                            |*field name* <sup>8</sup>                 | -                                        |
 |`  placement:`                    | -                                         |`"prototype" \|\| "static" \|\| "own"`    |`"prototype" \|\| "static" \|\| "own"`               |`"prototype" \|\| "static" \|\| "own"`    |`"prototype" \|\| "static" \|\| "own"`    |
@@ -56,6 +56,6 @@
 
 <sup>10</sup> `finisher` function is a callback that is called at the end of class creation. It's optional.
 
-<sup>11</sup> `kind: "initializer"` don't create new members. You can use the `initializer` field to include a callback to be used purely for perform a side effect. Do not confuse with the `initializer` property used to set the initial value to a field. 
+<sup>11</sup> `kind: "hook"` doesn't create new members. You can use the `initializer` field to include a callback to be used purely for perform a side effect. Do not confuse with the `initializer` property used to set the initial value to a field. 
 
 **Note**: you can replace a field decorator with a method descriptor, or a getter, or vice-versa, but you can't interchange those with classes.

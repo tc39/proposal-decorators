@@ -140,13 +140,13 @@ A class descriptor with the following properties:
 
 Note: finishers run once per class (at class creation time), not once per instance.
 
-### Initializers
+### Hooks
 
-The `extras` array can also contain stand-alone initializers, of the following form:
+The returned descriptor can be, or the `extras` array can contain, stand-alone initializers, of the following form:
 
 ```js
 {
-  kind: "initializer"
+  kind: "hook"
   placement: "static", "prototype" or "own",
   initializer() { /* ... */ }
 }

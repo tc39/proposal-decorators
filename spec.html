@@ -171,7 +171,7 @@ emu-example pre {
             <tr> <th>Field Name</th>      <th>Value</th>                                                          </tr>
           </thead>
           <tbody>
-            <tr> <td>[[Kind]]</td>        <td>One of `"method"`, `"field"` or `"initializer"`</td>                 </tr>
+            <tr> <td>[[Kind]]</td>        <td>One of `"method"`, `"field"` or `"hook"`</td>                        </tr>
             <tr> <td>[[Key]]</td>         <td>A Property Key or %PrivateName% object</td>                          </tr>
             <tr> <td>[[Descriptor]]</td>  <td>A Property Descriptor</td>                                           </tr>
             <tr> <td>[[Placement]]</td>   <td>One of `"static"`, `"prototype"`, or `"own"`</td>                    </tr>
@@ -201,7 +201,7 @@ emu-example pre {
             </ul>
           </li>
           <li>
-            If _element_.[[Kind]] is `"initializer", then
+            If _element_.[[Kind]] is `"hook", then
             <ul>
               <li>_element_.[[Key]] absent.</li>
               <li>_element_.[[Descriptor]] is absent.</li>
@@ -443,7 +443,7 @@ emu-example pre {
       1. If _element_.[[Placement]] is `"own"` and _element_.[[Kind]] is `"field"`,
         1. Assert: _element_.[[Descriptor]] does not have a [[Value]], [[Get]] or [[Set]] slot.
         1. Perform ? DefineClassElement(_O_, _element_).
-      1. <ins>If _element_.[[Kind]] is `"initializer"` and _element_.[[Placement]] is `"own"`,</ins>
+      1. <ins>If _element_.[[Kind]] is `"hook"` and _element_.[[Placement]] is `"own"`,</ins>
         1. <ins>Let _res_ be ? Call(_element_.[[Initializer]], _O_).</ins>
         1. <ins>If _res_ is not *undefined*, throw a *TypeError* exception.</ins>
     1. Return.
@@ -459,7 +459,7 @@ emu-example pre {
     1. Assert: _proto_ is ! Get(_F_, `"prototype"`).
     1. Let _elements_ be the value of _F_'s [[Elements]] internal slot.
     1. For each item _element_ in order from _elements_,
-      1. Assert: If _element_.[[Placement]] is `"prototype"` <del>or `"static"`, and if _element_.[[Kind]] is not `"initializer"`</del>, then _element_.[[Key]] is not a Private Name.
+      1. Assert: If _element_.[[Placement]] is `"prototype"` <del>or `"static"`, and if _element_.[[Kind]] is not `"hook"`</del>, then _element_.[[Key]] is not a Private Name.
       1. If _element_.[[Kind]] is `"method"` <ins>and _element_.[[Placement]] is `"static"` or `"prototype"`</ins>,
         1. Let _receiver_ be _F_ if _element_.[[Placement]] is `"static"`, else let _receiver_ be _proto_.
         1. Perform ? DefineClassElement(_receiver_, _element_).
@@ -468,7 +468,7 @@ emu-example pre {
         1. Assert: _element_.[[Descriptor]] does not have a [[Value]], [[Get]] or [[Set]] slot.
         1. Let _receiver_ be _F_ if _element_.[[Placement]] is `"static"`, else let _receiver_ be _proto_.
         1. Perform ? DefineClassElement(_receiver_, _element_).
-      1. <ins>If _element_.[[Placement]] is `"prototype"` or `"static"` and _element_.[[Kind]] is `"initializer"`,</ins>
+      1. <ins>If _element_.[[Placement]] is `"prototype"` or `"static"` and _element_.[[Kind]] is `"hook"`,</ins>
         1. <ins>Let _receiver_ be _F_ if _element_.[[Placement]] is `"static"`, else let _receiver_ be _proto_.</ins>
         1. <ins>Let _res_ be ? Call(_element_.[[Initializer]], _receiver_).</ins>
         1. <ins>If _res_ is not *undefined*, throw a *TypeError* exception.</ins>
@@ -632,7 +632,7 @@ emu-example pre {
       <p>An <dfn>element descriptor</dfn> describes an element of a class or object literal and has the following shape:</p>
       <pre><code class=typescript>
         interface ElementDescriptor {
-          kind: "method", "initializer", or "field"
+          kind: "method", "hook", or "field"
           key: String, Symbol or Private Name,
           placement: "static", "prototype", or "own"
           ...PropertyDescriptor,
@@ -723,7 +723,7 @@ emu-example pre {
         1. Let _extras_ be a new empty List.
         1. Let _finishers_ be a new empty List.
         1. If _element_ has a [[Decorators]] field, then for each _decorator_ in _element_.[[Decorators]], in reverse list order do
-          1. If _element_.[[Kind]] is `"initializer"`, throw a TypeError.
+          1. If _element_.[[Kind]] is `"hook"`, throw a TypeError.
           1. Perform RemoveElementPlacement(_element_, _placements_).
           1. Let _elementObject_ be ? FromElementDescriptor(_element_).
           1. Let _elementFinisherExtrasObject_ be ? Call(_decorator_, *undefined*, « _elementObject_ »).
@@ -760,8 +760,8 @@ emu-example pre {
           1. If _elementsAndFinisher_.[[Elements]] is not *undefined*,
             1. Set _elements_ to _elementsAndFinisher_.[[Elements]].
             1. If there are two class elements _a_ and _b_ in _elements_ such that all of the following are true:
-              1. _a_.[[Kind]] is not `"initializer"`
-              1. _b_.[[Kind]] is not `"initializer"`
+              1. _a_.[[Kind]] is not `"hook"`
+              1. _b_.[[Kind]] is not `"hook"`
               1. _a_.[[Key]] is _b_.[[Key]]
               1. _a_.[[Placement]] is _b_.[[Placement]]
             1. Then, throw a *TypeError* exception.
@@ -829,7 +829,7 @@ emu-example pre {
           1. If _key_ is a Private Name, set _key_ to ? PrivateNameObject(_key_).
           1. Perform ! CreateDataPropertyOrThrow(_obj_, `"key"`, _key_).
         1. Perform ! CreateDataPropertyOrThrow(_obj_, `"placement"`, _element_.[[Placement]]).
-        1. If _element_.[[Kind]] is `"field"` or `"initializer"`,
+        1. If _element_.[[Kind]] is `"field"` or `"hook"`,
           1. Let _initializer_ be _element_.[[Initializer]].
           1. If _initializer_ is ~empty~, set _initializer_ to *undefined*.
           1. Perform ! CreateDataPropertyOrThrow(_obj_, `"initializer"`, _initializer_).
@@ -864,9 +864,9 @@ emu-example pre {
       <emu-alg>
         1. Assert: Type(_elementObject_) is Object.
         1. Let _kind_ be ? ToString(? Get(_elementObject_, `"kind"`)).
-        1. If _kind_ is not one of `"initializer"`, `"method"`, or `"field"`, throw a *TypeError* exception.
+        1. If _kind_ is not one of `"hook"`, `"method"`, or `"field"`, throw a *TypeError* exception.
         1. Let _key_ be ? Get(_elementObject_, `"key"`).
-        1. If _kind_ is `"initializer"`,
+        1. If _kind_ is `"hook"`,
           1. If _key_ is not *undefined*, throw a *TypeError* exception.
         1. If _key_ has a [[PrivateNameData]] internal slot, set _key_ to _key_.[[PrivateNameData]].
         1. Otherwise, set _key_ to ? ToPropertyKey(_key_).
@@ -881,7 +881,7 @@ emu-example pre {
           1. If _descriptor_ has a [[Get]], [[Set]] or [[Value]] field, throw a *TypeError* exception.
         1. Let _initializer_ be ? Get(_elementObject_, `"initializer"`).
         1. If _initializer_ is not *undefined* and IsCallable(_initializer_) is *false*, throw a *TypeError*.
-        1. If _kind_ is `"initializer"`,
+        1. If _kind_ is `"hook"`,
           1. If _initializer_ is *undefined*, throw a *TypeError* exception
         1. If _kind_ is `"method"`,
           1. If _initializer_ is not *undefined*, throw a *TypeError* exception.
@@ -891,7 +891,7 @@ emu-example pre {
         1. If _kind_ is `"method"` or `"field",
            1. Set _element_.[[Key]] to _key_.
            1. Set _element_.[[Descriptor]] to _descriptor_.
-        1. If _kind_ is `"field"` or `"initializer"`,
+        1. If _kind_ is `"field"` or `"hook"`,
            1. Set _element_.[[Initializer]] to _initializer_.
         1. Return _element_.
       </emu-alg>
