@@ -3,7 +3,6 @@
 |----------------------------|------------------------------------------|---------------------------------------------|------------------------------------------------------------------|-----------------------------------------------------|
 |`{`                         |                                          |                                             |                                                                  |                                                     |
 |`  kind:`                   |`"class"`                                 |`"method"`                                   |`"field"`                                                         |`"accessor"` <sup>4</sup>                            |
-|`  elements:`               |*Array of member descriptors* <sup>1</sup>| -                                           | -                                                                | -                                                   |
 |`  key:`                    | -                                        |  *method name*                              |*property name*                                                   |*property name*                                      |
 |`  placement:`              | -                                        |`"prototype" \|\| "static"`                  |`"own" \|\| "static"`                                             |`"prototype" \|\| "static"`                          |
 |`  initialize:`             | -                                        | -                                           |*Function used to set the initial value of the field* <sup>2</sup>| -                                                   |
@@ -15,8 +14,6 @@
 |`  enumerable:`             | -                                        |`false`                                      |`false`                                                           |`false`                                              |
 |`}`                         |                                          |                                             |                                                                  |                                                     |
 </table>
-
-<sup>1</sup> `element` is an array of decorator descriptors, not to be confused with property descriptors.
 
 <sup>2</sup> `initialize` function is present only if the field is initialized into the class body: `field = 10`. A declaration like `field;` has `initialize` as undefined. Please, check if exist before calling it.
 
@@ -30,7 +27,6 @@
 |----------------------------------|-------------------------------------------|------------------------------------------|-----------------------------------------------------|------------------------------------------|------------------------------------------|
 |`{`                               |                                           |                                          |                                                     |                                          |                                          |
 |`  kind:`                         |`"class"`                                  |`"method"`                                |`"field"`                                            |`"accessor"`                              |`"hook"` <sup>11</sup>                    |
-|`  elements:`                     |*Array of member descriptors* <sup>6</sup> | -                                        | -                                                   | -                                        | -                                        |
 |`  key:`                          | -                                         |  *method name*    <sup>8</sup>           |*field name* <sup>8</sup>                            |*field name* <sup>8</sup>                 | -                                        |
 |`  placement:`                    | -                                         |`"prototype" \|\| "static" \|\| "own"`    |`"prototype" \|\| "static" \|\| "own"`               |`"prototype" \|\| "static" \|\| "own"`    |`"prototype" \|\| "static" \|\| "own"`    |
 |`  extras:`                       | -                                         |*Array of member descriptors* <sup>7</sup>|*Array of member descriptors* <sup>7</sup>           |*Array of member descriptors* <sup>7</sup>| -                                        |

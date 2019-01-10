@@ -121,7 +121,6 @@ A class descriptor with the following properties:
 ```js
 {
   kind: "class"
-  elements: Array of all class elements
 }
 ```
 
@@ -132,7 +131,7 @@ A class descriptor with the following properties:
 ```js
 {
   kind: "class"
-  elements: Possibly modified class elements (can include additional class elements)
+  extras: Additional class elements
 }
 ```
 
@@ -163,11 +162,10 @@ function defineElement(tagName) {
   // in the outer function and returns a different function that's called
   // when actually decorating the class (manual currying).
   return function(classDescriptor) {
-    let { kind, elements } = classDescriptor;
+    let { kind } = classDescriptor;
     assert(kind == "class");
     return {
       kind,
-      elements,
       // This callback is called once the class is otherwise fully defined
       extras: [
         {
