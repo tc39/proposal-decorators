@@ -58,7 +58,7 @@ Decorator reification
   writable: true,
   enumerable: true,
   configurable: true
-  initializer: () => bar
+  initialize: () => bar
 }
 ```
 
@@ -145,7 +145,7 @@ Decorator reification
   writable: true,
   enumerable: true,
   configurable: true
-  initializer: () => bar
+  initialize: () => bar
 }
 ```
 
@@ -234,7 +234,7 @@ Decorator reification
   writable: false,
   enumerable: false,
   configurable: false
-  initializer: () => bar
+  initialize: () => bar
 }
 ```
 
@@ -317,7 +317,7 @@ Decorator reification:
   writable: true,
   enumerable: false,
   configurable: false
-  initializer: () => bar
+  initialize: () => bar
 }
 ```
 

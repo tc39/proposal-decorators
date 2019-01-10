@@ -6,7 +6,7 @@
 |`  elements:`               |*Array of member descriptors* <sup>1</sup>| -                                           | -                                                                | -                                                   |
 |`  key:`                    | -                                        |  *method name*                              |*property name*                                                   |*property name*                                      |
 |`  placement:`              | -                                        |`"prototype" \|\| "static"`                  |`"own" \|\| "static"`                                             |`"prototype" \|\| "static"`                          |
-|`  initializer:`            | -                                        | -                                           |*Function used to set the initial value of the field* <sup>2</sup>| -                                                   |
+|`  initialize:`             | -                                        | -                                           |*Function used to set the initial value of the field* <sup>2</sup>| -                                                   |
 |`  value:`                  | -                                        |  *method function*                          | - <sup>3</sup>                                                   | -                                                   |
 |`  get:`                    | -                                        | -                                           | -                                                                |*getter function*                                    |
 |`  set:`                    | -                                        | -                                           | -                                                                |*setter function*                                    |
@@ -18,9 +18,9 @@
 
 <sup>1</sup> `element` is an array of decorator descriptors, not to be confused with property descriptors.
 
-<sup>2</sup> `initializer` function is present only if the field is initialized into the class body: `field = 10`. Please, check if exist before call it.
+<sup>2</sup> `initialize` function is present only if the field is initialized into the class body: `field = 10`. A declaration like `field;` has `initialize` as undefined. Please, check if exist before calling it.
 
-<sup>3</sup> when `kind` is `field`, don't include the value into the `value` and the value, if it exists, is returned by `initializer` function.
+<sup>3</sup> when `kind` is `field`, don't include the value into the `value` and the value, if it exists, is returned by `initialize` function.
 
 <sup>4</sup> when the decorator is apply over a getter/setter `kind` is `method` and `get` or `set` has value. 
 
@@ -34,7 +34,8 @@
 |`  key:`                          | -                                         |  *method name*    <sup>8</sup>           |*field name* <sup>8</sup>                            |*field name* <sup>8</sup>                 | -                                        |
 |`  placement:`                    | -                                         |`"prototype" \|\| "static" \|\| "own"`    |`"prototype" \|\| "static" \|\| "own"`               |`"prototype" \|\| "static" \|\| "own"`    |`"prototype" \|\| "static" \|\| "own"`    |
 |`  extras:`                       | -                                         |*Array of member descriptors* <sup>7</sup>|*Array of member descriptors* <sup>7</sup>           |*Array of member descriptors* <sup>7</sup>| -                                        |
-|`  initializer:`                  | -                                         |                                          |*Function used to set the initial value of the field*| - <sup>9</sup>                           | <sup>11</sup>                            |
+|`  initialize:`                   | -                                         | -                                        |*Function used to set the initial value of the field*| - <sup>9</sup>                           | -                                        |
+|`  start:`                        | -                                         | -                                        | -                                                   | -                                        | *Function for effect* <sup>11</sup>      |
 |`  value:`                        | -                                         |*method function*                         | -                                                   | - <sup>9</sup>                           | -                                        |
 |`  get:`                          | -                                         | -                                        | -                                                   |*getter*                                  | -                                        |
 |`  set:`                          | -                                         | -                                        | -                                                   |*setter*                                  | -                                        |
@@ -52,10 +53,10 @@
 
 <sup>8</sup> `key` can be change from the original. If the member is private (`#name`) a PrivateName object is included in this property. It's a mandatory field.
 
-<sup>9</sup> cannot include `initializer`, `value` or `writable` when `get` or `set` are defined.
+<sup>9</sup> cannot include `initialize`, `value` or `writable` when `get` or `set` are defined.
 
 <sup>10</sup> `finisher` function is a callback that is called at the end of class creation. It's optional.
 
-<sup>11</sup> `kind: "hook"` doesn't create new members. You can use the `initializer` field to include a callback to be used purely for perform a side effect. Do not confuse with the `initializer` property used to set the initial value to a field. 
+<sup>11</sup> `kind: "hook"` doesn't create new members. You can use the `start` field to include a callback to be used purely for perform a side effect. Do not confuse with the `initialize` property used to set the initial value to a field. 
 
 **Note**: you can replace a field decorator with a method descriptor, or a getter, or vice-versa, but you can't interchange those with classes.

@@ -32,7 +32,7 @@ The public field `x` above would be represented as the following class element d
   configurable: false,
   enumerable: true,
   writable: true,
-  initializer: () => 1
+  initialize: () => 1
 }
 ```
 
@@ -75,7 +75,7 @@ A class element descriptor with the following properties:
   key: String, Symbol or Private Name,
   placement: "static", "prototype" or "own",
   ...Property Descriptor (argument to Object.defineProperty),
-  initializer: A method used to set the initial state of the field
+  initialize: A method used to set the initial state of the field
 }
 ```
 
@@ -85,7 +85,7 @@ For private fields or accessors, the `key` will be a Private Name--this is simil
 
 A class element descriptor with the following properties (optional properties are indicated with `?`):
 
-`{ kind, key, placement, ...descriptor, initializer, extras?, finisher? }`
+`{ kind, key, placement, ...descriptor, initialize, extras?, finisher? }`
 
 The optional additional properties:
 
@@ -148,11 +148,11 @@ The returned descriptor can be, or the `extras` array can contain, stand-alone i
 {
   kind: "hook"
   placement: "static", "prototype" or "own",
-  initializer() { /* ... */ }
+  start() { /* ... */ }
 }
 ```
 
-The initializers added here are just like field initializers, except that they don't result in defining a field.
+The start functions added here are just like field initializers, except that they don't result in defining a field.
 
 These can be used, e.g., to make a decorator which defines fields through `[[Set]]` rather than `[[DefineOwnProperty]]`, or to store the field in some other place.
 
@@ -184,7 +184,7 @@ function defineElement(tagName) {
 function bound(elementDescriptor) {
   let { kind, key, value, enumerable, configurable, writable } = elementDescriptor;
   assert(kind == "method");
-  function initializer() {
+  function initialize() {
     return value.bind(this);
   }
   // Return both the original method and a bound function field that calls the method.
@@ -193,7 +193,7 @@ function bound(elementDescriptor) {
   return {
     ...elementDescriptor,
     extras: [
-      { kind: "field", key, placement: "own", enumerable, configurable, writable, value: undefined, initializer }
+      { kind: "field", key, placement: "own", enumerable, configurable, writable, value: undefined, initialize }
     ]
   }
 }
@@ -201,12 +201,12 @@ function bound(elementDescriptor) {
 // Whenever a read or write is done to a field, call the render()
 // method afterwards. Implement this by replacing the field with
 // a getter/setter pair.
-function observed({kind, key, placement, enumerable, configurable, writable, initializer}) {
+function observed({kind, key, placement, enumerable, configurable, writable, initialize}) {
   assert(kind == "field");
   assert(placement == "own");
   // Create a new anonymous private name as a key for a class element
   let storage = PrivateName();
-  let underlying = { kind, key: storage, placement, writable: true, initializer };
+  let underlying = { kind, key: storage, placement, writable: true, initialize };
   return {
     kind: "method",
     key,

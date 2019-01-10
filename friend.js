@@ -72,7 +72,7 @@ export function inherit(descriptor) {
   let placement = descriptor.placement;
   if (typeof key !== "object" ||
       descriptor.kind !== "field" ||
-      descriptor.initializer !== undefined) {
+      descriptor.initialize !== undefined) {
     throw new TypeError("invalid declaration for @inherit");
   }
   let superKey;
@@ -193,7 +193,7 @@ let emptySentinel = Symbol();
 export function abstract(descriptor) {
   let key = descriptor.key;
   let isPure = descriptor.kind === "field" &&
-               descriptor.initializer === undefined;
+               descriptor.initialize === undefined;
   let isMethod = descriptor.kind === "method" &&
                  descriptor.value !== undefined;
   let value = descriptor.value;
@@ -265,7 +265,7 @@ export function override(descriptor) {
         kind: "field",
         key: PrivateName(),
         placement,
-        initializer() {
+        initialize() {
           set(internalKey, this, body);
         }
         writable: true,
