@@ -194,9 +194,8 @@ export function abstract(descriptor) {
   let key = descriptor.key;
   let isPure = descriptor.kind === "field" &&
                descriptor.initialize === undefined;
-  let isMethod = descriptor.kind === "method" &&
-                 descriptor.value !== undefined;
-  let value = descriptor.value;
+  let isMethod = descriptor.kind === "method";
+  let method = descriptor.method;
   if (typeof key !== "object" ||
       !(isPure || isMethod) ||
       descriptor.placement !== "own") {
@@ -219,7 +218,7 @@ export function abstract(descriptor) {
         key: internalKey,
         kind: "method",
         placement: "own",
-        value: isPure ? emptySentinel : value,
+        method: isPure ? emptySentinel : method,
         writable: true,
         configurable: false,
         enumerable: false,

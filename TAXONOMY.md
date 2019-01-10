@@ -27,7 +27,7 @@ Decorator reification (from the existing decorator proposal):
   kind: "method",
   key: "foo",
   placement: "static",
-  value: function foo() {},
+  method: function foo() {},
   writable: true,
   enumerable: false,
   configurable: true
@@ -114,7 +114,7 @@ Decorator reification (from the existing decorator proposal):
   kind: "method",
   key: "foo",
   placement: "prototype",
-  value: function foo() {},
+  method: function foo() {},
   writable: true,
   enumerable: false,
   configurable: true
@@ -205,7 +205,7 @@ Decorator reification:
   kind: "method",
   key: decorators.PrivateName("foo"),
   placement: "static",
-  value: function foo() {},
+  method: function foo() {},
   writable: false,
   enumerable: false,
   configurable: false
@@ -286,7 +286,7 @@ Decorator reification:
   kind: "method",
   key: decorators.PrivateName("foo"),
   placement: "own",
-  value: function foo() {},
+  method: function foo() {},
   writable: true,
   enumerable: false,
   configurable: false
