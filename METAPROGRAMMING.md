@@ -85,12 +85,11 @@ For private fields or accessors, the `key` will be a Private Name--this is simil
 
 A class element descriptor with the following properties (optional properties are indicated with `?`):
 
-`{ kind, key, placement, ...descriptor, initialize, extras?, finisher? }`
+`{ kind, key, placement, ...descriptor, initialize, extras?, }`
 
 The optional additional properties:
 
 * `extras`: A property with additional class elements
-* `finisher`: A callback that is called at the end of class creation (before finishers for the class as a whole, if they exist)
 
 ### Method Decorator
 
@@ -111,7 +110,7 @@ A class element descriptor with the following properties:
 
 A class element descriptor with the following properties:
 
-`{ kind, key, placement, ...descriptor, extras?, finisher? }`
+`{ kind, key, placement, ...descriptor, extras?, }`
 
 ### Class Decorator
 
@@ -134,11 +133,8 @@ A class descriptor with the following properties:
 {
   kind: "class"
   elements: Possibly modified class elements (can include additional class elements)
-  finisher: (optional) A callback that is called at the end of class creation
 }
 ```
-
-Note: finishers run once per class (at class creation time), not once per instance.
 
 ### Hooks
 
@@ -173,9 +169,15 @@ function defineElement(tagName) {
       kind,
       elements,
       // This callback is called once the class is otherwise fully defined
-      finisher(klass) {
-        window.customElements.define(tagName, klass);
-      }
+      extras: [
+        {
+          kind: "hook",
+          placement: "static",
+          finish(klass) {
+            window.customElements.define(tagName, klass);
+          }
+        }
+      ]
     };
   };
 }

@@ -58,10 +58,10 @@ export function expose(descriptor) {
   if (typeof key !== "object")
     throw new TypeError("@expose must be used on #private declarations");
   return {
-    finisher(klass) {
-      exposeMap.set(klass, key.description, key);
-    },
     ...descriptor
+    extras: [{ kind: 'hook', placement: 'static', register(klass) {
+      exposeMap.set(klass, key.description, key);
+    }}],
   };
 }
 
@@ -85,12 +85,12 @@ export function inherit(descriptor) {
     set(value) { set.set(this, value); },
     configurable: false,
     enumerable: false,
-    finisher(klass) {
+    extras: [{ kind: 'hook', placement: 'static', register(klass) {
       superKey = exposeMap.get(klass, keyString);
       if (typeof superKey === undefined) {
         throw new TypeError("@inherit must be used on @exposed names");
       }
-    }
+    }}],
   };
 }
 
@@ -214,7 +214,6 @@ export function abstract(descriptor) {
     }
     enumerable: false,
     configurable: false,
-    finisher(klass) { abstractMap.set(klass, key.description, internalKey); },
     extras: [
       {
         key: internalKey,
@@ -224,6 +223,13 @@ export function abstract(descriptor) {
         writable: true,
         configurable: false,
         enumerable: false,
+      },
+      {
+        kind: "hook",
+        placement: "static",
+        register(klass) {
+          abstractMap.set(klass, key.description, internalKey);
+        }
       }
     ]
   }
@@ -252,25 +258,23 @@ export function override(descriptor) {
     get() { return get(internalKey, this); },
     configurable: false,
     enumerable: false,
-    finisher(klass) {
-      internalKey = privateNameMap.get(klass, keyString);
-      if (typeof internalKey === undefined) {
-        throw new TypeError("@override must be used on @exposed names");
-      }
-    },
     extras: [
-      // Never-accessed private field to run an initializer in the
-      // constructor which stores the method in the internal key.
       {
-        kind: "field",
-        key: PrivateName(),
+        kind: "hook",
         placement,
-        initialize() {
+        start() {
           set(internalKey, this, body);
         }
-        writable: true,
-        configurable: false,
-        enumerable: false,
+      },
+      {
+        kind: "hook",
+        placement: "static",
+        register(klass) {
+          internalKey = privateNameMap.get(klass, keyString);
+          if (typeof internalKey === undefined) {
+            throw new TypeError("@override must be used on @exposed names");
+          }
+        }
       }
     ]
   };
