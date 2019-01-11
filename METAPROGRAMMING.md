@@ -184,10 +184,10 @@ function defineElement(tagName) {
 
 // Create a bound version of the method as a field
 function bound(elementDescriptor) {
-  let { kind, key, value, enumerable, configurable, writable } = elementDescriptor;
+  let { kind, key, method, enumerable, configurable, writable } = elementDescriptor;
   assert(kind == "method");
   function initialize() {
-    return value.bind(this);
+    return method.bind(this);
   }
   // Return both the original method and a bound function field that calls the method.
   // (That way the original method will still exist on the prototype, avoiding
@@ -195,7 +195,7 @@ function bound(elementDescriptor) {
   return {
     ...elementDescriptor,
     extras: [
-      { kind: "field", key, placement: "own", enumerable, configurable, writable, value: undefined, initialize }
+      { kind: "field", key, placement: "own", enumerable, configurable, writable, initialize }
     ]
   }
 }

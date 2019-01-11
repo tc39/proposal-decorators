@@ -838,17 +838,28 @@ emu-example pre {
       <h1>FromElementDescriptor ( _element_ )</h1>
       <emu-alg>
         1. Assert: _element_ is an ElementDescriptor Record.
-        1. If _element_.[[Kind]] is `"method"`, `"accessor"`, or `"field"`,
-          1. Let _obj_ be ! FromPropertyDescriptor(_element_.[[Descriptor]])).
-        1. Otherwise,
-          1. Let _obj_ be ! ObjectCreate(%ObjectPrototype%).
+        1. Let _obj_ be ! ObjectCreate(%ObjectPrototype%).
         1. Let _desc_ be PropertyDescriptor{ [[Value]]: `"Descriptor"`, [[Writable]]: *false*, [[Enumerable]]: *false*, [[Configurable]]: *true* }.
         1. Perform ! DefinePropertyOrThrow(_obj_, @@toStringTag, _desc_).
         1. Perform ! CreateDataPropertyOrThrow(_obj_, `"kind"`, _element_.[[Kind]]).
+        1. If _element_ has a [[Descriptor]] field,
+          1. If _element_.[[Descriptor]] has a [[Value]] field, then
+            1. Perform ! CreateDataProperty(_obj_, `"method"`, _element_.[[Descriptor]].[[Value]]).
+          1. If _element_.[[Descriptor]] has a [[Writable]] field, then
+            1. Perform ! CreateDataProperty(_obj_, `"writable"`, _element_.[[Descriptor]].[[Writable]]).
+          1. If _element_.[[Descriptor]] has a [[Get]] field, then
+            1. Perform ! CreateDataProperty(_obj_, `"get"`, _element_.[[Descriptor]].[[Get]]).
+          1. If _element_.[[Descriptor]] has a [[Set]] field, then
+            1. Perform ! CreateDataProperty(_obj_, `"set"`, _element_.[[Descriptor]].[[Set]]).
+          1. If _element_.[[Descriptor]] has an [[Enumerable]] field, then
+            1. Perform ! CreateDataProperty(_obj_, `"enumerable"`, _element_.[[Descriptor]].[[Enumerable]]).
+          1. If _element_.[[Descriptor]] has a [[Configurable]] field, then
+            1. Perform ! CreateDataProperty(_obj_, `"configurable"`, _element_.[[Descriptor]].[[Configurable]]).
         1. If _element_.[[Kind]] is `"method"`, `"accessor"`, or `"field"`,
           1. Let _key_ be _element_.[[Key]].
           1. If _key_ is a Private Name, set _key_ to ? PrivateNameObject(_key_).
           1. Perform ! CreateDataPropertyOrThrow(_obj_, `"key"`, _key_).
+
         1. Perform ! CreateDataPropertyOrThrow(_obj_, `"placement"`, _element_.[[Placement]]).
         1. If _element_.[[Kind]] is `"field"`,
           1. Let _initialize_ be _element_.[[Initializer]].
@@ -881,6 +892,43 @@ emu-example pre {
       </emu-alg>
     </emu-clause>
 
+    <emu-clause id="sec-to-decorator-property-descriptor" aoid=ToDecoratorPropertyDescriptor>
+      <h1>ToDecoratorPropertyDescriptor ( _elementObject_ )</h1>
+      <emu-alg>
+        1. Let _desc_ be a new Property Descriptor that initially has no fields.
+        1. Let _hasEnumerable_ be ? HasProperty(_Obj_, `"enumerable"`).
+        1. If _hasEnumerable_ is *true*, then
+          1. Let _enumerable_ be ToBoolean(? Get(_Obj_, `"enumerable"`)).
+          1. Set _desc_.[[Enumerable]] to _enumerable_.
+        1. Let _hasConfigurable_ be ? HasProperty(_Obj_, `"configurable"`).
+        1. If _hasConfigurable_ is *true*, then
+          1. Let _configurable_ be ToBoolean(? Get(_Obj_, `"configurable"`)).
+          1. Set _desc_.[[Configurable]] to _configurable_.
+        1. Let _hasValue_ be ? HasProperty(_Obj_, `"method"`).
+        1. If _hasValue_ is *true*, then
+          1. Let _value_ be ? Get(_Obj_, `"method"`).
+          1. If IsCallable(_value_) is *false*, throw a *TypeError* exception.
+          1. Set _desc_.[[Value]] to _value_.
+        1. Let _hasWritable_ be ? HasProperty(_Obj_, `"writable"`).
+        1. If _hasWritable_ is *true*, then
+          1. Let _writable_ be ToBoolean(? Get(_Obj_, `"writable"`)).
+          1. Set _desc_.[[Writable]] to _writable_.
+        1. Let _hasGet_ be ? HasProperty(_Obj_, `"get"`).
+        1. If _hasGet_ is *true*, then
+          1. Let _getter_ be ? Get(_Obj_, `"get"`).
+          1. If IsCallable(_getter_) is *false* and _getter_ is not *undefined*, throw a *TypeError* exception.
+          1. Set _desc_.[[Get]] to _getter_.
+        1. Let _hasSet_ be ? HasProperty(_Obj_, `"set"`).
+        1. If _hasSet_ is *true*, then
+          1. Let _setter_ be ? Get(_Obj_, `"set"`).
+          1. If IsCallable(_setter_) is *false* and _setter_ is not *undefined*, throw a *TypeError* exception.
+          1. Set _desc_.[[Set]] to _setter_.
+        1. If _desc_.[[Get]] is present or _desc_.[[Set]] is present, then
+          1. If _desc_.[[Value]] is present or _desc_.[[Writable]] is present, throw a *TypeError* exception.
+        1. Return CompletePropertyDescriptor(_desc_).
+      </emu-alg>
+    </emu-clause>
+
     <emu-clause id=sec-to-element-descriptor aoid=ToElementDescriptor>
       <h1>ToElementDescriptor ( _elementObject_ )</h1>
       <p>With parameter _elementObject_, returns an ElementDescriptor.</p>
@@ -895,7 +943,7 @@ emu-example pre {
         1. Otherwise, set _key_ to ? ToPropertyKey(_key_).
         1. Let _placement_ be ? ToString(? Get(_elementObject_, `"placement"`)).
         1. If _placement_ is not one of `"static"`, `"prototype"`, or `"own"`, throw a *TypeError* exception.
-        1. Let _descriptor_ be ? ToPropertyDescriptor(_elementObject_)
+        1. Let _descriptor_ be ? ToDecoratorPropertyDescriptor(_elementObject_)
         1. If _key_ is a Private Name,
           1. If _descriptor_ has an [[Enumerable]] field and _descriptor_.[[Enumerable]] is *true*, throw a *TypeError* exception.
           1. If _descriptor_ has an [[Configurable]] field and _descriptor_.[[Configurable]] is *true*, throw a *TypeError* exception.
