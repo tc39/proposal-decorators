@@ -904,9 +904,10 @@ emu-example pre {
         1. If _hasConfigurable_ is *true*, then
           1. Let _configurable_ be ToBoolean(? Get(_Obj_, `"configurable"`)).
           1. Set _desc_.[[Configurable]] to _configurable_.
-        1. Let _hasValue_ be ? HasProperty(_Obj_, `"value"`).
+        1. Let _hasValue_ be ? HasProperty(_Obj_, `"method"`).
         1. If _hasValue_ is *true*, then
           1. Let _value_ be ? Get(_Obj_, `"method"`).
+          1. If IsCallable(_value_) is *false*, throw a *TypeError* exception.
           1. Set _desc_.[[Value]] to _value_.
         1. Let _hasWritable_ be ? HasProperty(_Obj_, `"writable"`).
         1. If _hasWritable_ is *true*, then
