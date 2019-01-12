@@ -103,6 +103,7 @@ A class element descriptor with the following properties:
   key: String, Symbol or Private Name,
   placement: "static", "prototype" or "own",
   ...Property Descriptor (argument to Object.defineProperty),
+  method: The method itself
 }
 ```
 
@@ -110,7 +111,7 @@ A class element descriptor with the following properties:
 
 A class element descriptor with the following properties:
 
-`{ kind, key, placement, ...descriptor, extras?, }`
+`{ kind, key, placement, ...descriptor, method, extras?, }`
 
 ### Class Decorator
 
