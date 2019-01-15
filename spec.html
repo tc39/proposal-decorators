@@ -147,25 +147,6 @@ emu-example pre {
         It is a Syntax Error if |DecoratorList| is present and PropName of |MethodDefinition| is `"constructor"`.
       </li>
     </ul>
-
-
-    <emu-grammar>
-      ClassDeclaration[Yield, Await, Default] :
-        <ins>DecoratorList[?Yield, ?Await]?</ins> `class` BindingIdentifier[?Yield, ?Await] ClassTail[?Yield, ?Await]
-
-      ClassExpression[Yield, Await] :
-        <ins>DecoratorList[?Yield, ?Await]?</ins> `class` BindingIdentifier[?Yield, ?Await]? ClassTail[?Yield, ?Await]
-    </emu-grammar>
-    <ul>
-      <li>
-        It is a Syntax Error if |DecoratorList| is present and |ClassExpression| or |ClassDeclaration| is directly contained in non-strict code.
-      </li>
-    </ul>
-
-    <emu-note>
-      |DecoratorList| is always interpreted as strict mode code, as it is part of a |ClassDeclaration| or |ClassExpression|.
-    </emu-note>
-
   </emu-clause>
 </emu-clause>
 
