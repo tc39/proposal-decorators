@@ -105,6 +105,12 @@ emu-example pre {
 
       DecoratorCallExpression[Yield, Await] :
         DecoratorMemberExpression Arguments[?Yield, ?Await]
+
+      DecoratedClassDeclaration[Yield, Await, Default] :
+        DecoratorList[?Yield, ?Await] ClassDeclaration
+
+      DecoratedClassExpression[Yield, Await] :
+        DecoratorList[?Yield, ?Await] ClassExpression
     </emu-grammar>
   </emu-clause>
 
@@ -119,11 +125,11 @@ emu-example pre {
         <ins>DecoratorList[?Yield, ?Await]?</ins> `static` FieldDefinition[?Yield, ?Await] `;`
 
       ClassDeclaration[Yield, Await, Default] :
-        <ins>DecoratorList[?Yield, ?Await]?</ins> `class` BindingIdentifier[?Yield, ?Await] ClassTail[?Yield, ?Await]
-        [+Default] <ins>DecoratorList[?Yield, ?Await]?</ins> `class` ClassTail[?Yield, ?Await]
+        `class` BindingIdentifier[?Yield, ?Await] ClassTail[?Yield, ?Await]
+        [+Default] `class` ClassTail[?Yield, ?Await]
 
       ClassExpression[Yield, Await] :
-        <ins>DecoratorList[?Yield, ?Await]?</ins> `class` BindingIdentifier[?Yield, ?Await]? ClassTail[?Yield, ?Await]
+        `class` BindingIdentifier[?Yield, ?Await]? ClassTail[?Yield, ?Await]
 
       ExportDeclaration :
         `export` `*` FromClause `;`
@@ -133,7 +139,30 @@ emu-example pre {
         `export` Declaration[~Yield, ~Await]
         `export` `default` HoistableDeclaration[~Yield, ~Await, +Default]
         `export` `default` ClassDeclaration[~Yield, ~Await, +Default]
+        <ins>`export` `default` DecoratedClassDeclaration[~Yield, ~Await, +Default]</ins>
         `export` `default` [lookahead &lt;! {`function`, `async` [no |LineTerminator| here] `function`, `class`, <ins>`@`</ins>}] AssignmentExpression[+In, ~Yield, ~Await] `;`
+
+      Declaration[Yield, Await] :
+        HoistableDeclaration[?Yield, ?Await, ~Default]
+        ClassDeclaration[?Yield, ?Await, ~Default]
+        <ins>DecoratedClassDeclaration[?Yield, ?Await, ~Default]</ins>
+        LexicalDeclaration[+In, ?Yield, ?Await]
+
+      PrimaryExpression[Yield, Await] :
+        `this`
+        IdentifierReference[?Yield, ?Await]
+        Literal
+        ArrayLiteral[?Yield, ?Await]
+        ObjectLiteral[?Yield, ?Await]
+        FunctionExpression
+        ClassExpression[?Yield, ?Await]
+        <ins>DecoratedClassExpression[?Yield, ?Await]</ins>
+        GeneratorExpression
+        AsyncFunctionExpression
+        AsyncGeneratorExpression
+        RegularExpressionLiteral
+        TemplateLiteral[?Yield, ?Await, ~Tagged]
+        CoverParenthesizedExpressionAndArrowParameterList[?Yield, ?Await] #parencover
     </emu-grammar>
   </emu-clause>
 
@@ -530,12 +559,11 @@ emu-example pre {
   <!-- es6num="14.5.15" -->
   <emu-clause id="sec-runtime-semantics-bindingclassdeclarationevaluation" aoid="BindingClassDeclarationEvaluation">
     <h1>Runtime Semantics: BindingClassDeclarationEvaluation</h1>
-    <emu-grammar>ClassDeclaration : <ins>DecoratorList?</ins> `class` BindingIdentifier ClassTail</emu-grammar>
+    <p><ins>With parameter _decorators_.</ins></p>
+    <emu-grammar>ClassDeclaration : `class` BindingIdentifier ClassTail</emu-grammar>
     <emu-alg>
-      1. <ins>If |DecoratorList_opt| is present, let _decorators_ be the result of performing DecoratorListEvaluation of |DecoratorList|.</ins>
-      1. <ins>Otherwise, let _decorators_ be a new empty List.</ins>
       1. Let _className_ be StringValue of |BindingIdentifier|.
-      1. Let _value_ be the result of ClassDefinitionEvaluation of |ClassTail| with arguments _className_<ins> and _decorators</ins>.
+      1. Let _value_ be the result of ClassDefinitionEvaluation of |ClassTail| with arguments _className_<ins> and _decorators_</ins>.
       1. ReturnIfAbrupt(_value_).
       1. Let _hasNameProperty_ be ? HasOwnProperty(_value_, `"name"`).
       1. If _hasNameProperty_ is *false*, perform SetFunctionName(_value_, _className_).
@@ -543,10 +571,8 @@ emu-example pre {
       1. Perform ? InitializeBoundName(_className_, _value_, _env_).
       1. Return _value_.
     </emu-alg>
-    <emu-grammar>ClassDeclaration : <ins>DecoratorList?</ins> `class` ClassTail</emu-grammar>
+    <emu-grammar>ClassDeclaration : `class` ClassTail</emu-grammar>
     <emu-alg>
-      1. <ins>If |DecoratorList| is present, let _decorators_ be the result of performing DecoratorListEvaluation of |DecoratorList|.</ins>
-      1. <ins>Otherwise, let _decorators_ be a new empty List.</ins>
       1. Return the result of ClassDefinitionEvaluation of |ClassTail| with arguments *undefined* <ins>and _decorators_</ins>.
     </emu-alg>
     <emu-note>
@@ -554,21 +580,11 @@ emu-example pre {
     </emu-note>
   </emu-clause>
 
-  <!-- es6num="14.5.16" -->
-  <emu-clause id="sec-class-definitions-runtime-semantics-evaluation">
-    <h1>Runtime Semantics: Evaluation</h1>
-    <emu-grammar>ClassDeclaration : <ins>DecoratorList?</ins> `class` BindingIdentifier ClassTail</emu-grammar>
+  <emu-clause id="sec-runtime-semantics-classexpressionevaluation" aoid="ClassExpressionEvaluation">
+    <h1>Runtime Semantics: ClassExpressionEvaluation</h1>
+    <p>With parameter _decorators_</p>
+    <emu-grammar>ClassExpression : `class` BindingIdentifier? ClassTail</emu-grammar>
     <emu-alg>
-      1. Perform ? BindingClassDeclarationEvaluation of this |ClassDeclaration|.
-      1. Return NormalCompletion(~empty~).
-    </emu-alg>
-    <emu-note>
-      <p><emu-grammar>ClassDeclaration : `class` ClassTail</emu-grammar> only occurs as part of an |ExportDeclaration| and is never directly evaluated.</p>
-    </emu-note>
-    <emu-grammar>ClassExpression : <ins>DecoratorList?</ins> `class` BindingIdentifier? ClassTail</emu-grammar>
-    <emu-alg>
-      1. <ins>If |DecoratorList_opt| is present, let _decorators_ be the result of performing DecoratorListEvaluation of |DecoratorList|.</ins>
-      1. <ins>Otherwise, let _decorators_ be a new empty List.</ins>
       1. If |BindingIdentifier_opt| is not present, let _className_ be *undefined*.
       1. Else, let _className_ be StringValue of |BindingIdentifier|.
       1. Let _value_ be the result of ClassDefinitionEvaluation of |ClassTail| with argument _className_ <ins>and _decorators_</ins>.
@@ -577,12 +593,88 @@ emu-example pre {
         1. Let _hasNameProperty_ be ? HasOwnProperty(_value_, `"name"`).
         1. If _hasNameProperty_ is *false*, then
           1. Perform SetFunctionName(_value_, _className_).
-      1. Return NormalCompletion(_value_).
+      1. Return.
     </emu-alg>
-    <emu-note>
-      <p>If the class definition included a `name` static method then that method is not over-written with a `name` data property for the class name.</p>
-    </emu-note>
   </emu-clause>
+
+  <!-- es6num="14.5.16" -->
+  <emu-clause id="sec-class-definitions-runtime-semantics-evaluation">
+    <h1>Runtime Semantics: Evaluation</h1>
+    <emu-grammar>ClassDeclaration : <ins>DecoratorList?</ins> `class` BindingIdentifier ClassTail</emu-grammar>
+    <emu-alg>
+      1. <ins>Let _decorators_ be a new empty List.</ins>
+      1. Perform ? BindingClassDeclarationEvaluation of this |ClassDeclaration| <ins>with parameter _decorators_</ins>.
+      1. Return NormalCompletion(~empty~).
+    </emu-alg>
+    <emu-grammar>DecoratedClassDeclaration : DecoratorList? ClassDeclaration</emu-grammar>
+    <emu-alg>
+      1. Let _decorators_ be the result of performing DecoratorListEvaluation of |DecoratorList|.
+      1. Perform ? BindingClassDeclarationEvaluation of this |ClassDeclaration| with parameter _decorators_.
+      1. Return NormalCompletion(~empty~).
+    </emu-alg>
+
+    <emu-grammar>ClassExpression : `class` BindingIdentifier? ClassTail</emu-grammar>
+    <emu-alg>
+      1. Let _decorators_ be a new empty List.
+      1. Perform ? ClassExpressionEvaluation of this |ClassExpression| with parameter _decorators_.
+      1. Return NormalCompletion(~empty~).
+    </emu-alg>
+
+    <emu-grammar>DecoratedClassExpression : DecoratorList ClassExpression</emu-grammar>
+    <emu-alg>
+      1. Let _decorators_ be the result of performing DecoratorListEvaluation of |DecoratorList|.
+      1. Perform ? ClassExpressionEvaluation of this |ClassExpression| with parameter _decorators_.
+      1. Return NormalCompletion(~empty~).
+    </emu-alg>
+
+    <emu-grammar>ExportDeclaration : `export` `default` ClassDeclaration</emu-grammar>
+    <emu-alg>
+      1. <ins>Let _decorators_ be a new empty List.</ins>
+      1. Let _value_ be the result of BindingClassDeclarationEvaluation of |ClassDeclaration| <ins>with argument _decorators_</ins>.
+      1. ReturnIfAbrupt(_value_).
+      1. Let _className_ be the sole element of BoundNames of |ClassDeclaration|.
+      1. If _className_ is `"*default*"`, then
+        1. Let _hasNameProperty_ be ? HasOwnProperty(_value_, `"name"`).
+        1. If _hasNameProperty_ is *false*, perform SetFunctionName(_value_, `"default"`).
+        1. Let _env_ be the running execution context's LexicalEnvironment.
+        1. Perform ? InitializeBoundName(`"*default*"`, _value_, _env_).
+      1. Return NormalCompletion(~empty~).
+    </emu-alg>
+
+    <emu-grammar>ExportDeclaration : `export` `default` DecoratedClassDeclaration</emu-grammar>
+    <emu-alg>
+      1. Let _decorators_ be the result of performing DecoratorListEvaluation of |DecoratorList|.
+      1. Let _value_ be the result of BindingClassDeclarationEvaluation of |ClassDeclaration| <ins>with argument _decorators_</ins>.
+      1. ReturnIfAbrupt(_value_).
+      1. Let _className_ be the sole element of BoundNames of |ClassDeclaration|.
+      1. If _className_ is `"*default*"`, then
+        1. Let _hasNameProperty_ be ? HasOwnProperty(_value_, `"name"`).
+        1. If _hasNameProperty_ is *false*, perform SetFunctionName(_value_, `"default"`).
+        1. Let _env_ be the running execution context's LexicalEnvironment.
+        1. Perform ? InitializeBoundName(`"*default*"`, _value_, _env_).
+      1. Return NormalCompletion(~empty~).
+    </emu-alg>
+  </emu-clause>
+
+<emu-note type=editor>
+  Additional specification algorithms to straightforwardly update for |DecoratedClassDeclaration| and |DecoratedClassExpression|:
+  <ul>
+    <li>AssignmentTargetType</li>
+    <li>BoundNames</li>
+    <li>DeclarationPart</li>
+    <li>ExportEntries</li>
+    <li>ExportedBindings</li>
+    <li>ExportedNames</li>
+    <li>HasCallInTailPosition</li>
+    <li>HasName</li>
+    <li>IsConstantDeclaration</li>
+    <li>IsFunctionDefinition</li>
+    <li>IsIdentifierRef</li>
+    <li>LexicallyScopedDeclarations</li>
+    <li>ModuleRequests</li>
+  </ul>
+</emu-note>
+
 
   <emu-clause id="sec-coalesce-getter-setter" aoid=CoalesceGetterSetter>
     <h1>CoalesceGetterSetter ( _element_, _other_ )</h1>
@@ -729,9 +821,6 @@ emu-example pre {
         1. Set _attributes_.[[Descriptor]] to _element_.[[Descriptor]].
   </emu-alg>
 </emu-clause>
-
-</emu-clause>
-
 
 </emu-clause>
 
@@ -1410,35 +1499,3 @@ emu-example pre {
 
   </emu-clause>
 </emu-clause>
-
-    <emu-clause id="sec-strict-mode-code">
-      <h1>Strict Mode Code</h1>
-      <p>An ECMAScript |Script| syntactic unit may be processed using either unrestricted or strict mode syntax and semantics. Code is interpreted as <dfn>strict mode code</dfn> in the following situations:</p>
-      <ul>
-        <li>
-          Global code is strict mode code if it begins with a Directive Prologue that contains a Use Strict Directive.
-        </li>
-        <li>
-          Module code is always strict mode code.
-        </li>
-        <li>
-          All parts of a |ClassDeclaration| or a |ClassExpression| are strict mode code, <ins>except for the |DecoratorList| at the top level of a |ClassDeclaration| or |ClassExpression| which is contained in non-strict mode code</ins>.
-        </li>
-        <li>
-          Eval code is strict mode code if it begins with a Directive Prologue that contains a Use Strict Directive or if the call to `eval` is a direct eval that is contained in strict mode code.
-        </li>
-        <li>
-          Function code is strict mode code if the associated |FunctionDeclaration|, |FunctionExpression|, |GeneratorDeclaration|, |GeneratorExpression|, |AsyncFunctionDeclaration|, |AsyncFunctionExpression|, |AsyncGeneratorDeclaration|, |AsyncGeneratorExpression|, |MethodDefinition|, |ArrowFunction|, or |AsyncArrowFunction| is contained in strict mode code or if the code that produces the value of the function's [[ECMAScriptCode]] internal slot begins with a Directive Prologue that contains a Use Strict Directive.
-        </li>
-        <li>
-          Function code that is supplied as the arguments to the built-in `Function`, `Generator`, `AsyncFunction`, and `AsyncGenerator` constructors is strict mode code if the last argument is a String that when processed is a |FunctionBody| that begins with a Directive Prologue that contains a Use Strict Directive.
-        </li>
-      </ul>
-      <p>ECMAScript code that is not strict mode code is called <dfn id="non-strict-code">non-strict code</dfn>.</p>
-    </emu-clause>
-
-    <emu-clause id="sec-non-ecmascript-functions">
-      <h1>Non-ECMAScript Functions</h1>
-      <p>An ECMAScript implementation may support the evaluation of function exotic objects whose evaluative behaviour is expressed in some implementation-defined form of executable code other than via ECMAScript code. Whether a function object is an ECMAScript code function or a non-ECMAScript function is not semantically observable from the perspective of an ECMAScript code function that calls or is called by such a non-ECMAScript function.</p>
-    </emu-clause>
-  </emu-clause>
