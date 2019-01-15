@@ -718,14 +718,15 @@ emu-example pre {
     1. For each _element_ of _elements_,
       1. If _element_ has a [[Key]] field and _element_.[[Key]] is a Private Name,
         1. Let _name_ be _element_.[[Key]].
-        1. If _name_ does not have a [[Type]] field, throw a *TypeError* exception.
+        1. Let _attributes_ be _name_'s associated [[Attributes]] record.
+        1. If _attributes_ does not have a [[Kind]] field, throw a *TypeError* exception.
         1. If _element_.[[Kind]] is `"field"`,
-          1. Set _name_.[[Type]] to ~field~.
+          1. Set _attributes_.[[Kind]] to ~field~.
         1. Otherwise, if _element_.[[Kind]] is `"method"`,
-          1. Set _name_.[[Type]] to ~method~.
+          1. Set _attributes_.[[Kind]] to ~method~.
         1. Otherwise, _element_.[[Kind]] is `"accessor"`,
-          1. Set _name_.[[Type]] to ~accessor~.
-        1. Set _name_.[[Descriptor]] to _element_.[[Descriptor]].
+          1. Set _attributes_.[[Kind]] to ~accessor~.
+        1. Set _attributes_.[[Descriptor]] to _element_.[[Descriptor]].
   </emu-alg>
 </emu-clause>
 
@@ -741,26 +742,132 @@ emu-example pre {
       This section refers to <a href="https://tc39.github.io/proposal-class-fields/#sec-private-names">Private Name values</a>, as defined in the class fields proposal.
     </emu-note>
 
+  <p>Each PrivateName value immutably holds a mutable record called [[Attributes]], initially empty, which may have the following fields added to it:</p>
+    <emu-table id="private-name-record" caption="Fields of the [[Attributes]] record">
+      <table>
+        <tbody>
+        <tr>
+          <th>
+            Field
+          </th>
+          <th>
+            Type
+          </th>
+          <th>
+            For which types is it present
+          </th>
+          <th>
+            Description
+          </th>
+        </tr>
+        <tr>
+          <td>
+            [[Kind]]
+          </td>
+          <td>
+            ~field~, ~method~ or ~accessor~
+          </td>
+          <td>
+            All
+          </td>
+          <td>
+            Indicates what the private name is used for.
+          </td>
+        </tr>
+        <tr>
+          <td>
+            [[Brand]]
+          </td>
+          <td>
+            an ECMAScript value
+          </td>
+          <td>
+            ~method~ or ~accessor~
+          </td>
+          <td>
+            The "original" class of the private method or accessor; checked for in the [[PrivateBrands]] internal slot of instances before access is provided.
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <ins>[[Descriptor]]</ins>
+          </td>
+          <td>
+            <ins>PropertyDescriptor</ins>
+          </td>
+          <td>
+            <ins>~field~, ~method~, or ~accessor~</ins>
+          </td>
+          <td>
+            <ins>A property descriptor for the private field, method, or accessor, including the getter/setter for accessors and the value for methods. For fields, the descriptor determines whether it is writable.</ins>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <del>[[Value]]</del>
+          </td>
+          <td>
+            <del>Function</del>
+          </td>
+          <td>
+            <del>~method~</del>
+          </td>
+          <td>
+            <del>The value of the private method.</del>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <del>[[Get]]</del>
+          </td>
+          <td>
+            <del>Function</del>
+          </td>
+          <td>
+            <del>~accessor~</del>
+          </td>
+          <td>
+            <del>The getter for a private accessor.</del>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <del>[[Set]]</del>
+          </td>
+          <td>
+            <del>Function</del>
+          </td>
+          <td>
+            <del>~accessor~</del>
+          </td>
+          <td>
+            <del>The setter for a private accessor.</del>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </emu-table>
+
 <emu-clause id="sec-privatefieldget" aoid="PrivateFieldGet">
   <h1>PrivateFieldGet (_P_, _O_ )</h1>
   <emu-alg>
     1. Assert: _P_ is a Private Name value.
     1. If _O_ is not an object, throw a *TypeError* exception.
-    1. Let _descriptor_ be _P_'s associated [[Descriptor]].
-    1. If _descriptor_.[[Type]] is ~field~,
+    1. Let _attributes_ be _P_'s associated [[Attributes]] record.
+    1. If _attributes_.[[Kind]] is ~field~,
       1. Let _entry_ be PrivateFieldFind(_P_, _O_).
       1. If _entry_ is ~empty~, throw a *TypeError* exception.
       1. Return _entry_.[[PrivateFieldValue]].
     1. Perform ? PrivateBrandCheck(_O_, _P_).
     1. If _descriptor_.[[Type]] is ~method~,
-      1. <ins>If _descriptor_.[[Descriptor]].[[Writable]] is *true*,</ins>
+      1. <ins>If _attributes_.[[Descriptor]].[[Writable]] is *true*,</ins>
         1. <ins>Let _entry_ be PrivateFieldFind(_P_, _O_).</ins>
         1. <ins>If _entry_ is not ~empty~,</ins>
           1. <ins>Return _entry_.[[PrivateFieldValue]].</ins>
-      1. Return _descriptor_.[[Value]].
-    1. Otherwise, _descriptor_.[[Type]] is ~accessor~,
-      1. If _descriptor_ does not have a [[Get]] field, throw a *TypeError* exception.
-      1. Let _getter_ be _descriptor_.[[Get]].
+      1. Return _attributes_<ins>.[[Descriptor]]</ins>.[[Value]].
+    1. Otherwise, _attributes_.[[Kind]] is ~accessor~,
+      1. If _attributes_<ins>.[[Descriptor]]</ins> does not have a [[Get]] field, throw a *TypeError* exception.
+      1. Let _getter_ be _attributes<ins>.[[Descriptor]]</ins>.[[Get]].
       1. Return ? Call(_getter_, _O_).
   </emu-alg>
 </emu-clause>
@@ -770,15 +877,15 @@ emu-example pre {
   <emu-alg>
     1. Assert: _P_ is a Private Name value.
     1. If _O_ is not an object, throw a *TypeError* exception.
-    1. Let _descriptor_ be _P_'s associated [[Descriptor]].
-    1. If _descriptor_.[[Type]] is ~field~,
-      1. <ins>If _descriptor_.[[Descriptor]].[[Writable]] is *false*, throw a *TypeError* exception.</ins>
+    1. Let _attributes_ be _P_'s associated [[Attributes]] record.
+    1. If _attributes<ins>.[[Descriptor]]</ins>.[[Kind]] is ~field~,
+      1. <ins>If _attributes_.[[Descriptor]].[[Writable]] is *false*, throw a *TypeError* exception.</ins>
       1. Let _entry_ be PrivateFieldFind(_P_, _O_).
       1. If _entry_ is ~empty~, throw a *TypeError* exception.
       1. Set _entry_.[[PrivateFieldValue]] to _value_.
       1. Return.
-    1. If _descriptor_.[[Type]] is ~method~,
-      1. <ins>If _descriptor_.[[Descriptor]].[[Writable]] is *false*,</ins>
+    1. If _attributes_.[[Kind]] is ~method~,
+      1. <ins>If _attributes_.[[Descriptor]].[[Writable]] is *false*,</ins>
         1. Throw a *TypeError* exception.
       1. <ins>Otherwise,</ins>
         1. <ins>Let _entry_ be PrivateFieldFind(_P_, _O_).</ins>
@@ -787,10 +894,10 @@ emu-example pre {
         1. <ins>Otherwise,</ins>
           1. <ins>Set _entry_.[[PrivateFieldValue]] to _value_.</ins>
         1. <ins>Return.</ins>
-    1. Otherwise, _descriptor_.[[Type]] is ~accessor~,
-      1. If _O_.[[PrivateFieldBrands]] does not contain _descriptor_.[[Brand]], throw a *TypeError* exception.
-      1. If _descriptor_ does not have a [[Set]] field, throw a *TypeError* exception.
-      1. Let _setter_ be _descriptor_.[[Set]].
+    1. Otherwise, _attribute_.[[Kind]] is ~accessor~,
+      1. If _O_.[[PrivateFieldBrands]] does not contain _attributes_.[[Brand]], throw a *TypeError* exception.
+      1. If _attributes_<ins>.[[Descriptor]]</ins> does not have a [[Set]] field, throw a *TypeError* exception.
+      1. Let _setter_ be _attributes_<ins>.[[Descriptor]]</ins>.[[Set]].
       1. Perform ? Call(_setter_, _O_, _value_).
       1. Return.
   </emu-alg>
