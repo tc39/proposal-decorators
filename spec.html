@@ -147,25 +147,6 @@ emu-example pre {
         It is a Syntax Error if |DecoratorList| is present and PropName of |MethodDefinition| is `"constructor"`.
       </li>
     </ul>
-
-
-    <emu-grammar>
-      ClassDeclaration[Yield, Await, Default] :
-        <ins>DecoratorList[?Yield, ?Await]?</ins> `class` BindingIdentifier[?Yield, ?Await] ClassTail[?Yield, ?Await]
-
-      ClassExpression[Yield, Await] :
-        <ins>DecoratorList[?Yield, ?Await]?</ins> `class` BindingIdentifier[?Yield, ?Await]? ClassTail[?Yield, ?Await]
-    </emu-grammar>
-    <ul>
-      <li>
-        It is a Syntax Error if |DecoratorList| is present and |ClassExpression| or |ClassDeclaration| is directly contained in non-strict code.
-      </li>
-    </ul>
-
-    <emu-note>
-      |DecoratorList| is always interpreted as strict mode code, as it is part of a |ClassDeclaration| or |ClassExpression|.
-    </emu-note>
-
   </emu-clause>
 </emu-clause>
 
@@ -1055,3 +1036,35 @@ emu-example pre {
 
   </emu-clause>
 </emu-clause>
+
+    <emu-clause id="sec-strict-mode-code">
+      <h1>Strict Mode Code</h1>
+      <p>An ECMAScript |Script| syntactic unit may be processed using either unrestricted or strict mode syntax and semantics. Code is interpreted as <dfn>strict mode code</dfn> in the following situations:</p>
+      <ul>
+        <li>
+          Global code is strict mode code if it begins with a Directive Prologue that contains a Use Strict Directive.
+        </li>
+        <li>
+          Module code is always strict mode code.
+        </li>
+        <li>
+          All parts of a |ClassDeclaration| or a |ClassExpression| are strict mode code, <ins>except for the |DecoratorList| at the top level of a |ClassDeclaration| or |ClassExpression| which is contained in non-strict mode code</ins>.
+        </li>
+        <li>
+          Eval code is strict mode code if it begins with a Directive Prologue that contains a Use Strict Directive or if the call to `eval` is a direct eval that is contained in strict mode code.
+        </li>
+        <li>
+          Function code is strict mode code if the associated |FunctionDeclaration|, |FunctionExpression|, |GeneratorDeclaration|, |GeneratorExpression|, |AsyncFunctionDeclaration|, |AsyncFunctionExpression|, |AsyncGeneratorDeclaration|, |AsyncGeneratorExpression|, |MethodDefinition|, |ArrowFunction|, or |AsyncArrowFunction| is contained in strict mode code or if the code that produces the value of the function's [[ECMAScriptCode]] internal slot begins with a Directive Prologue that contains a Use Strict Directive.
+        </li>
+        <li>
+          Function code that is supplied as the arguments to the built-in `Function`, `Generator`, `AsyncFunction`, and `AsyncGenerator` constructors is strict mode code if the last argument is a String that when processed is a |FunctionBody| that begins with a Directive Prologue that contains a Use Strict Directive.
+        </li>
+      </ul>
+      <p>ECMAScript code that is not strict mode code is called <dfn id="non-strict-code">non-strict code</dfn>.</p>
+    </emu-clause>
+
+    <emu-clause id="sec-non-ecmascript-functions">
+      <h1>Non-ECMAScript Functions</h1>
+      <p>An ECMAScript implementation may support the evaluation of function exotic objects whose evaluative behaviour is expressed in some implementation-defined form of executable code other than via ECMAScript code. Whether a function object is an ECMAScript code function or a non-ECMAScript function is not semantically observable from the perspective of an ECMAScript code function that calls or is called by such a non-ECMAScript function.</p>
+    </emu-clause>
+  </emu-clause>
