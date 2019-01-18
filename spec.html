@@ -1053,11 +1053,11 @@ emu-example pre {
           initializer?: Function
           extras?: ElementDescriptor[]
           start?: (any): undefined;
-          register?: (klass): undefined;
+          finish?: (klass): undefined;
           replace?: (klass): constructor;
         }
       </code></pre>
-      The `start`, `register`, `replace` and `extra` fields are only present when returning from user code, and are not given as an argument to them, or logically part of the descriptor.
+      The `start`, `finish`, `replace` and `extra` fields are only present when returning from user code, and are not given as an argument to them, or logically part of the descriptor.
     </emu-clause>
     <emu-clause id=sec-decorator-functions-class-descriptor>
       <h1>Class Descriptors</h1>
@@ -1066,7 +1066,7 @@ emu-example pre {
         interface ClassDescriptor {
           kind: "class"
           elements: ElementDescriptor[]
-          register?: (klass): undefined;
+          finish?: (klass): undefined;
           replace?: (klass): constructor;
         }
       </code></pre>
