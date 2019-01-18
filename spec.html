@@ -171,7 +171,7 @@ emu-example pre {
             <tr> <th>Field Name</th>      <th>Value</th>                                                          </tr>
           </thead>
           <tbody>
-            <tr> <td>[[Kind]]</td>        <td>One of `"method"`, `"accessor"`, `"field"` or `"hook"`</td>          </tr>
+            <tr> <td>[[Kind]]</td>        <td>One of `"method"`, `"accessor"`, `"field"`, or `"hook"`</td>          </tr>
             <tr> <td>[[Key]]</td>         <td>A Property Key or %PrivateName% object</td>                          </tr>
             <tr> <td>[[Descriptor]]</td>  <td>A Property Descriptor</td>                                           </tr>
             <tr> <td>[[Placement]]</td>   <td>One of `"static"`, `"prototype"`, or `"own"`</td>                    </tr>
@@ -348,7 +348,7 @@ emu-example pre {
 
   <emu-clause id="sec-method-definitions-runtime-semantics-propertydefinitionevaluation">
     <h1>Runtime Semantics: ClassElementEvaluation</h1>
-    <p>With parameters _homeObject_, _enumerable_ and _placement_.</p>
+    <p>With parameters _homeObject_, _enumerable_, and _placement_.</p>
     <p>ClassElementEvaluation returns an ElementDescriptor Record.</p>
     <emu-see-also-para op="PropertyDefinitionEvaluation"></emu-see-also-para>
     <emu-grammar>ClassElement : <ins>DecoratorList?</ins> MethodDefinition</emu-grammar>
@@ -361,7 +361,7 @@ emu-example pre {
     <emu-grammar>ClassElement : <ins>DecoratorList?</ins> `static` MethodDefinition</emu-grammar>
     <emu-alg>
       1. If |DecoratorList| is present, let _decorators_ be the result of performing DecoratorListEvaluation of |DecoratorList|.
-      1. Let _element_ be ? ClassElementEvaluation of |MethodDefinition| with arguments _homeObject_, _enumerable_ and `"static"`.
+      1. Let _element_ be ? ClassElementEvaluation of |MethodDefinition| with arguments _homeObject_, _enumerable_, and `"static"`.
       1. If |DecoratorList| is present, set _element_.[[Decorators]] to _decorators_.
       1. Return _elements_.
     </emu-alg>
@@ -383,11 +383,11 @@ emu-example pre {
 
     <emu-grammar>ClassElement : MethodDefinition</emu-grammar>
     <emu-alg>
-      1. Return ClassElementEvaluation of |MethodDefinition| with arguments ! Get(_homeObject_, `"prototype"`),_enumerable_, and `"prototype"`.
+      1. Return ClassElementEvaluation of |MethodDefinition| with arguments ! Get(_homeObject_, `"prototype"`), _enumerable_, and `"prototype"`.
     </emu-alg>
     <emu-grammar>ClassElement : `static` MethodDefinition</emu-grammar>
     <emu-alg>
-      1. Return ClassElementEvaluation of |MethodDefinition| with arguments _homeObject_, _enumerable_ and `"static"`.
+      1. Return ClassElementEvaluation of |MethodDefinition| with arguments _homeObject_, _enumerable_, and `"static"`.
     </emu-alg>
     <emu-grammar>MethodDefinition : ClassElementName `(` UniqueFormalParameters `)` `{` FunctionBody `}`</emu-grammar>
     <emu-alg>
