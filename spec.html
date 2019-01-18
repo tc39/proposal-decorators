@@ -1309,7 +1309,7 @@ emu-example pre {
       <emu-alg>
         1. Assert: Type(_elementObject_) is Object.
         1. Let _kind_ be ? ToString(? Get(_elementObject_, `"kind"`)).
-        1. If _kind_ is not one of `"hook"`, `"method"`, `"accessor"` or `"field"`, throw a *TypeError* exception.
+        1. If _kind_ is not one of `"hook"`, `"method"`, `"accessor"`, or `"field"`, throw a *TypeError* exception.
         1. Let _key_ be ? Get(_elementObject_, `"key"`).
         1. If _kind_ is `"hook"`,
           1. If _key_ is not *undefined*, throw a *TypeError* exception.
