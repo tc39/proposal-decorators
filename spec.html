@@ -1066,8 +1066,6 @@ emu-example pre {
         interface ClassDescriptor {
           kind: "class"
           elements: ElementDescriptor[]
-          finish?: (klass): undefined;
-          replace?: (klass): constructor;
         }
       </code></pre>
     </emu-clause>
@@ -1403,6 +1401,10 @@ emu-example pre {
         1. If _start_ is not *undefined*, throw a *TypeError* exception.
         1. Let _extras_ be ? Get(_classDescriptor_, `"extras"`).
         1. If _extras_ is not *undefined*, throw a *TypeError* exception.
+        1. Let _finish_ be ? Get(_classDescriptor_, `"finish"`).
+        1. If _finish_ is not *undefined*, throw a *TypeError* exception.
+        1. Let _replace_ be ? Get(_classDescriptor_, `"replace"`).
+        1. If _replace_ is not *undefined*, throw a *TypeError* exception.
         1. Let _elementsObject_ be ? ToObject(? Get(_classDescriptor_, `"elements"`)).
         1. Return ? ToElementDescriptors(_elementsObject_).
       </emu-alg>
