@@ -723,9 +723,10 @@ emu-example pre {
         1. If _attributes_ does not have a [[Kind]] field, throw a *TypeError* exception.
         1. If _element_.[[Kind]] is `"field"`,
           1. Set _attributes_.[[Kind]] to ~field~.
-        1. Otherwise, if _element_.[[Kind]] is `"method"`,
+        1. Else, if _element_.[[Kind]] is `"method"`,
           1. Set _attributes_.[[Kind]] to ~method~.
-        1. Otherwise, _element_.[[Kind]] is `"accessor"`,
+        1. Else,
+          1. Assert: _element_.[[Kind]] is `"accessor"`.
           1. Set _attributes_.[[Kind]] to ~accessor~.
         1. Set _attributes_.[[Descriptor]] to _element_.[[Descriptor]].
   </emu-alg>
