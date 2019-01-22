@@ -321,10 +321,14 @@ emu-example pre {
       1. <ins>Perform ? AssignPrivateNames(_decorated_.[[Elements]]).
       1. Set the running execution context's LexicalEnvironment to _lex_.
       1. <ins>Set the running execution context's PrivateNameEnvironment to _outerPrivateEnvironment_.</ins>
+      1. <ins>Set the value of _F_'s [[Elements]] internal slot to _decorated_.[[Elements]].</ins>
+      1. <ins>Let _newF_ be ? InitializeClassMethods(_F_, _proto_).</ins>
+      1. <ins>If _newF_ is not _F_,</ins>
+        1. <ins>Set _F_ to _newF_.</ins>
+        1. <ins>Set _proto_ to ? Get(_F_, `"prototype"`).</ins>
       1. If _className_ is not *undefined*, then
         1. Perform _classScopeEnvRec_.InitializeBinding(_className_, _F_).
-      1. <ins>Set the value of _F_'s [[Elements]] internal slot to _decorated_.[[Elements]].</ins>
-      1. <ins>Return ? InitializeClassElements(_F_, _proto_).</ins>
+      1. <ins>Perform ? InitializeClassFields(_F_, _proto_).</ins>
       1. <del>Return _F_</del>.
     </emu-alg>
   </emu-clause>
@@ -675,8 +679,8 @@ emu-example pre {
   </emu-alg>
 </emu-clause>
 
-<emu-clause id="initialize-class-elements" aoid="InitializeClassElements">
-  <h1>InitializeClassElements(_F_, _proto_)</h1>
+<emu-clause id="initialize-class-methods" aoid="InitializeClassMethods">
+  <h1>InitializeClassMethods ( _F_, _proto_ )</h1>
   <emu-alg>
     1. Assert: Type(_F_) is Object and Type(_proto_) is Object.
     1. Assert: _F_ is an ECMAScript function object.
@@ -689,6 +693,19 @@ emu-example pre {
         1. Let _receiver_ be _F_ if _element_.[[Placement]] is `"static"`, else let _receiver_ be _proto_.
         1. Perform ? DefinePropertyOrThrow(_receiver_, _element_.[[Key]], _element_.[[Descriptor]]).
     1. For each item _element_ in order from _elements_,
+      1. If _element_ has a [[Replace]] field,
+        1. Assert: _element_.[[Placement]] is `"static"` and _element_.[[Kind]] is `"hook"`.
+        1. Let _newConstructor_ be Call( _element_.[[Replace]], *undefined*, « _F_ »).
+        1. If IsConstructor(_newConstructor_) is *false*, throw a *TypeError* exception.
+        1. Set _F_ to _newConstructor_.
+    1. Return _F_.
+  </emu-alg>
+</emu-clause>
+
+<emu-clause id="initialize-class-fields" aoid="InitializeClassFields">
+  <h1>InitializeClassFields ( _F_, _proto_ )</h1>
+  <emu-alg>
+    1. For each item _element_ in order from _elements_,
       1. If _element_.[[Kind]] is `"field"` and _element_.[[Placement]] is `"static"` or `"prototype"`,
         1. Assert: _element_.[[Descriptor]] does not have a [[Value]], [[Get]] or [[Set]] slot.
         1. Let _receiver_ be _F_ if _element_.[[Placement]] is `"static"`, else let _receiver_ be _proto_.
@@ -698,17 +715,12 @@ emu-example pre {
         1. Let _res_ be ? Call(_element_.[[Start]], _receiver_).
         1. If _res_ is not *undefined*, throw a *TypeError* exception.
     1. For each item _element_ in order from _elements_,
-      1. If _element_.[[Placement]] is `"prototype"` or `"static"`, _element_.[[Kind]] is `"hook"`,
-        1. If _element_ has a [[Replace]] field,
-          1. Assert: _element_.[[Placement]] is `"static"`.
-          1. Let _newConstructor_ be Call( _element_.[[Replace]], *undefined*, « _F_ »).
-          1. If IsConstructor(_newConstructor_) is *false*, throw a *TypeError* exception.
-          1. Set _F_ to _newConstructor_.
-        1. If _element_ has a [[Finish]] field,
-          1. Let _receiver_ be _F_ if _element_.[[Placement]] is `"static"`, else let _receiver_ be _proto_.
-          1. Let _res_ be ? Call(_element_.[[Finish]], _receiver_).
-          1. If _res_ is not *undefined*, throw a *TypeError* exception.
-    1. Return _F_.
+      1. If _element_ has a [[Finish]] field,
+        1. Assert: _element_.[[Placement]] is `"prototype"` or `"static"` and _element_.[[Kind]] is `"hook"`.
+        1. Let _receiver_ be _F_ if _element_.[[Placement]] is `"static"`, else let _receiver_ be _proto_.
+        1. Let _res_ be ? Call(_element_.[[Finish]], _receiver_).
+        1. If _res_ is not *undefined*, throw a *TypeError* exception.
+    1. Return.
   </emu-alg>
   <emu-note type=editor>Brands, methods and accessors are added before initializers so that all methods are visible from all initializers</emu-note>
 </emu-clause>
@@ -1342,7 +1354,6 @@ emu-example pre {
           1. If _finish_ is not *undefined*, throw a *TypeError* exception.
         1. If _kind_ is `"hook"`,
           1. If _start_, _replace_ and _finish_ are all *undefined*, throw a *TypeError* exception.
-          1. If neither _replace_ nor _finish_ is *undefined*, throw a *TypeError* exception.
           1. If _placement_ is `"own"` and either _replace_ or _finish_ is not *undefined*, throw a *TypeError* exception.
           1. If _placement_ is `"prototype"` and _replace_ is not *undefined*, throw a *TypeError* exception.
         1. Let _elements_ be ? Get(_elementObject_, `"elements"`).
