@@ -217,7 +217,7 @@ emu-example pre {
             </ul>
           </li>
           <li>
-            If _element_.[[Kind]] is `"hook", then
+            If _element_.[[Kind]] is `"hook"`, then
             <ul>
               <li>_element_.[[Key]] absent.</li>
               <li>_element_.[[Descriptor]] is absent.</li>
@@ -668,6 +668,7 @@ emu-example pre {
       1. If _element_.[[Placement]] is `"own"` and _element_.[[Kind]] is `"field"`,
         1. Perform ? DefineField(_O_, _element_).
       1. <ins>If _element_.[[Kind]] is `"hook"` and _element_.[[Placement]] is `"own"`,</ins>
+        1. Assert: _element_ has [[Start]].
         1. <ins>Let _res_ be ? Call(_element_.[[Start]], _O_).</ins>
         1. <ins>If _res_ is not *undefined*, throw a *TypeError* exception.</ins>
     1. Return.
@@ -692,7 +693,7 @@ emu-example pre {
         1. Assert: _element_.[[Descriptor]] does not have a [[Value]], [[Get]] or [[Set]] slot.
         1. Let _receiver_ be _F_ if _element_.[[Placement]] is `"static"`, else let _receiver_ be _proto_.
         1. Perform ? DefineField(_receiver_, _element_).
-      1. If _element_.[[Placement]] is `"prototype"` or `"static"` and _element_.[[Kind]] is `"hook"`,
+      1. If _element_.[[Placement]] is `"prototype"` or `"static"` and _element_.[[Kind]] is `"hook"` and _element_ has [[Start]],
         1. Let _receiver_ be _F_ if _element_.[[Placement]] is `"static"`, else let _receiver_ be _proto_.
         1. Let _res_ be ? Call(_element_.[[Start]], _receiver_).
         1. If _res_ is not *undefined*, throw a *TypeError* exception.
@@ -1341,7 +1342,9 @@ emu-example pre {
           1. If _finish_ is not *undefined*, throw a *TypeError* exception.
         1. If _kind_ is `"hook"`,
           1. If _start_, _replace_ and _finish_ are all *undefined*, throw a *TypeError* exception.
-          1. If neither _replace_ nor _finish_ are *undefined*, throw a *TypeError* exception.
+          1. If neither _replace_ nor _finish_ is *undefined*, throw a *TypeError* exception.
+          1. If _placement_ is `"own"` and either _replace_ or _finish_ is not *undefined*, throw a *TypeError* exception.
+          1. If _placement_ is `"prototype"` and _replace_ is not *undefined*, throw a *TypeError* exception.
         1. Let _elements_ be ? Get(_elementObject_, `"elements"`).
         1. If _elements_ is not *undefined*, throw a *TypeError* exception.
         1. Let _element_ be the ElementDescriptor { [[Kind]]: _kind_, [[Placement]]: _placement_ }.
