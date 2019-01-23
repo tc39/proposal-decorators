@@ -168,10 +168,10 @@ emu-example pre {
       <emu-table id="table-element-descriptor-fields" caption="ElementDescriptor fields">
         <table>
           <thead>
-            <tr> <th>Field Name</th>      <th>Value</th>                                                          </tr>
+            <tr> <th>Field Name</th>      <th>Value</th>                                                           </tr>
           </thead>
           <tbody>
-            <tr> <td>[[Kind]]</td>        <td>One of `"method"`, `"accessor"`, `"field"`, or `"hook"`</td>          </tr>
+            <tr> <td>[[Kind]]</td>        <td>One of `"method"`, `"accessor"`, `"field"`, or `"hook"`</td>         </tr>
             <tr> <td>[[Key]]</td>         <td>A Property Key or %PrivateName% object</td>                          </tr>
             <tr> <td>[[Descriptor]]</td>  <td>A Property Descriptor</td>                                           </tr>
             <tr> <td>[[Placement]]</td>   <td>One of `"static"`, `"prototype"`, or `"own"`</td>                    </tr>
@@ -740,10 +740,10 @@ emu-example pre {
     <h1>Private Names and references</h1>
 
     <emu-note type=editor>
-      This section refers to <a href="https://tc39.github.io/proposal-class-fields/#sec-private-names">Private Name values</a>, as defined in the class fields proposal.
+      This section refers to the <a href="https://tc39.github.io/proposal-class-fields/#sec-private-names">Private Name specification type</a>, as defined in the class fields proposal and <a href="https://tc39.github.io/proposal-private-methods/#sec-private-names">updated</a> in the private methods proposal.
     </emu-note>
 
-  <p>Each PrivateName value immutably holds a mutable record called [[Attributes]], initially empty, which may have the following fields added to it:</p>
+  <p>Each Private Name value immutably holds a mutable record called [[Attributes]], initially empty, which may have the following fields added to it:</p>
     <emu-table id="private-name-record" caption="Fields of the [[Attributes]] record">
       <table>
         <tbody>
