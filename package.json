@@ -8,10 +8,12 @@
   "license": "SEE LICENSE IN https://tc39.github.io/ecma262/#sec-copyright-and-software-license",
   "homepage": "https://tc39.github.io/proposal-decorators/",
   "scripts": {
-    "build": "ecmarkup spec.html rendered.html"
+    "prebuild": "rimraf out && mkdir out",
+    "build": "ecmarkup spec.html out/index.html"
   },
   "dependencies": {
-    "ecmarkup": "^3.14.0"
+    "ecmarkup": "^3.14.0",
+    "rimraf": "^2.6.3"
   },
   "devDependencies": {
     "@alrra/travis-scripts": "^3.0.0"

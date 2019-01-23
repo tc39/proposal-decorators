@@ -27,7 +27,7 @@ $(npm bin)/set-up-ssh --key "$ENCRYPTED_KEY" \
 
 # Update the content from the `gh-pages` branch
 
-$(npm bin)/update-branch --commands "mkdir out && ecmarkup spec.html out/index.html" \
+$(npm bin)/update-branch --commands "npm run build" \
                          --commit-message "Update gh-pages [skip ci]" \
                          --directory "out" \
                          --distribution-branch "gh-pages" \
