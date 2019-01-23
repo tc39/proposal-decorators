@@ -626,7 +626,7 @@ emu-example pre {
     1. Assert: Type(_receiver_) is Object.
     1. Assert: _descriptor_ is an ElementDescriptor Record.
     1. Let _key_ be _descriptor_.[[Key]].
-    1. Let _initialize_ be _fieldRecord_.[[Initialize]].
+    1. Let _initialize_ be _descriptor_.[[Initialize]].
     1. If _initialize_ is not ~empty~, then
       1. Let _initValue_ be ? Call(_initialize_, _receiver_).
     1. Else, let _initValue_ be *undefined*.
