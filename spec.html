@@ -175,7 +175,7 @@ emu-example pre {
             <tr> <td>[[Key]]</td>         <td>A Property Key or %PrivateName% object</td>                          </tr>
             <tr> <td>[[Descriptor]]</td>  <td>A Property Descriptor</td>                                           </tr>
             <tr> <td>[[Placement]]</td>   <td>One of `"static"`, `"prototype"`, or `"own"`</td>                    </tr>
-            <tr> <td>[[Initializer]]</td> <td>A function or ~empty~. This field can be absent.</td>                </tr>
+            <tr> <td>[[Initialize]]</td>  <td>A function or ~empty~. This field can be absent.</td>                </tr>
             <tr> <td>[[Start]]</td>       <td>A function. This field can be absent.</td>                           </tr>
             <tr> <td>[[Replace]]</td>     <td>A function. This field can be absent.</td>                           </tr>
             <tr> <td>[[Finish]]</td>      <td>A function. This field can be absent.</td>                           </tr>
@@ -189,7 +189,7 @@ emu-example pre {
         <ul>
           <li>If _element_.[[Kind]] is `"method"` or `"accessor"`, then
             <ul>
-              <li>_element_.[[Initializer]] is absent.</li>
+              <li>_element_.[[Initialize]] is absent.</li>
               <li>_element_.[[Start]] is absent.</li>
               <li>_element_.[[Replace]] is absent.</li>
               <li>_element_.[[Finish]] is absent.</li>
@@ -198,7 +198,7 @@ emu-example pre {
           <li>
             If _element_.[[Kind]] is `"field"`, then
             <ul>
-              <li>_element_.[[Initializer]] is present.</li>
+              <li>_element_.[[Initialize]] is present.</li>
               <li>_element_.[[Start]] is absent.</li>
               <li>_element_.[[Replace]] is absent.</li>
               <li>_element_.[[Finish]] is absent.</li>
@@ -221,7 +221,7 @@ emu-example pre {
             <ul>
               <li>_element_.[[Key]] absent.</li>
               <li>_element_.[[Descriptor]] is absent.</li>
-              <li>_element_.[[Initializer]] is absent.</li>
+              <li>_element_.[[Initialize]] is absent.</li>
               <li>At least one of _element_.[[Start]], _element_.[[Replace]], and _element_.[[Finish]] is present.</li>
               <li>_element_.[[Replace]] and _element_.[[Finish]] are not both present.</li>
               <li>_element_.[[Decorators]] is absent.</li>
@@ -503,10 +503,10 @@ emu-example pre {
     1. If |Initializer_opt| is present,
       1. Let _lex_ be the Lexical Environment of the running execution context.
       1. Let _formalParameterList_ be an instance of the production <emu-grammar>FormalParameters : [empty]</emu-grammar>.
-      1. Let _initializer_ be FunctionCreate(~Method~, _formalParameterList_, |Initializer|, _lex_, *true*).
-      1. Perform MakeMethod(_initializer_, _homeObject_).
+      1. Let _initialize_ be FunctionCreate(~Method~, _formalParameterList_, |Initializer|, _lex_, *true*).
+      1. Perform MakeMethod(_initialize_, _homeObject_).
     1. Else,
-      1. Let _initializer_ be ~empty~.
+      1. Let _initialize_ be ~empty~.
     1. If _key_ is a Private Name,
       1. Let _enumerable_ be *false*.
       1. Let _configurable_ be *false*.
@@ -515,11 +515,11 @@ emu-example pre {
       1. Let _enumerable_ be *true*.
       1. Let _configurable_ be *true*.
       1. Let _writable_ be *true*.
-    1. Let _desc_ be the PropertyDescriptor{[[Value]]: _initializer_, [[Writable]]: _writable_, [[Enumerable]]: _enumerable_, [[Configurable]]: _configurable_}.
+    1. Let _desc_ be the PropertyDescriptor{[[Value]]: _initialize_, [[Writable]]: _writable_, [[Enumerable]]: _enumerable_, [[Configurable]]: _configurable_}.
     1. Return an ElementDescriptor {
          [[Kind]]: `"field"`,
          [[Key]]: _fieldName_,
-         [[Initializer]]: _initializer_,
+         [[Initialize]]: _initialize_,
          [[Descriptor]]: _desc_
          [[Placement]]: _placement_,
        }.
@@ -626,9 +626,9 @@ emu-example pre {
     1. Assert: Type(_receiver_) is Object.
     1. Assert: _descriptor_ is an ElementDescriptor Record.
     1. Let _key_ be _descriptor_.[[Key]].
-    1. Let _initializer_ be _fieldRecord_.[[Initializer]].
-    1. If _initializer_ is not ~empty~, then
-      1. Let _initValue_ be ? Call(_initializer_, _receiver_).
+    1. Let _initialize_ be _fieldRecord_.[[Initialize]].
+    1. If _initialize_ is not ~empty~, then
+      1. Let _initValue_ be ? Call(_initialize_, _receiver_).
     1. Else, let _initValue_ be *undefined*.
     1. Assert: IsDataDescriptor(_descriptor_) is *true*.
     1. Let _dataDescriptor_ be a PropertyDescriptor with the fields of _descriptor_, but with the [[Value]] field set to _initValue_.
@@ -1051,7 +1051,7 @@ emu-example pre {
           key: String, Symbol or Private Name,
           placement: "static", "prototype", or "own"
           ...PropertyDescriptor,
-          initializer?: Function
+          initialize?: Function
           extras?: ElementDescriptor[]
           start?: (any): undefined;
           finish?: (klass): undefined;
@@ -1235,7 +1235,7 @@ emu-example pre {
 
         1. Perform ! CreateDataPropertyOrThrow(_obj_, `"placement"`, _element_.[[Placement]]).
         1. If _element_.[[Kind]] is `"field"`,
-          1. Let _initialize_ be _element_.[[Initializer]].
+          1. Let _initialize_ be _element_.[[Initialize]].
           1. If _initialize_ is ~empty~, set _initialize_ to *undefined*.
           1. Perform ! CreateDataPropertyOrThrow(_obj_, `"initialize"`, _initialize_).
         1. If _element_.[[Kind]] is `"hook"`,
@@ -1327,7 +1327,7 @@ emu-example pre {
         1. Let _initialize_ be ? Get(_elementObject_, `"initialize"`).
         1. If _initialize_ is not *undefined* and IsCallable(_initialize_) is *false*, throw a *TypeError*.
         1. If _kind_ is not `"field"`,
-          1. If _initializer_ is not *undefined*, throw a *TypeError* exception.
+          1. If _initialize_ is not *undefined*, throw a *TypeError* exception.
         1. Let _start_ be ? Get(_elementObject_, `"start"`).
         1. If _start_ is not *undefined* and IsCallable(_start_) is *false*, throw a *TypeError*.
         1. If _kind_ is not `"hook"`,
@@ -1352,7 +1352,7 @@ emu-example pre {
            1. Set _element_.[[Key]] to _key_.
            1. Set _element_.[[Descriptor]] to _descriptor_.
         1. If _kind_ is `"field"`,
-           1. Set _element_.[[Initializer]] to _initialize_.
+           1. Set _element_.[[Initialize]] to _initialize_.
         1. If _kind_ is `"hook"`,
            1. If _start_ is not *undefined*, set _element_.[[Start]] to _start_.
            1. If _replace_ is not *undefined*, set _element_.[[Replace]] to _replace_.
