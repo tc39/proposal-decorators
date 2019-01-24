@@ -168,14 +168,14 @@ emu-example pre {
       <emu-table id="table-element-descriptor-fields" caption="ElementDescriptor fields">
         <table>
           <thead>
-            <tr> <th>Field Name</th>      <th>Value</th>                                                          </tr>
+            <tr> <th>Field Name</th>      <th>Value</th>                                                           </tr>
           </thead>
           <tbody>
-            <tr> <td>[[Kind]]</td>        <td>One of `"method"`, `"accessor"`, `"field"`, or `"hook"`</td>          </tr>
+            <tr> <td>[[Kind]]</td>        <td>One of `"method"`, `"accessor"`, `"field"`, or `"hook"`</td>         </tr>
             <tr> <td>[[Key]]</td>         <td>A Property Key or %PrivateName% object</td>                          </tr>
             <tr> <td>[[Descriptor]]</td>  <td>A Property Descriptor</td>                                           </tr>
             <tr> <td>[[Placement]]</td>   <td>One of `"static"`, `"prototype"`, or `"own"`</td>                    </tr>
-            <tr> <td>[[Initializer]]</td> <td>A function or ~empty~. This field can be absent.</td>                </tr>
+            <tr> <td>[[Initialize]]</td>  <td>A function or ~empty~. This field can be absent.</td>                </tr>
             <tr> <td>[[Start]]</td>       <td>A function. This field can be absent.</td>                           </tr>
             <tr> <td>[[Replace]]</td>     <td>A function. This field can be absent.</td>                           </tr>
             <tr> <td>[[Finish]]</td>      <td>A function. This field can be absent.</td>                           </tr>
@@ -189,7 +189,7 @@ emu-example pre {
         <ul>
           <li>If _element_.[[Kind]] is `"method"` or `"accessor"`, then
             <ul>
-              <li>_element_.[[Initializer]] is absent.</li>
+              <li>_element_.[[Initialize]] is absent.</li>
               <li>_element_.[[Start]] is absent.</li>
               <li>_element_.[[Replace]] is absent.</li>
               <li>_element_.[[Finish]] is absent.</li>
@@ -198,7 +198,7 @@ emu-example pre {
           <li>
             If _element_.[[Kind]] is `"field"`, then
             <ul>
-              <li>_element_.[[Initializer]] is present.</li>
+              <li>_element_.[[Initialize]] is present.</li>
               <li>_element_.[[Start]] is absent.</li>
               <li>_element_.[[Replace]] is absent.</li>
               <li>_element_.[[Finish]] is absent.</li>
@@ -221,7 +221,7 @@ emu-example pre {
             <ul>
               <li>_element_.[[Key]] absent.</li>
               <li>_element_.[[Descriptor]] is absent.</li>
-              <li>_element_.[[Initializer]] is absent.</li>
+              <li>_element_.[[Initialize]] is absent.</li>
               <li>At least one of _element_.[[Start]], _element_.[[Replace]], and _element_.[[Finish]] is present.</li>
               <li>_element_.[[Replace]] and _element_.[[Finish]] are not both present.</li>
               <li>_element_.[[Decorators]] is absent.</li>
@@ -503,10 +503,10 @@ emu-example pre {
     1. If |Initializer_opt| is present,
       1. Let _lex_ be the Lexical Environment of the running execution context.
       1. Let _formalParameterList_ be an instance of the production <emu-grammar>FormalParameters : [empty]</emu-grammar>.
-      1. Let _initializer_ be FunctionCreate(~Method~, _formalParameterList_, |Initializer|, _lex_, *true*).
-      1. Perform MakeMethod(_initializer_, _homeObject_).
+      1. Let _initialize_ be FunctionCreate(~Method~, _formalParameterList_, |Initializer|, _lex_, *true*).
+      1. Perform MakeMethod(_initialize_, _homeObject_).
     1. Else,
-      1. Let _initializer_ be ~empty~.
+      1. Let _initialize_ be ~empty~.
     1. If _key_ is a Private Name,
       1. Let _enumerable_ be *false*.
       1. Let _configurable_ be *false*.
@@ -515,11 +515,11 @@ emu-example pre {
       1. Let _enumerable_ be *true*.
       1. Let _configurable_ be *true*.
       1. Let _writable_ be *true*.
-    1. Let _desc_ be the PropertyDescriptor{[[Value]]: _initializer_, [[Writable]]: _writable_, [[Enumerable]]: _enumerable_, [[Configurable]]: _configurable_}.
+    1. Let _desc_ be the PropertyDescriptor{[[Value]]: _initialize_, [[Writable]]: _writable_, [[Enumerable]]: _enumerable_, [[Configurable]]: _configurable_}.
     1. Return an ElementDescriptor {
          [[Kind]]: `"field"`,
          [[Key]]: _fieldName_,
-         [[Initializer]]: _initializer_,
+         [[Initialize]]: _initialize_,
          [[Descriptor]]: _desc_
          [[Placement]]: _placement_,
        }.
@@ -626,9 +626,9 @@ emu-example pre {
     1. Assert: Type(_receiver_) is Object.
     1. Assert: _descriptor_ is an ElementDescriptor Record.
     1. Let _key_ be _descriptor_.[[Key]].
-    1. Let _initializer_ be _fieldRecord_.[[Initializer]].
-    1. If _initializer_ is not ~empty~, then
-      1. Let _initValue_ be ? Call(_initializer_, _receiver_).
+    1. Let _initialize_ be _descriptor_.[[Initialize]].
+    1. If _initialize_ is not ~empty~, then
+      1. Let _initValue_ be ? Call(_initialize_, _receiver_).
     1. Else, let _initValue_ be *undefined*.
     1. Assert: IsDataDescriptor(_descriptor_) is *true*.
     1. Let _dataDescriptor_ be a PropertyDescriptor with the fields of _descriptor_, but with the [[Value]] field set to _initValue_.
@@ -644,7 +644,7 @@ emu-example pre {
 <emu-clause id="sec-privatefielddefine" aoid="PrivateFieldDefine">
   <h1>PrivateFieldDefine (_P_, _O_, _desc_)</h1>
   <emu-alg>
-    1. Assert: _P_ is a Private Name value.
+    1. Assert: _P_ is a Private Name.
     1. Assert: _desc_ is a Property Descriptor.
     1. If _O_ is not an object, throw a *TypeError* exception.
     1. Let _entry_ be PrivateFieldFind(_P_, _O_).
@@ -740,10 +740,10 @@ emu-example pre {
     <h1>Private Names and references</h1>
 
     <emu-note type=editor>
-      This section refers to <a href="https://tc39.github.io/proposal-class-fields/#sec-private-names">Private Name values</a>, as defined in the class fields proposal.
+      This section refers to the <a href="https://tc39.github.io/proposal-class-fields/#sec-private-names">Private Name specification type</a>, as defined in the class fields proposal and <a href="https://tc39.github.io/proposal-private-methods/#sec-private-names">updated</a> in the private methods proposal.
     </emu-note>
 
-  <p>Each PrivateName value immutably holds a mutable record called [[Attributes]], initially empty, which may have the following fields added to it:</p>
+  <p>Each Private Name immutably holds a mutable record called [[Attributes]], initially empty, which may have the following fields added to it:</p>
     <emu-table id="private-name-record" caption="Fields of the [[Attributes]] record">
       <table>
         <tbody>
@@ -852,7 +852,7 @@ emu-example pre {
 <emu-clause id="sec-privatefieldget" aoid="PrivateFieldGet">
   <h1>PrivateFieldGet (_P_, _O_ )</h1>
   <emu-alg>
-    1. Assert: _P_ is a Private Name value.
+    1. Assert: _P_ is a Private Name.
     1. If _O_ is not an object, throw a *TypeError* exception.
     1. Let _attributes_ be _P_'s associated [[Attributes]] record.
     1. If _attributes_.[[Kind]] is ~field~,
@@ -876,7 +876,7 @@ emu-example pre {
 <emu-clause id="sec-privatefieldset" aoid="PrivateFieldSet">
   <h1>PrivateFieldSet (_P_, _O_, _value_ )</h1>
   <emu-alg>
-    1. Assert: _P_ is a Private Name value.
+    1. Assert: _P_ is a Private Name.
     1. If _O_ is not an object, throw a *TypeError* exception.
     1. Let _attributes_ be _P_'s associated [[Attributes]] record.
     1. If _attributes<ins>.[[Descriptor]]</ins>.[[Kind]] is ~field~,
@@ -1003,7 +1003,7 @@ emu-example pre {
 
     <emu-clause id="sec-properties-of-private-name-instances">
       <h1>Properties of PrivateName Instances</h1>
-      <p>PrivateName instances are ordinary objects that inherit properties from the PrivateName prototype object. PrivateName instances have a [[PrivateNameData]] internal slot. The [[PrivateNameData]] internal slot is the Private Name value represented by this Private Name object.</p>
+      <p>PrivateName instances are ordinary objects that inherit properties from the PrivateName prototype object. PrivateName instances have a [[PrivateNameData]] internal slot. The [[PrivateNameData]] internal slot is the Private Name represented by this Private Name object.</p>
     </emu-clause>
     </emu-clause>
   </emu-clause>
@@ -1208,7 +1208,7 @@ emu-example pre {
 
         1. Perform ! CreateDataPropertyOrThrow(_obj_, `"placement"`, _element_.[[Placement]]).
         1. If _element_.[[Kind]] is `"field"`,
-          1. Let _initialize_ be _element_.[[Initializer]].
+          1. Let _initialize_ be _element_.[[Initialize]].
           1. If _initialize_ is ~empty~, set _initialize_ to *undefined*.
           1. Perform ! CreateDataPropertyOrThrow(_obj_, `"initialize"`, _initialize_).
         1. If _element_.[[Kind]] is `"hook"`,
@@ -1300,7 +1300,7 @@ emu-example pre {
         1. Let _initialize_ be ? Get(_elementObject_, `"initialize"`).
         1. If _initialize_ is not *undefined* and IsCallable(_initialize_) is *false*, throw a *TypeError*.
         1. If _kind_ is not `"field"`,
-          1. If _initializer_ is not *undefined*, throw a *TypeError* exception.
+          1. If _initialize_ is not *undefined*, throw a *TypeError* exception.
         1. Let _start_ be ? Get(_elementObject_, `"start"`).
         1. If _start_ is not *undefined* and IsCallable(_start_) is *false*, throw a *TypeError*.
         1. If _kind_ is not `"hook"`,
@@ -1325,7 +1325,7 @@ emu-example pre {
            1. Set _element_.[[Key]] to _key_.
            1. Set _element_.[[Descriptor]] to _descriptor_.
         1. If _kind_ is `"field"`,
-           1. Set _element_.[[Initializer]] to _initialize_.
+           1. Set _element_.[[Initialize]] to _initialize_.
         1. If _kind_ is `"hook"`,
            1. If _start_ is not *undefined*, set _element_.[[Start]] to _start_.
            1. If _replace_ is not *undefined*, set _element_.[[Replace]] to _replace_.
