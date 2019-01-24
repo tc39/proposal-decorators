@@ -1042,34 +1042,7 @@ emu-example pre {
   <emu-clause id=sec-decorator-functions>
     <h1>Decorator Functions</h1>
     <p>A <dfn>decorator function</dfn> is a function that takes and returns either a element descriptor or a class descriptor. The body of a decorator function modifies and returns the descriptor it receives to change the semantics of the decorated entity. Descriptor types can be differentiated by their `kind` property, which is either `"method"`, `"accessor"`, `"field"`, or `"class"`. Descriptors also have a @@toStringTag property which has the value `"Descriptor"`; this property helps differentiate them from other objects.</p>
-    <emu-clause id=sec-decorator-functions-element-descriptor>
-      <h1>Element Descriptors</h1>
-      <p>An <dfn>element descriptor</dfn> describes an element of a class or object literal and has the following shape:</p>
-      <pre><code class=typescript>
-        interface ElementDescriptor {
-          kind: "method", "accessor", "hook", or "field"
-          key: String, Symbol or Private Name,
-          placement: "static", "prototype", or "own"
-          ...PropertyDescriptor,
-          initializer?: Function
-          extras?: ElementDescriptor[]
-          start?: (any): undefined;
-          finish?: (klass): undefined;
-          replace?: (klass): constructor;
-        }
-      </code></pre>
-      The `start`, `finish`, `replace` and `extra` fields are only present when returning from user code, and are not given as an argument to them, or logically part of the descriptor.
-    </emu-clause>
-    <emu-clause id=sec-decorator-functions-class-descriptor>
-      <h1>Class Descriptors</h1>
-      <p>A <dfn>class descriptor</dfn> describes a class and has the following shape:</p>
-      <pre><code class=typescript>
-        interface ClassDescriptor {
-          kind: "class"
-          elements: ElementDescriptor[]
-        }
-      </code></pre>
-    </emu-clause>
+    <emu-note type=editor>See <a href="https://github.com/tc39/proposal-decorators/blob/master/TABLE.md">TABLE.md</a> for high-level documentation about what class and element descriptors contain.</emu-note>
   </emu-clause>
 
     <emu-clause id=sec-decorator-runtime-semantics-decoratorevaluation aoid=DecoratorEvaluation>
