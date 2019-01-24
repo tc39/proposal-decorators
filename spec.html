@@ -344,7 +344,7 @@ emu-example pre {
         1. Let _configurable_ be *true*.
         1. Let _writable_ be *true*.
       1. Let _desc_ be the PropertyDescriptor{[[Value]]: _closure_, [[Writable]]: _writable_, [[Enumerable]]: _enumerable_, [[Configurable]]: _configurable_}.
-      1. Return the ElementDescriptor { [[Kind]]: `"method"`, [[Key]]: _key_, [[Descriptor]]: _desc_, [[Placement]]: _placement_ }
+      1. Return the ElementDescriptor{[[Kind]]: `"method"`, [[Key]]: _key_, [[Descriptor]]: _desc_, [[Placement]]: _placement_}
     </emu-alg>
   </emu-clause>
 
@@ -418,7 +418,7 @@ emu-example pre {
       1. <ins>Else,</ins>
         1. <ins>Let _configurable_ be *true*.</ins>
       1. <ins>Let _desc_ be the PropertyDescriptor{[[Get]]: _closure_, [[Enumerable]]: _enumerable_, [[Configurable]]: _configurable_}.</ins>
-      1. <ins>Return the ElementDescriptor { [[Kind]]: `"method"`, [[Key]]: _key_, [[Descriptor]]: _desc_, [[Placement]]: _placement_ }</ins>
+      1. <ins>Return the ElementDescriptor{[[Kind]]: `"method"`, [[Key]]: _key_, [[Descriptor]]: _desc_, [[Placement]]: _placement_}</ins>
     </emu-alg>
     <emu-grammar>MethodDefinition : `set` ClassElementName `(` PropertySetParameterList `)` `{` FunctionBody `}`</emu-grammar>
     <emu-alg>
@@ -438,7 +438,7 @@ emu-example pre {
       1. <ins>Else,</ins>
         1. <ins>Let _configurable_ be *true*.</ins>
       1. <ins>Let _desc_ be the PropertyDescriptor{[[Set]]: _closure_, [[Enumerable]]: _enumerable_, [[Configurable]]: _configurable_}.</ins>
-      1. <ins>Return the ElementDescriptor { [[Kind]]: `"method"`, [[Key]]: _key_, [[Descriptor]]: _desc_, [[Placement]]: _placement_ }</ins>
+      1. <ins>Return the ElementDescriptor{[[Kind]]: `"method"`, [[Key]]: _key_, [[Descriptor]]: _desc_, [[Placement]]: _placement_}</ins>
     </emu-alg>
     <emu-grammar>GeneratorMethod : `*` ClassElementName `(` UniqueFormalParameters `)` `{` GeneratorBody `}`</emu-grammar>
     <emu-alg>
@@ -518,13 +518,7 @@ emu-example pre {
       1. Let _configurable_ be *true*.
       1. Let _writable_ be *true*.
     1. Let _desc_ be the PropertyDescriptor{[[Value]]: _initialize_, [[Writable]]: _writable_, [[Enumerable]]: _enumerable_, [[Configurable]]: _configurable_}.
-    1. Return an ElementDescriptor {
-         [[Kind]]: `"field"`,
-         [[Key]]: _fieldName_,
-         [[Initialize]]: _initialize_,
-         [[Descriptor]]: _desc_
-         [[Placement]]: _placement_,
-       }.
+    1. Return the ElementDescriptor{[[Kind]]: `"field"`, [[Key]]: _fieldName_, [[Initialize]]: _initialize_, [[Descriptor]]: _desc_, [[Placement]]: _placement_}.
   </emu-alg>
 </emu-clause>
 
@@ -1323,7 +1317,7 @@ emu-example pre {
           1. If _placement_ is `"prototype"` and _replace_ is not *undefined*, throw a *TypeError* exception.
         1. Let _elements_ be ? Get(_elementObject_, `"elements"`).
         1. If _elements_ is not *undefined*, throw a *TypeError* exception.
-        1. Let _element_ be the ElementDescriptor { [[Kind]]: _kind_, [[Placement]]: _placement_ }.
+        1. Let _element_ be the ElementDescriptor{[[Kind]]: _kind_, [[Placement]]: _placement_}.
         1. If _kind_ is `"method"`, `"accessor"`, or `"field",
            1. Set _element_.[[Key]] to _key_.
            1. Set _element_.[[Descriptor]] to _descriptor_.
