@@ -694,13 +694,15 @@ emu-example pre {
         1. Let _res_ be ? Call(_element_.[[Start]], _receiver_).
         1. If _res_ is not *undefined*, throw a *TypeError* exception.
     1. For each item _element_ in order from _elements_,
-      1. If _element_.[[Placement]] is `"prototype"` or `"static"`, _element_.[[Kind]] is `"hook"`,
-        1. If _element_ has a [[Replace]] field,
+      1. If _element_.[[Placement]] is `"prototype"` or `"static"`, _element_.[[Kind]] is `"hook"`, and _element_ has [[Replace]] or [[Finish]],
+        1. If _element_ has [[Replace]],
+          1. Assert: _element_ does not have [[Finish]].
           1. Assert: _element_.[[Placement]] is `"static"`.
           1. Let _newConstructor_ be Call( _element_.[[Replace]], *undefined*, « _F_ »).
           1. If IsConstructor(_newConstructor_) is *false*, throw a *TypeError* exception.
           1. Set _F_ to _newConstructor_.
-        1. If _element_ has a [[Finish]] field,
+        1. Else,
+          1. Assert: _element_ has [[Finish]].
           1. Let _receiver_ be _F_ if _element_.[[Placement]] is `"static"`, else let _receiver_ be _proto_.
           1. Let _res_ be ? Call(_element_.[[Finish]], _receiver_).
           1. If _res_ is not *undefined*, throw a *TypeError* exception.
