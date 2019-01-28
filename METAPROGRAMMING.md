@@ -184,6 +184,10 @@ function defineElement(tagName) {
 }
 
 // Create a bound version of the method as a field
+//
+// PLEASE NOTE: This is just an example implementation. There are open-source libraries
+// with similar decorators, which are maintained unlike this example.
+// See for example https://github.com/mbrowne/bound-decorator
 function bound(elementDescriptor) {
   let { kind, key, method, enumerable, configurable, writable } = elementDescriptor;
   assert(kind == "method");
@@ -240,4 +244,4 @@ function PrivateName() {
 
 ## Notes about the `@bound` decorator
 
-See [bound-decorator-rationale.md](bound-decorator-rationale.md)
+For a rationale for this example decorator, see https://github.com/mbrowne/bound-decorator/blob/master/MOTIVATION.md
