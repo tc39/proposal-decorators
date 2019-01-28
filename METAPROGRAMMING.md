@@ -189,7 +189,7 @@ function bound(elementDescriptor) {
   assert(kind == "method");
   let initialize =
     // check for private method
-    typeof key != "string" && typeof key != "symbol"
+    typeof key == "object"
         ? function() { return method.bind(this) }
         // for public methods, defer lookup until construction to respect prototype chain
         : function() { return this[key].bind(this) };
