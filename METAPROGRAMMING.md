@@ -184,21 +184,27 @@ function defineElement(tagName) {
 }
 
 // Create a bound version of the method as a field
+//
+// PLEASE NOTE: This is just an example implementation. There are open-source libraries
+// with similar decorators, which are maintained unlike this example.
+// See for example https://github.com/mbrowne/bound-decorator
 function bound(elementDescriptor) {
   let { kind, key, method, enumerable, configurable, writable } = elementDescriptor;
   assert(kind == "method");
-  function initialize() {
-    return method.bind(this);
-  }
+  let initialize =
+    // check for private method
+    typeof key == "object"
+        ? function() { return method.bind(this) }
+        // for public methods, defer lookup until construction to respect prototype chain
+        : function() { return this[key].bind(this) };
+
   // Return both the original method and a bound function field that calls the method.
   // (That way the original method will still exist on the prototype, avoiding
   // confusing side-effects.)
-  return {
-    ...elementDescriptor,
-    extras: [
-      { kind: "field", key, placement: "own", enumerable, configurable, writable, initialize }
-    ]
-  }
+  elementDescriptor.extras = [
+    { kind: "field", key, placement: "own", enumerable, configurable, writable, initialize }
+  ];
+  return elementDescriptor;
 }
 
 // Whenever a read or write is done to a field, call the render()
@@ -238,4 +244,4 @@ function PrivateName() {
 
 ## Notes about the `@bound` decorator
 
-See [bound-decorator-rationale.md](bound-decorator-rationale.md)
+For a rationale for this example decorator, see https://github.com/mbrowne/bound-decorator/blob/master/MOTIVATION.md
