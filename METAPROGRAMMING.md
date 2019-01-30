@@ -235,10 +235,9 @@ function observed({kind, key, placement, enumerable, configurable, writable, ini
 // There is no built-in PrivateName constructor, but a new private name can
 // be constructed by extracting it from a throwaway class
 function PrivateName() {
-  let name;
-  function extract({key}) { name = key; }
-  class Throwaway { @extract #_; }
-  return name;
+  function extract({key}) { throw key; }
+  try { class Throwaway { @extract #_; } }
+  catch (name) { return name; }
 }
 ```
 
