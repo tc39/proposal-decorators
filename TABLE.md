@@ -42,7 +42,7 @@
 |`  configurable:`                 | -                                         |`true \|\| false`                         |`true \|\| false`                                    |`true \|\| false`                         | -                                        |
 |`  enumerable:`                   | -                                         |`false \|\| true`                         |`false \|\| true`                                    |`false \|\| true`                         | -                                        |
 |`  start:`                        | -                                         | -                                        | -                                                   | -                                        | *Function for effect* <sup>10</sup>      |
-|`  register:`                     | -                                         | -                                        | -                                                   | -                                        | *Function for effect* <sup>10</sup>      |
+|`  finish:`                       | -                                         | -                                        | -                                                   | -                                        | *Function for effect* <sup>10</sup>      |
 |`  replace:`                      | -                                         | -                                        | -                                                   | -                                        | *Function for replacement* <sup>10</sup> |
 |`}`                               |                                           |                                          |                                                     |                                          |                                          |
 </tbody>    
@@ -56,6 +56,6 @@
 
 <sup>9</sup> cannot include `initialize`, `method` or `writable` when `get` or `set` are defined.
 
-<sup>10</sup> `kind: "hook"` doesn't create new members. You can use the `start` field to include a callback to be used purely for perform a side effect, interspersed with field initializers. Do not confuse with the `initialize` property used to set the initial value to a field. The `register` callback is called for side effect at the end of construction, and the `replace` side effect is called at that time as well, to return a replacement class. A hook may contain only one of these three functions.
+<sup>10</sup> `kind: "hook"` doesn't create new members. You can use the `start` field to include a callback to be used purely for perform a side effect, interspersed with field initializers. Do not confuse with the `initialize` property used to set the initial value to a field. The `finish` callback is called for side effect at the end of construction, and the `replace` side effect is called at that time as well, to return a replacement class. A hook may contain only one of these three functions.
 
 **Note**: you can replace a field decorator with a method descriptor, or a getter, or vice-versa, but you can't interchange those with classes.
