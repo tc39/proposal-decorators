@@ -10,7 +10,7 @@ Decorators are a JavaScript language feature, proposed for standardization at TC
 
 ES6 classes were intentionally minimal, and they don't support some common behaviors needed from classes. Some of these use cases are handled by [class fields](https://github.com/tc39/proposal-class-fields) and [private methods](https://github.com/tc39/proposal-private-methods), but others require some kind of programmability or introspection. Decorators make class declarations programmable.
 
-Decorators are very widely used in JavaScript today through transpilers today. For example, see the documentation of [core-decorators](https://www.npmjs.com/package/core-decorators), [ember-decorators](https://ember-decorators.github.io/ember-decorators/), [Angular](https://medium.com/@madhavmahesh/list-of-all-decorators-available-in-angular-71bdf4ad6976), [Stencil](https://stenciljs.com/docs/decorators/), and [MobX](https://mobx.js.org/refguide/modifiers.html) decorators. 
+Decorators are very widely used in JavaScript today through transpilers today. For example, see the documentation of [core-decorators](https://www.npmjs.com/package/core-decorators), [ember-decorators](https://ember-decorators.github.io/ember-decorators/), [Angular](https://medium.com/@madhavmahesh/list-of-all-decorators-available-in-angular-71bdf4ad6976), [Stencil](https://stenciljs.com/docs/decorators/), and [MobX](https://mobx.js.org/refguide/modifiers.html) decorators.
 
 A few examples of how to implement and use decorators that are a bit more self-contained:
 
@@ -77,11 +77,11 @@ The `@defineElement` decorator is based on the `@register` decorator. This decor
 export const @defineElement = @(name, options) => @register(klass => customElements.define(name, klass, options));
 ```
 
-This example uses a *decorator arrow function* `@(args) => @decorators` which lets a decorator definition take arguments that can be used to supply arguments to other decorators in its definition. 
+This example uses a *decorator arrow function* `@(args) => @decorators` which lets a decorator definition take arguments that can be used to supply arguments to other decorators in its definition.
 
 ### `@metadata`
 
-The `@metdata(key, value)` decorator is similar to [`@Reflect.metadata`](https://github.com/rbuckton/reflect-metadata): It allows the storage and retrieval of information 
+The `@metdata(key, value)` decorator is similar to [`@Reflect.metadata`](https://github.com/rbuckton/reflect-metadata): It allows the easy retrival of information which was stored by annotating the class.
 
 ```mjs
 import { @metadata } from "./metadata.mjs";
@@ -163,7 +163,7 @@ const b = new SubClassB();  // logs 1
 b.x;                        // undefined
 ```
 
-The `@set` decorator is implemented with `@initialize`, which can decorate public fields. `@initialize` takes a callback as an argument, which is called after the field initializer is evaluated, 
+The `@set` decorator is implemented with `@initialize`, which can decorate public fields. `@initialize` takes a callback as an argument, which is called after the field initializer is evaluated,
 
 ```mjs
 // set.mjs
@@ -281,24 +281,127 @@ Decorators can only be composed in rather fixed ways, making them more staticall
 
 ## Built-in Decorators
 
+This proposal defines a few built-in decorators that can either be used directly, or can be used as a basis to define other decorators. This section explains how the small set of built-in decorators work, in terms of explaining their effect as translating down to if you weren't using the decorator.
+
 ### `@wrap`
+
+The `@wrap` decorator can be used on a method to pass the function through another function. For example,
+
+```js
+class C {
+  @wrap(f) method() { }
+}
+```
+
+is roughly equivalent to the following:
+
+```js
+class C {
+  method() { }
+}
+C.prototype.method = f(C.prototype.method);
+```
+
+Details:
+- `@wrap` may be used on private methods as well as public ones, static as well as instance.
+- The function is only passed the method, and no other context.
+- The return value is used to replace the method or accessor.
+- `@wrap` may be used on getters or setters, and applies to these individually.
+- `@wrap` may not be used on field declarations, as there's no clear meaning.
+- `@wrap` may not be used on the class as a whole, due to the lack of a clear answer to [#211](https://github.com/tc39/proposal-decorators/issues/211).
 
 ### `@register`
 
+The `@register` decorator schedules a callback to run after the class is created.
+
+```js
+class C {
+  @register(f) method() { }
+}
+```
+
+is roughly equivalent to
+
+```js
+class C {
+  method() { }
+}
+f(C, "method");
+```
+
+Details:
+- `@register` can be used on any method, field, accessor, or the class as a whole.
+- Arguments passed into the callback given to `@register`:
+  - First argument: the "target": For static fields and methods, or the class itself, it is the class; for instance fields and methods, it is the class's prototype.
+  - Second argument: For public fields, methods or accessors, the property key; for private, or for the class itself, only one argument is passed.
+  - Note, there is no third argument; the property descriptor is not passed into the callback, but the callback could look it up itself.
+- The return value of the callback must be undefined.
+- All `@wrap` callbacks run before all `@register` callbacks. This is because `@wrap` is used to set up the class, and `@register` runs on the class after it's created.
+
 ### `@initialize`
 
-## Composed Decorators
+The `@initialize` decorator intercepts the initialization of a public class field and runs a callback supplied to the decorator in place of `Object.defineProperty`. For example:
+
+```js
+class C {
+  @initialize(f) a = b;
+}
+```
+
+is roughly equivalent to the following:
+
+```js
+class C {
+  constructor() {
+    f.call(this, f, b, "a");
+  }
+}
+```
+
+Details:
+- `@initialize` can only be used on public field declarations (including symbols/computed property names), not private.
+- `@initialize` can be used with both static and instance fields.
+- The return value of the callback must be undefined.
+
+## User-defined Decorators
+
+JavaScript programmers can make thier own decorators by composing built-in decorators.
 
 ### `const @decorator` declarations
 
+Decorators may be defined as a simple composition of other decorators. You can use all the fancy JavaScript features you want inside the arguments, but at the top level, this is just a string of decorators and arguments for these decorators. There's no way to conditionally use one decorator in one situation and another in another situation, for example.
+
+Example:
+
+```js
+const @decorator = @foo @bar(arg) @baz(arg2);
+@decorator class C { }
+```
+
+TODO(littledan): Describe this more clearly and precisely.
+
 ### Decorator arrow functions
 
-```mjs
+A decorator arrow function may be defined similarly. Place an `@` before the parameter list (parens required even if it's just one parameter) to make a decorator arrow function. After the `=>`, only decorators are permitted, just as in decorator compositions.
+
+Example:
+
+```js
 const @decorator = @(arg, arg2) => @foo @bar(arg) @baz(arg2);
 @decorator(arg, arg2) class C { }
 ```
 
-### Importing and exporting from modules
+TODO(littledan): Describe this more clearly and precisely.
+
+### Scoping details
+
+Decorators can be declared in any lexical scope. They are always declared with `const`. Using a decorator before it's defined leads to a TDZ. Decorators can be imported and exported from modules.
+
+`@` is part of the name of decorators. It's always used right at the beginning, with no whitespace between the `@` and the rest of the name.
+
+Decorators are not JavaScript values--they can only be applied to classes or used in composed decorators.
+
+Built-in decorators are exposed in an outer lexical scope. The global scope may shadow the definition of built-in decorators which come from this outer lexical scope.
 
 ## FAQ
 
@@ -314,30 +417,57 @@ Babel 7 supports the decorators proposal presented to TC39 in the November 2018 
 
 #### Syntax changes
 
+On the side of using decorators, this proposal makes several changes compared to previous decorators proposals:
+- When importing a decorator from a module, include `@` as part of the name of the decorator; previous proposals excluded the `@` during an import.
+- Forms like `@foo.bar` or `@(foo)` are no longer permitted, as decorators are not JavaScript expressions.
+- The syntax for defining a decorator is completely different: Rather than a function as in the other decorators proposals, special "composed decorator" syntax is used.
 
-
-#### Comparison with TypeScript "experimental" decorators
+Due to these syntax differences, no code using decorators will "just work" when upgrading from other versions of decorators; a codemod will be required.
 
 #### Comparison with Babel "legacy" decorators
 
+Babel legacy-mode decorators are based on the state of the JavaScript decorators proposal as of 2014. In addition to the syntax changes listed above:
+- Babel legacy decorators are a single callback form that handles all of the changes, rather than different callbacks for different built-in decorators.
+- Babel legacy decorators pass the property descriptor to the callback, and apply that automatically, whereas `@register` forces you to get and set the property descriptor yourself.
+
+Despite these differences, it should generally be possible to achieve the same sort of functionality with this decorators proposal as with Babel legacy decorators. If you see important missing functionality in this proposal, please file an issue.
+
+#### Comparison with TypeScript "experimental" decorators
+
+TypeScript experimental decorators are largely similar to Babel legacy decorators, so the comments in that section apply as well. In addition:
+- This proposal does not include parameter decorators, but they may be provided by future built-in decorators, see [NEXTBUILTINS.md](./NEXTBUILTINS.md).
+- TypeScript decorators run all instance decorators before all static decorators, whereas the order of evaluation (for both `@wrap` and `@register`) in this proposal is based on the ordering in the program, regardless of whether they are static or instance.
+
+Despite these differences, it should generally be possible to achieve the same sort of functionality with this decorators proposal as with TypeScript experimental decorators. If you see important missing functionality in this proposal, please file an issue.
+
 #### Comparison with the previous Stage 2 decorators proposal
 
-### If the Stage 2 decorators didn't work out, why not go back to TS/Babel "legacy" decorators?
+The previous Stage 2 decorators proposal was more full-featured than this proposal, including:
+- Access to reading and writing private fields, and declaring new private fields
+- Class decorator access to manipulating all fields and methods within the class
+- More flexible handling of the initializer, treating it as a "thunk"
 
-- Legacy decorators, when applied to field declarations, depend deeply on the semantics that field initializers call setters. TC39 [concluded](https://github.com/tc39/proposal-class-fields/blob/master/README.md#public-fields-created-with-objectdefineproperty) that, instead, field declarations act like Object.defineProperty. This would mean that 
-- Legacy decorators are run as a function, and they don't give any clear path towards being statically analyzable or expandable ahead of the time through tools, or a way to extend them to other possibilities, such as decorating field initializers, private class elements, functions, objects, etc.
+These features aren't included in this initial proposal, but they may be provided by future built-in decorators.
 
-### Why prioritize the features of "legacy" decorators, like classes, over other features?
+The previous Stage 2 decorators proposal was based on a concept of descriptors which stand in for various class elements. Such descriptors do not exist in this proposal, but could be partially revived in future built-in decorators. However, those descriptors gave a bit too much flexibility/dynamism to the class shape in order to be efficiently optimizable; future built-in decorators would add the same functionality in a more statically analyzable way.
+
+### If the Stage 2 decorators didn't work out, why not go back and standardize TS/Babel legacy decorators?
+
+**Path towards features and analyzability**: Legacy decorators are run as a function, and they don't give any clear path towards being statically analyzable or expandable ahead of the time through tools, or a way to extend them to other possibilities, such as decorating field initializers, private class elements, functions, objects, etc.
+
+**Technical infeasibility**: Legacy decorators, when applied to field declarations, depend deeply on the semantics that field initializers call setters. TC39 [concluded](https://github.com/tc39/proposal-class-fields/blob/master/README.md#public-fields-created-with-objectdefineproperty) that, instead, field declarations act like Object.defineProperty. This decision makes many patterns with legacy decorators no longer work.
+
+### Why prioritize the features of "legacy" decorators, like classes, over other features that decorators could provide?
 
 "Legacy" decorators have grown to huge popularity in the JavaScript ecosystem. That proves that they were onto something, and solve a problem that many people are facing. This proposal takes that knowledge and runs with it, building in native support in the JavaScript language. It does so in a way that leaves open the opportunity to use the same syntax for many more different kinds of extensions in the future.
 
 ### Could we support decorating objects, parameters, blocks, functions, etc?
 
-Yes! Once we have validated this core approach, the authors of this proposal plan to come back and make proposals for more kinds of decorators. See [NEXTBUILTINS.md](./NEXTBUILTINS.md) for details.
+Yes! Once we have validated this core approach, the authors of this proposal plan to come back and make proposals for more kinds of decorators. See [NEXTBUILTINS.md](./NEXTBUILTINS.md).
 
 ### Will decorators let you access private fields and methods?
 
-This proposal does not include any built-in decorators that would provide the primitives to access private fields or methods (beyond wrapping them). We hope to provide this capability with future built-in decorators. See [NEXTBUILTINS.md](./NEXTBUILTINS.md) for details.
+This proposal does not include any built-in decorators that would provide the primitives to access private fields or methods (beyond wrapping them). We hope to provide this capability with future built-in decorators. See [NEXTBUILTINS.md](./NEXTBUILTINS.md).
 
 ### When are decorators evaluated?
 
@@ -379,6 +509,6 @@ See [IMPLNOTES.md](./IMPLNOTES.md) for notes on how implementations might be org
 
 We are truly sorry about the delay here. We understand that this causes real problems in the JavaScript ecosystem, and are working towards a solution as fast as we can.
 
-It took us a long time for everyone to get on the same page about the requirements spanning frameworks, tooling and native implementations. Only after pushing hard towards the previous direction did we get real-world experience that it was slow in transpilers and a detailed explanation of how they would be slow in native implementations. 
+It took us a long time for everyone to get on the same page about the requirements spanning frameworks, tooling and native implementations. Only after pushing hard towards the previous direction did we get real-world experience that it was slow in transpilers and a detailed explanation of how they would be slow in native implementations.
 
 We are working to develop better communication within TC39 and with the broader JavaScript community so that this sort of problem can be corrected sooner in the future.
