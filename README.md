@@ -57,6 +57,120 @@ export const @logged = @wrap(f => {
 });
 ```
 
+In the above example, the *composed decorator* `@logged` is defined to expand out into a call of the `@wrap` decorator with a particular fixed callback.
+
+### `@defineElement`
+
+[HTML Custom Elements](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements) lets you define your own HTML element. Elements are registered using `customElements.define`. Using decorators, the registration can happen up-front:
+
+```mjs
+import { @defineElement } from "./defineElement.mjs";
+
+@defineElement('my-class')
+class MyClass extends HTMLElement { }
+```
+
+The `@defineElement` decorator is based on the `@register` decorator. This decorator is called when the class is finished being defined, and it calls the provided callback with the class that resulted.
+
+```mjs
+// defineElement.mjs
+export const @defineElement = @(name, options) => @register(klass => customElements.define(name, klass, options));
+```
+
+This example uses a *decorator arrow function* `@(args) => @decorators` which lets a decorator definition take arguments that can be used to supply arguments to other decorators in its definition. 
+
+### `@metadata`
+
+The `@metdata(key, value)` decorator is similar to [`@Reflect.metadata`](https://github.com/rbuckton/reflect-metadata): It allows the storage and retrieval of information 
+
+```mjs
+import { @metadata } from "./metadata.mjs";
+
+// partially apply the decorator locally for terseness
+const @localMeta = @metadata("key", "value");
+
+@localMeta class C {
+  @localMeta method() { }
+}
+
+Reflect.getMetadata(C, "key");                      // "value"
+Reflect.getMetadata(C.prototype, "key", "method");  // "value"
+```
+
+`@metadata` can also be defined in terms of `@register`. When `@register` is used with a public field, method or accessor, it is called with the second argument being the property key of that class eleemnt.
+
+```mjs
+// metadata.mjs
+import "reflect-metadata";
+
+export const @metadata = @(key, value) =>
+    @register((target, prop) => Reflect.defineMetadata(key, value, target, prop));
+```
+
+### `@frozen`
+
+The `@frozen` decorator freezes the constructor and its `prototype` so that they cannot be mutated after the class is defined. It leaves instances mutable. Example usage:
+
+```mjs
+import { @frozen } from "./frozen.mjs";
+
+@frozen
+class MyClass {
+  method() { }
+}
+
+MyClass.method = () => {};            // TypeError to add a method
+MyClass.prototype.method = () => {};  // TypeError to overwrite a method
+MyClass.prototype.method.foo = 1;     // TypeError to mutate a method
+```
+
+`@frozen` is implemented with the `@register` decorator, which allows a callback to be scheduled after the class is created. The callback is passed the class as an argument.
+
+```mjs
+// frozen.mjs
+export const @frozen = @register(klass => {
+  Object.freeze(klass);
+  for (const [key, value] of Object.entries(klass)) {
+    Object.freeze(value);
+  }
+  for (const [key, value] of Object.entries(klass.prototype)) {
+    Object.freeze(value);
+  }
+});
+```
+
+### `@set`
+
+The `@set` decorator makes a class field declaration behave as a setting a property when it's called, rather than as `Object.defineProperty`. In particular, setters will be called with a normal property set, whereas `Object.defineProperty` just clobbers setters without calling them. For example:
+
+```mjs
+class SuperClass {
+  set x(value) { console.log(value); }
+}
+
+class SubClassA extends SuperClass {
+  x = 1;
+}
+
+class SubClassB extends SuperClass {
+  @set x = 1;
+}
+
+const a = new SubClassA();  // does not log anything
+a.x;                        // 1
+
+const b = new SubClassB();  // logs 1
+b.x;                        // undefined
+```
+
+The `@set` decorator is implemented with `@initialize`, which can decorate public fields. `@initialize` takes a callback as an argument, which is called after the field initializer is evaluated, 
+
+```mjs
+// set.mjs
+
+export const @set = @initialize(function(value, key) { this[key] = value });
+```
+
 ### `@tracked`
 
 The `@tracked` decorator turns a public field declaration into a getter/setter pair which triggers a `render()` method when the setter is called. This pattern, or patterns like it, is common in frameworksto avoid extra bookkeeping scattered throughout the application to ask for re-rendering.
@@ -77,17 +191,15 @@ e.increment();  // logs 1
 e.increment();  // logs 2
 ```
 
-`@tracked` is defined in terms of the combination of two built-in decorators:
-- `@initialize` on a field declaration redirects the value of an initializer to a function which is provided, rather than calling `Object.defineProperty`. The function is called with the `this` value being the object under construction, and with two arguments `value` (what the initializer evaluates to, or `undefined` if there was no initializer) and `name` (the property key).
-- `@register` on any class element or the class itself schedules a callback to be called once the class is created. The class is passed into this callback. If it's used on a public method or field declaration, the property key is passed in as the second argument.
+`@tracked` is defined in terms of the combination of two built-in decorators that we've seen before above. `@initialize` is used to replace the property definition with setting a property which stores the underlying data. `@register` is used to define a getter/setter pair which is used when accessing the property.
 
 ```mjs
 // tracked.mjs
 
 export const @tracked =
   @initialize(function(value, name) { this[`__internal_${name}`] = value; })
-  @register((klass, name) => {
-    Object.defineProperty(klass.prototype, "name", {
+  @register((target, name) => {
+    Object.defineProperty(target, "name", {
       get() { return this[`__internal_${name}`]; },
       set() { this[`__internal_${name}`] = value; this.render(); },
       configurable: true
@@ -95,9 +207,65 @@ export const @tracked =
   });
 ```
 
-Note, further built-in decorators as in [NEXTBUILTINS.md](./NEXTBUILTINS.md) may provide a more direct and statically analyzable way to implement `@tracked`. This version unfortunately relies on metaprogramming when the class is defined.
+Note, further built-in decorators as in [NEXTBUILTINS.md](./NEXTBUILTINS.md) may provide a more direct and statically analyzable way to implement `@tracked` and avoid the use of `Object.defineProperty`. This version unfortunately relies on metaprogramming when the class is defined.
 
-<!-- `@metdata`? `@frozen`? -->
+### `@bound`
+
+The `@bound` decorator makes a method auto-bound: it will carry around the original `this` value when accessed as `this.method` and not immediately called. This behavior matches Python's semantics, and it's been found useful in the React ecosystem, which makes frequent use of passing functions around. Example usage:
+
+```mjs
+class Foo {
+  x = 1;
+
+  @bound method() { console.log(this.x); }
+
+  queueMethod() { setTimeout(this.method, 1000); }
+}
+
+new Foo().queueMethod();  // will log 1, rather than undefined
+```
+
+One possible implementation, based on `@register`:
+
+```mjs
+// bound.mjs
+export const @bound = @register((target, name) => {
+  const method = target[name];
+  Object.defineProperty(target, name, {
+    get() {
+      const bound = method.bind(this);
+      Object.defineProperty(this, name, { value: bound, configurable: true });
+    }
+    configurable: true
+  });
+})
+```
+
+There are various appraoches to writing an auto-bound decorator, but ultimately, the most efficient way may be built into the JavaScript engine; see [NEXTBUILTINS.md](./NEXTBUILTINS.md) for discussion of a built-in `@bound` decorator, and the [bound-decorator](https://github.com/mbrowne/bound-decorator) repository for another approach.
+
+### Combined example
+
+Some of the above examples could be combined to form a mini-framework, to make it easier to write HTML Custom Elements.
+
+```mjs
+import { @set } from "./set.mjs";
+import { @tracked } from "./tracked.mjs";
+import { @bound } from "./bound.mjs";
+import { @defineElement } from "./defineElement.mjs";
+
+@defineElement('counter-widget')
+class CounterWidget extends HTMLElement {
+  @tracked x = 0;
+
+  @set onclick = this.clicked;
+
+  @bound clicked() { this.x++; }
+
+  connectedCallback() { this.render(); }
+
+  render() { this.textContent = this.x.toString(); }
+}
+```
 
 ## The idea
 
@@ -145,6 +313,8 @@ Babel 7 supports the decorators proposal presented to TC39 in the November 2018 
 ### How does this proposal compare to other versions of decorators?
 
 #### Syntax changes
+
+
 
 #### Comparison with TypeScript "experimental" decorators
 
