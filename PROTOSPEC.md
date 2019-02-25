@@ -23,7 +23,7 @@ DecoratorDeclaration :
 
 Similar to `#names`, there is a parallel lexical scope for `@names`. This is important so that `with` statements do not provide a way to dynamically create decorators.
 
-Each construct which makes a new lexical scope for variables also names a lexical scope for decorators. The only type of declarations which decorators support are `const` declarations and `import { @name }` declarations.
+Each construct which makes a new lexical scope for variables also names a lexical scope for decorators. The only type of declarations which decorators support are `decorator @name { }` declarations and `import { @name }` declarations.
 
 There is a special outer scope for built-in decorators. When a decorator is declared at the module or script level, it is being declared in an inner, nested scope which may shadow things in this outer scope. In this way, built-in decorators can be polyfilled.
 
@@ -33,7 +33,7 @@ Although the decorators specification is designed to allow decorators to be anal
 
 ## Runtime representation of decorators
 
-A decorator as applied is represented as a List of Decorator Records of the form { [[BuiltinDecorator]]: the String name of a built-in decorator, e.g., `"wrap"`, [[Arguments]]: a List of JavaScript values }.
+A decorator as applied is represented as a List of Decorator Records of the form { [[BuiltinDecorator]]: the String name of a built-in decorator, e.g., `"@wrap"`, [[Arguments]]: a List of JavaScript values }.
 
 A `decorator` declaration is, effectively, a function which converts a List of JavaScript values into a List of Decorator Records.
 

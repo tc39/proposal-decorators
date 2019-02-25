@@ -136,11 +136,11 @@ MyClass.prototype.method.foo = 1;     // TypeError to mutate a method
 export decorator @frozen {
   @register(klass => {
     Object.freeze(klass);
-    for (const [key, value] of Object.entries(klass)) {
-      Object.freeze(value);
+    for (const key of Reflect.ownKeys(klass)) {
+      Object.freeze(klass[key]);
     }
-    for (const [key, value] of Object.entries(klass.prototype)) {
-      Object.freeze(value);
+    for (const key of Reflect.ownKeys(klass.prototype)) {
+      Object.freeze(klass.prototype[key]);
     }
   })
 }
