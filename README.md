@@ -45,16 +45,18 @@ new C().method(1);
 ```mjs
 // logged.mjs
 
-export const @logged = @wrap(f => {
-  const name = f.name;
-  function wrapped(...args) {
-    console.log(`starting ${name} with arguments ${args.join(", ")}`);
-    f.call(this, ...args);
-    console.log(`ending ${name}`);
-  }
-  wrapped.name = name;
-  return wrapped;
-});
+export decorator @logged {
+  @wrap(f => {
+    const name = f.name;
+    function wrapped(...args) {
+      console.log(`starting ${name} with arguments ${args.join(", ")}`);
+      f.call(this, ...args);
+      console.log(`ending ${name}`);
+    }
+    wrapped.name = name;
+    return wrapped;
+  })
+}
 ```
 
 In the above example, the *composed decorator* `@logged` is defined to expand out into a call of the `@wrap` decorator with a particular fixed callback.
@@ -74,7 +76,9 @@ The `@defineElement` decorator is based on the `@register` decorator. This decor
 
 ```mjs
 // defineElement.mjs
-export const @defineElement = @(name, options) => @register(klass => customElements.define(name, klass, options));
+export decorator @defineElement(name, options) {
+  @register(klass => customElements.define(name, klass, options))
+}
 ```
 
 This example uses a *decorator arrow function* `@(args) => @decorators` which lets a decorator definition take arguments that can be used to supply arguments to other decorators in its definition.
@@ -87,7 +91,7 @@ The `@metdata(key, value)` decorator is similar to [`@Reflect.metadata`](https:/
 import { @metadata } from "./metadata.mjs";
 
 // partially apply the decorator locally for terseness
-const @localMeta = @metadata("key", "value");
+decorator @localMeta { @metadata("key", "value") }
 
 @localMeta class C {
   @localMeta method() { }
@@ -103,8 +107,9 @@ Reflect.getMetadata(C.prototype, "key", "method");  // "value"
 // metadata.mjs
 import "reflect-metadata";
 
-export const @metadata = @(key, value) =>
-    @register((target, prop) => Reflect.defineMetadata(key, value, target, prop));
+export decorator @metadata(key, value) {
+  @register((target, prop) => Reflect.defineMetadata(key, value, target, prop))
+}
 ```
 
 ### `@frozen`
@@ -128,15 +133,17 @@ MyClass.prototype.method.foo = 1;     // TypeError to mutate a method
 
 ```mjs
 // frozen.mjs
-export const @frozen = @register(klass => {
-  Object.freeze(klass);
-  for (const [key, value] of Object.entries(klass)) {
-    Object.freeze(value);
-  }
-  for (const [key, value] of Object.entries(klass.prototype)) {
-    Object.freeze(value);
-  }
-});
+export decorator @frozen {
+  @register(klass => {
+    Object.freeze(klass);
+    for (const [key, value] of Object.entries(klass)) {
+      Object.freeze(value);
+    }
+    for (const [key, value] of Object.entries(klass.prototype)) {
+      Object.freeze(value);
+    }
+  })
+}
 ```
 
 ### `@set`
@@ -168,7 +175,7 @@ The `@set` decorator is implemented with `@initialize`, which can decorate publi
 ```mjs
 // set.mjs
 
-export const @set = @initialize(function(value, key) { this[key] = value });
+export decorator @set { @initialize(function(value, key) { this[key] = value }) }
 ```
 
 ### `@tracked`
@@ -196,7 +203,7 @@ e.increment();  // logs 2
 ```mjs
 // tracked.mjs
 
-export const @tracked =
+export decorator @tracked {
   @initialize(function(value, name) { this[`__internal_${name}`] = value; })
   @register((target, name) => {
     Object.defineProperty(target, "name", {
@@ -204,7 +211,8 @@ export const @tracked =
       set() { this[`__internal_${name}`] = value; this.render(); },
       configurable: true
     });
-  });
+  })
+}
 ```
 
 Note, further built-in decorators as in [NEXTBUILTINS.md](./NEXTBUILTINS.md) may provide a more direct and statically analyzable way to implement `@tracked` and avoid the use of `Object.defineProperty`. This version unfortunately relies on metaprogramming when the class is defined.
@@ -231,16 +239,18 @@ One possible implementation, based on `@register`:
 
 ```mjs
 // bound.mjs
-export const @bound = @register((target, name) => {
-  const method = target[name];
-  Object.defineProperty(target, name, {
-    get() {
-      const bound = method.bind(this);
-      Object.defineProperty(this, name, { value: bound, configurable: true });
-    }
-    configurable: true
-  });
-})
+export decorator @bound {
+  @register((target, name) => {
+    const method = target[name];
+    Object.defineProperty(target, name, {
+      get() {
+        const bound = method.bind(this);
+        Object.defineProperty(this, name, { value: bound, configurable: true });
+      }
+      configurable: true
+    });
+  })
+}
 ```
 
 There are various appraoches to writing an auto-bound decorator, but ultimately, the most efficient way may be built into the JavaScript engine; see [NEXTBUILTINS.md](./NEXTBUILTINS.md) for discussion of a built-in `@bound` decorator, and the [bound-decorator](https://github.com/mbrowne/bound-decorator) repository for another approach.
@@ -264,20 +274,24 @@ An implementation in terms of `@wrap`:
 ```mjs
 // callable.mjs
 
-const @call = @(callback) => @wrap(klass => {
-  function subclass(...args) {
-    if (new.target === undefined) {
-      return callback.call(klass, ...args);
-    } else {
-      return Reflect.construct(klass, args, new.target);
+decorator @call(callback) {
+  @wrap(klass => {
+    function subclass(...args) {
+      if (new.target === undefined) {
+        return callback.call(klass, ...args);
+      } else {
+        return Reflect.construct(klass, args, new.target);
+      }
     }
-  }
-  subclass.__proto__ = klass;
-  subclass.prototype.__proto__ = klass;
-  return subclass;
-});
+    subclass.__proto__ = klass;
+    subclass.prototype.__proto__ = klass;
+    return subclass;
+  })
+}
 
-export const @callable = @call(function(...args) { return this.call(...args); });
+export decorator @callable {
+  @call(function(...args) { return this.call(...args); })
+}
 ```
 
 Note that a decorator like `@call` could be considered for a future built-in decorator, in a way that avoids creating an additional subclass.
@@ -420,41 +434,53 @@ Details:
 
 JavaScript programmers can make thier own decorators by composing built-in decorators.
 
-### `const @decorator` declarations
+### `decorator @xyz` declarations
 
 Decorators may be defined as a simple composition of other decorators. You can use all the fancy JavaScript features you want inside the arguments, but at the top level, this is just a string of decorators and arguments for these decorators. There's no way to conditionally use one decorator in one situation and another in another situation, for example.
 
 Example:
 
 ```js
-const @decorator = @foo @bar(arg) @baz(arg2);
-@decorator class C { }
+decorator @xyz {
+  @foo @bar(arg) @baz(arg2)
+}
+@xyz class C { }
 ```
 
-TODO(littledan): Describe this more clearly and precisely.
-
-### Decorator arrow functions
-
-A decorator arrow function may be defined similarly. Place an `@` before the parameter list (parens required even if it's just one parameter) to make a decorator arrow function. After the `=>`, only decorators are permitted, just as in decorator compositions.
-
-Example:
+This is basically equivalent to listing those decorators explicitly:
 
 ```js
-const @decorator = @(arg, arg2) => @foo @bar(arg) @baz(arg2);
-@decorator(arg, arg2) class C { }
+@foo @bar(arg) @baz(arg2)
+class C { }
 ```
 
-TODO(littledan): Describe this more clearly and precisely.
+Decorators may also take arguments:
 
-### Scoping details
+```js
+decorator @xyz(arg, arg2) {
+  @foo @bar(arg) @baz(arg2)
+}
+@xyz(1, 2) class C { }
+```
+
+This would be equivalent to:
+
+```js
+@foo @bar(1) @baz(2)
+class C { }
+```
+
+Note, omitting the arguments list for a decorator (whether in a definition or usage) is equivalent to an empty arguments list, for `decorator` declarations. It's possible that future built-in decorators or declaration forms would treat them differently, however.
+
+### Semantic details
 
 Decorators can be declared in any lexical scope. They are always declared with `const`. Using a decorator before it's defined leads to a TDZ. Decorators can be imported and exported from modules.
 
 `@` is part of the name of decorators. It's always used right at the beginning, with no whitespace between the `@` and the rest of the name.
 
-Decorators are not JavaScript values--they can only be applied to classes or used in composed decorators.
+Decorators, whether built-in or user-defined, are not JavaScript values--they can only be applied to classes or used in composed decorators.
 
-Built-in decorators are exposed in an outer lexical scope. The global scope may shadow the definition of built-in decorators which come from this outer lexical scope.
+See further details in [PROTOSPEC.md](./PROTOSPEC.md)
 
 ## FAQ
 
@@ -534,7 +560,7 @@ The built-in decorators take callbacks as arguments, which are scheduled to run 
 Whenever there are multiple callbacks, they are executed from "top to bottom, inside to out", regardless of the type or placement of class element. This goes for all three built-in decorators. Here's an example based on `@register`:
 
 ```js
-const @log = @(msg) => @register(k => { console.log(msg); return k });
+decorator @log(msg) { @register(k => { console.log(msg); return k }) }
 
 @log("a") @log("b")
 class C {
