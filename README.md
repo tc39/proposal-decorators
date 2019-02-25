@@ -215,7 +215,7 @@ export decorator @tracked {
 }
 ```
 
-Note, further built-in decorators as in [NEXTBUILTINS.md](./NEXTBUILTINS.md) may provide a more direct and statically analyzable way to implement `@tracked` and avoid the use of `Object.defineProperty`. This version unfortunately relies on metaprogramming when the class is defined.
+Note, further built-in decorators as in [NEXTBUILTINS.md](./NEXTBUILTINS.md#tracked) may provide a more direct and statically analyzable way to implement `@tracked` and avoid the use of `Object.defineProperty`.
 
 ### `@bound`
 
@@ -253,7 +253,7 @@ export decorator @bound {
 }
 ```
 
-There are various appraoches to writing an auto-bound decorator, but ultimately, the most efficient way may be built into the JavaScript engine; see [NEXTBUILTINS.md](./NEXTBUILTINS.md) for discussion of a built-in `@bound` decorator, and the [bound-decorator](https://github.com/mbrowne/bound-decorator) repository for another approach.
+There are various appraoches to writing an auto-bound decorator, but ultimately, the most efficient way may be built into the JavaScript engine; see [NEXTBUILTINS.md](./NEXTBUILTINS.md#bound) for discussion of a built-in `@bound` decorator, and the [bound-decorator](https://github.com/mbrowne/bound-decorator) repository for another approach.
 
 ### `@callable`
 
@@ -542,11 +542,11 @@ The previous Stage 2 decorators proposal was based on a concept of descriptors w
 
 ### Could we support decorating objects, parameters, blocks, functions, etc?
 
-Yes! Once we have validated this core approach, the authors of this proposal plan to come back and make proposals for more kinds of decorators. See [NEXTBUILTINS.md](./NEXTBUILTINS.md).
+Yes! Once we have validated this core approach, the authors of this proposal plan to come back and make proposals for more kinds of decorators. See [NEXTBUILTINS.md](./NEXTBUILTINS.md#applying-built-in-decorators-to-other-syntactic-forms).
 
 ### Will decorators let you access private fields and methods?
 
-This proposal does not include any built-in decorators that would provide the primitives to access private fields or methods (beyond wrapping them). We hope to provide this capability with future built-in decorators. See [NEXTBUILTINS.md](./NEXTBUILTINS.md).
+This proposal does not include any built-in decorators that would provide the primitives to access private fields or methods (beyond wrapping them). We hope to provide this capability with future built-in decorators. See [NEXTBUILTINS.md](./NEXTBUILTINS.md#expose).
 
 ### When are decorators evaluated?
 
@@ -618,7 +618,7 @@ By contrast, this decorator proposal should be compiled out into simply making f
 
 Another case of static analyzability being useful for tooling was named exports from ES modules. The fixed nature of named imports and exports helps tree shaking, importing and exporting of types, and here, as the basis for the predictable nature of composed decorators. Even though the ecosystem remains in transition from exporting entirely dynamic objects, ES modules have taken root in tooling and found to be useful because, not despite, their more static nature.
 
-See [IMPLNOTES.md](./IMPLNOTES.md) for notes on how transpilers might be organized.
+See [IMPLNOTES.md](./IMPLNOTES.md#transpiler-implementations) for notes on how transpilers might be organized.
 
 ### How does static analyzability help native JS engines?
 
@@ -628,7 +628,7 @@ Studies of the execution traces of popular web applications show that a large pr
 
 Decorators, especially the previous Stage 2 proposal, added various sources of overhead, both for executing the class definition and for using the class, that would make startup slower if they weren't optimized out by a JIT. By contrast, composed decorators always boil down in a fixed way to built-in decorators, which can be handled directly by bytecode generation.
 
-See [IMPLNOTES.md](./IMPLNOTES.md) for notes on how JS engines might implement decorators.
+See [IMPLNOTES.md](./IMPLNOTES.md#native-implementations) for notes on how JS engines might implement decorators.
 
 ### Why is decorators taking so long?
 
