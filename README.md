@@ -572,6 +572,30 @@ class C {
 
 This example logs `"e"`, `"d"`, `"g"`, `"f"`, `"b"`, `"a"`.
 
+Or, similarly, with `@wrap`:
+
+```js
+@wrap(a) @wrap(b)
+class C {
+  @wrap(d) @wrap(e) method() { }
+
+  @wrap(f) @wrap(g) static m() { }
+}
+```
+
+would be roughly equivalent to:
+
+```js
+class C {
+  @wrap(d) @wrap(e) method() { }
+
+  @wrap(f) @wrap(g) static m() { }
+}
+C.prototype.method = d(e(C.prototype.method));
+C.m = f(g(C.m));
+C = a(b(C));
+```
+
 ### How should this new proposal be used in transpilers, when it's implemented?
 
 Unlike previous decorator proposals, decorators in this proposal are not functions or first-class values. This means that, when they are imported from another module, that other module needs to be present in source form, not in transpiled form. The decorators champion group suggests exporting decorators from a separate module, both because this proposal is still under development, and to enable the rest of the package to be distributed in a more optimized form.
