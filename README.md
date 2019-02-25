@@ -81,11 +81,11 @@ export decorator @defineElement(name, options) {
 }
 ```
 
-This example uses a *decorator arrow function* `@(args) => @decorators` which lets a decorator definition take arguments that can be used to supply arguments to other decorators in its definition.
+This example uses a `decorator` declaration with a parameter list, which lets a decorator definition take arguments that can be used to supply arguments to other decorators in its definition.
 
 ### `@metadata`
 
-The `@metdata(key, value)` decorator is similar to [`@Reflect.metadata`](https://github.com/rbuckton/reflect-metadata): It allows the easy retrival of information which was stored by annotating the class.
+The `@metdata(key, value)` decorator is similar to [`@Reflect.metadata`](https://github.com/rbuckton/reflect-metadata): It allows the easy retrival of information which was stored by annotating the class. The following examples are written in terms of the Reflect.metadata proposal, but you could imagine storing the metadata in any other form.
 
 ```mjs
 import { @metadata } from "./metadata.mjs";
