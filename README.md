@@ -4,7 +4,7 @@ Stage 2
 
 ## Status
 
-Decorators are a JavaScript language feature, proposed for standardization at TC39. Decorators are currently at Stage 2 in TC39's process, indicating that the committee expects them to eventually be included in the standard JavaScript programming language. The decorators champion group is considering a redesign of the proposal, which the rest of this document describes.
+Decorators are a JavaScript language feature, proposed for standardization at TC39. Decorators are currently at Stage 2 in TC39's process, indicating that the committee expects them to eventually be included in the standard JavaScript programming language. The decorators champion group is considering a redesign of the proposal as "static decorators", which the rest of this document describes.
 
 ## Motivation and use cases
 
@@ -214,6 +214,8 @@ Note, further built-in decorators as in [NEXTBUILTINS.md](./NEXTBUILTINS.md) may
 The `@bound` decorator makes a method auto-bound: it will carry around the original `this` value when accessed as `this.method` and not immediately called. This behavior matches Python's semantics, and it's been found useful in the React ecosystem, which makes frequent use of passing functions around. Example usage:
 
 ```mjs
+import { @bound } from "./bound.mjs";
+
 class Foo {
   x = 1;
 
@@ -242,6 +244,43 @@ export const @bound = @register((target, name) => {
 ```
 
 There are various appraoches to writing an auto-bound decorator, but ultimately, the most efficient way may be built into the JavaScript engine; see [NEXTBUILTINS.md](./NEXTBUILTINS.md) for discussion of a built-in `@bound` decorator, and the [bound-decorator](https://github.com/mbrowne/bound-decorator) repository for another approach.
+
+### `@callable`
+
+The `@callable` decorator makes it possible to invoke the class without `new`. When a class decorated with `@callable` is called, its static `call` method is invoked.
+
+```mjs
+import { @callable } from "./callable.mjs";
+
+@callable
+class MyDate {
+  static call(...args) { return Date(...args) }
+  constructor(...args) { return new Date(...args) }
+}
+```
+
+An implementation in terms of `@wrap`:
+
+```mjs
+// callable.mjs
+
+const @call = @(callback) => @wrap(klass => {
+  function subclass(...args) {
+    if (new.target === undefined) {
+      return callback.call(klass, ...args);
+    } else {
+      return Reflect.construct(klass, args, new.target);
+    }
+  }
+  subclass.__proto__ = klass;
+  subclass.prototype.__proto__ = klass;
+  return subclass;
+});
+
+export const @callable = @call(function(...args) { return this.call(...args); });
+```
+
+Note that a decorator like `@call` could be considered for a future built-in decorator, in a way that avoids creating an additional subclass.
 
 ### Combined example
 
@@ -302,13 +341,27 @@ class C {
 C.prototype.method = f(C.prototype.method);
 ```
 
+`@wrap` can also be used on a class to wrap the entire class.
+
+```js
+@wrap(f)
+class C { }
+```
+
+is roughly equivalent to:
+
+```js
+class C { }
+C = f(C);
+```
+
 Details:
 - `@wrap` may be used on private methods as well as public ones, static as well as instance.
 - The function is only passed the method, and no other context.
 - The return value is used to replace the method or accessor.
 - `@wrap` may be used on getters or setters, and applies to these individually.
 - `@wrap` may not be used on field declarations, as there's no clear meaning.
-- `@wrap` may not be used on the class as a whole, due to the lack of a clear answer to [#211](https://github.com/tc39/proposal-decorators/issues/211).
+- When `@wrap` is used on a class, if there is a use of `C` in a method or field initializer inside the class, it will refer to the original, unwrapped `C. See [#211](https://github.com/tc39/proposal-decorators/issues/211) for details.
 
 ### `@register`
 
@@ -501,9 +554,31 @@ Unlike previous decorator proposals, decorators in this proposal are not functio
 
 See [PROTOSPEC.md](./PROTOSPEC.md) for the outline of a specification.
 
-### How might this proposal be implemented in transpilers and JS engines?
+### What makes this decorators proposal more statically analyzable than previous proposals?
 
-See [IMPLNOTES.md](./IMPLNOTES.md) for notes on how implementations might be organized.
+The decorators in this proposal are statically analyzable in the sense that, if you parse a module and all of its dependencies, it's possible to tell, without executing the program, which built-in decorators are used at any particular place where a decorator is used. The built-in decorators have a relatively fixed effect on the program (e.g., call this function at this place). The arguments to decorators--in the case of built-in decorators, the callbacks that will be called---are based on runtime values that flow through the program, and may differ across multiple runs of the same code, but the structure *around* those callbacks remains the same.
+
+### How does static analyzability help transpilers and other tooling?
+
+Statically analyzable decorators help tooling to generate faster and smaller JavaScript from build tools, enabling the decorators to be transpiled away, without causing extra data structures to be created and manipulated at runtime. It will be easier for tools to understand what's going on, which could help in tree shaking, type systems, etc.
+
+An attempt by LinkedIn to use the previous Stage 2 decorators proposal found that it led to a significant performance overhead. Members of the Polymer and TypeScript team also noticed a significant increase in generated code size with these decorators.
+
+By contrast, this decorator proposal should be compiled out into simply making function calls in particular places, or replacing one class element with another class element. We're working on proving out this benefit by implementing the proposal in Babel, so an informed comparison can be made before propsing for Stage 3.
+
+Another case of static analyzability being useful for tooling was named exports from ES modules. The fixed nature of named imports and exports helps tree shaking, importing and exporting of types, and here, as the basis for the predictable nature of composed decorators. Even though the ecosystem remains in transition from exporting entirely dynamic objects, ES modules have taken root in tooling and found to be useful because, not despite, their more static nature.
+
+See [IMPLNOTES.md](./IMPLNOTES.md) for notes on how transpilers might be organized.
+
+### How does static analyzability help native JS engines?
+
+Although a [JIT](https://en.wikipedia.org/wiki/Just-in-time_compilation) can optimize away just about anything, it can only do so after a program "warms up". That is, when a typical JavaScript engine starts up, it's not using the JIT--instead, it compiles the JavaScript to bytecode and executes that directly. Later, if code is run lots of times, the JIT will kick in and optimize the program.
+
+Studies of the execution traces of popular web applications show that a large proportion of the time starting up the page is often in parsing and execution through bytecode, typically with a smaller percentage running JIT-optimized code. This means that, if we want the web to be fast, we can't rely on fancy JIT optimizations.
+
+Decorators, especially the previous Stage 2 proposal, added various sources of overhead, both for executing the class definition and for using the class, that would make startup slower if they weren't optimized out by a JIT. By contrast, composed decorators always boil down in a fixed way to built-in decorators, which can be handled directly by bytecode generation.
+
+See [IMPLNOTES.md](./IMPLNOTES.md) for notes on how JS engines might implement decorators.
 
 ### Why is decorators taking so long?
 
