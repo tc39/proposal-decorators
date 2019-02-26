@@ -12,6 +12,10 @@ Nicolò Ribaudo has written [notes](https://hackmd.io/44ErLPn8Qi6FshyoTcrXcA?vie
 
 If possible, it would be great to agree on common formats for these two items among tooling. If consensus can be reached among participating tooling implementations, the intention would be that IMPLNOTES.md will eventually contains a description of this shared format.
 
+### Better code generation through custom decorators in transpilers
+
+Even before further decorators are standard, transpilers can include the implementations of additional, tool-defined built-in decorators (which we could call "custom decorators"). Sometimes, these could add more fundamental capabilities; other times, they could do the same sort of thing as is possible with standard built-in decorators, but in a more fixed way. For example, the `@tracked` decorator could be implemented in a tool to convert directly to a getter/setter pair, with a "fallback" definition based on `@register`. Such decorators could also be explained specially to type systems, tree shaking, etc.
+
 ## Native implementations
 
 The goal for native implementations is to permit the JS engine to see which built-in decorators are being called *when generating bytecode*. The challenge is how to see that when they may be imported from other modules.

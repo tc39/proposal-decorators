@@ -540,13 +540,23 @@ The previous Stage 2 decorators proposal was based on a concept of descriptors w
 
 "Legacy" decorators have grown to huge popularity in the JavaScript ecosystem. That proves that they were onto something, and solve a problem that many people are facing. This proposal takes that knowledge and runs with it, building in native support in the JavaScript language. It does so in a way that leaves open the opportunity to use the same syntax for many more different kinds of extensions in the future.
 
+### Why does `@name` have to be used when importing a decorator, rather than `name` as in transpilers?
+
+By including the `@` in the name, decorators are distinguished from ordinary JavaScript values. All defined variables in JavaScript are associated with JavaScript values, which decorators are not.
+
+Using a prefix lets us restrict in how decorators are defined and used. The ordinary JavaScript lexical variable scope permits various kinds of dynamism, e.g., through `with` statements, the global object, and `var` declarations leaking out of eval. By using a prefix, we can define those sources of variability away.
+
+We've found that it's intuitive to have `@` as part of the name of decorators: Most documentation for decorators in practice today treated `@` as if it were part of the name, rather than the syntax for invoking decorators.
+
+As a bonus: The separate namespace for the new, static decorators proposal should also help the transition path from previous transpiler-based decorators proposals: It's easy for tooling to see whether you're referring to a static decorator or not, just by what names it can see in scope.
+
 ### Could we support decorating objects, parameters, blocks, functions, etc?
 
 Yes! Once we have validated this core approach, the authors of this proposal plan to come back and make proposals for more kinds of decorators. See [NEXTBUILTINS.md](./NEXTBUILTINS.md#applying-built-in-decorators-to-other-syntactic-forms).
 
 ### Will decorators let you access private fields and methods?
 
-This proposal does not include any built-in decorators that would provide the primitives to access private fields or methods (beyond wrapping them). We hope to provide this capability with future built-in decorators. See [NEXTBUILTINS.md](./NEXTBUILTINS.md#expose).
+The champion group feels very strongly that decorator access to private fields and methods in various different ways is very important, and we're trying to provide it as soon as possible. This proposal does not include any built-in decorators that would provide the primitives to access private fields or methods (beyond wrapping them). We hope to provide this capability with future built-in decorators. See [NEXTBUILTINS.md](./NEXTBUILTINS.md#expose). The focus of this proposal is on the *infrastructure* for built-in and user-defined decorators, and a minimum of functionality is provided.
 
 ### When are decorators evaluated?
 
@@ -608,6 +618,17 @@ See [PROTOSPEC.md](./PROTOSPEC.md) for the outline of a specification.
 
 The decorators in this proposal are statically analyzable in the sense that, if you parse a module and all of its dependencies, it's possible to tell, without executing the program, which built-in decorators are used at any particular place where a decorator is used. The built-in decorators have a relatively fixed effect on the program (e.g., call this function at this place). The arguments to decorators--in the case of built-in decorators, the callbacks that will be called---are based on runtime values that flow through the program, and may differ across multiple runs of the same code, but the structure *around* those callbacks remains the same.
 
+### Doesn't the dynamic nature of arguments negate the static analyzability?
+
+The idea here is, the decorators (statically available) manipulate the shape of the code, and the arguments are plugged into that new shape. For example, the `@register` decorator creates a slot for a function to be called, and the argument is that function that will be called. Future decorators may change the shape of a class directly, e.g., turning a field into a getter/setter pair, while calling out to a function provided in an argument from *within* the getter or setter.
+
+### Some of the above examples used Object.defineProperty. How is this statically analyzable?
+
+It isn't really. The use of `Object.defineProperty` is rather unfortunate, and a compromise in this proposal for minimalism. Future built-in decorators can chip away at the cases where features like this would be used. However:
+
+- **Limited scope of dynamic-ness**: In previous decorators proposals, basically everything had to go through `Object.defineProperty` if any sort of decorator was applied. With this proposal, only decorator definitions which explicitly call `Object.defineProperty` will do it.
+- **Framework for making static transformations**: This proposal focuses on creates, for the first time, a new way that the list of transformations can be composed across modules while remaining statically analyzable. This will be a useful extension point for nailing down the details of these transformations and further reducing the use of `Object.defineProperty` over time, whereas previous proposals did not present any such path.
+
 ### How does static analyzability help transpilers and other tooling?
 
 Statically analyzable decorators help tooling to generate faster and smaller JavaScript from build tools, enabling the decorators to be transpiled away, without causing extra data structures to be created and manipulated at runtime. It will be easier for tools to understand what's going on, which could help in tree shaking, type systems, etc.
@@ -629,6 +650,10 @@ Studies of the execution traces of popular web applications show that a large pr
 Decorators, especially the previous Stage 2 proposal, added various sources of overhead, both for executing the class definition and for using the class, that would make startup slower if they weren't optimized out by a JIT. By contrast, composed decorators always boil down in a fixed way to built-in decorators, which can be handled directly by bytecode generation.
 
 See [IMPLNOTES.md](./IMPLNOTES.md#native-implementations) for notes on how JS engines might implement decorators.
+
+### What happened to coalescing getter/setter pairs?
+
+Given the initial decorator set of `@register`, `@wrap` and `@initialize`, nothing needs coalesced getter/setter pairs, and works just fine decorating individual class elements. Coalescing could be re-added as part of the semantics of an individual built-in decorator, invoked only when that decorator is used. However, the use cases are unclear; it may simply be unnecessary long-term. Removing getter/setter coalescing is a relatively large simplification of both the specification and implementations, so all else being equal, we're better off without it. (Being honest, this isn't really an FAQ--no one asked about this yet, maybe because no one really missed coalescing...)
 
 ### Why is decorators taking so long?
 

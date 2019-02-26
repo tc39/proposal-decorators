@@ -153,15 +153,24 @@ with `get` and `set` closing over the underlying storage
 - `@toGet`
 - `@toGetSet`
 - `@toSet`
-- `@toInitializer`
+- `@toInitialize`
 - `@addStorage`
-- `@addInitializer`
+- `@addInitialize`
 
-For example, a `@bound` decorator could be implemented as follows:
+Some examples of using this system, which would work equally on public and private fields:
 
 ```js
 decorator @bound {
   @toField({method} => ({initializer() { return method.bind(this); }}))
+}
+
+decorator @tracked(callback) {
+  @toGetSet({ storage } => ({
+    initialize(value) { storage.set.call(this, value), },
+    get() { return storage.get.call(this); }
+    set(value) { storage.set.call(this, value); callback.call(this); }
+  }))
+  @addStorage
 }
 ```
 
