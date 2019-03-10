@@ -136,3 +136,4 @@ To learn how to define your own decorators, see [METAPROGRAMMING.md](https://git
 
 ## Implementation status
 - [Babel](https://www.npmjs.com/package/@babel/plugin-proposal-decorators) -- included in 7.1+
+- [TypeScript](https://www.typescriptlang.org/docs/handbook/decorators.html) -- experimental flag in 3.3.3333
