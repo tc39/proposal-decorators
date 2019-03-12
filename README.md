@@ -85,7 +85,7 @@ This example uses a `decorator` declaration with a parameter list, which lets a 
 
 ### `@metadata`
 
-The `@metdata(key, value)` decorator is similar to [`@Reflect.metadata`](https://github.com/rbuckton/reflect-metadata): It allows the easy retrival of information which was stored by annotating the class. The following examples are written in terms of the Reflect.metadata proposal, but you could imagine storing the metadata in any other form.
+The `@metdata(key, value)` decorator is similar to [`@Reflect.metadata`](https://github.com/rbuckton/reflect-metadata): It allows the easy retrieval of information which was stored by annotating the class. The following examples are written in terms of the Reflect.metadata proposal, but you could imagine storing the metadata in any other form.
 
 ```mjs
 import { @metadata } from "./metadata.mjs";
@@ -101,7 +101,7 @@ Reflect.getMetadata(C, "key");                      // "value"
 Reflect.getMetadata(C.prototype, "key", "method");  // "value"
 ```
 
-`@metadata` can also be defined in terms of `@register`. When `@register` is used with a public field, method or accessor, it is called with the second argument being the property key of that class eleemnt.
+`@metadata` can also be defined in terms of `@register`. When `@register` is used with a public field, method or accessor, it is called with the second argument being the property key of that class element.
 
 ```mjs
 // metadata.mjs
@@ -180,7 +180,7 @@ export decorator @set { @initialize(function(value, key) { this[key] = value }) 
 
 ### `@tracked`
 
-The `@tracked` decorator turns a public field declaration into a getter/setter pair which triggers a `render()` method when the setter is called. This pattern, or patterns like it, is common in frameworksto avoid extra bookkeeping scattered throughout the application to ask for re-rendering.
+The `@tracked` decorator turns a public field declaration into a getter/setter pair which triggers a `render()` method when the setter is called. This pattern, or patterns like it, is common in frameworks to avoid extra bookkeeping scattered throughout the application to ask for re-rendering.
 
 ```mjs
 import { @tracked } from "./tracked.mjs";
@@ -253,7 +253,7 @@ export decorator @bound {
 }
 ```
 
-There are various appraoches to writing an auto-bound decorator, but ultimately, the most efficient way may be built into the JavaScript engine; see [NEXTBUILTINS.md](./NEXTBUILTINS.md#bound) for discussion of a built-in `@bound` decorator, and the [bound-decorator](https://github.com/mbrowne/bound-decorator) repository for another approach.
+There are various approaches to writing an auto-bound decorator, but ultimately, the most efficient way may be built into the JavaScript engine; see [NEXTBUILTINS.md](./NEXTBUILTINS.md#bound) for discussion of a built-in `@bound` decorator, and the [bound-decorator](https://github.com/mbrowne/bound-decorator) repository for another approach.
 
 ### `@callable`
 
@@ -432,7 +432,7 @@ Details:
 
 ## User-defined Decorators
 
-JavaScript programmers can make thier own decorators by composing built-in decorators.
+JavaScript programmers can make their own decorators by composing built-in decorators.
 
 ### `decorator @xyz` declarations
 
@@ -488,7 +488,7 @@ See further details in [PROTOSPEC.md](./PROTOSPEC.md)
 
 Unfortunately, we're in the classic trap of, "The old thing is deprecated, and the new thing is not ready yet!" For now, best to keep using the old thing.
 
-The decorators champion group would recommend continuing to use Babel "legacy" decorators or TypeScript "experimental" decorators. If you're using decorators today, you're probably already using one of these versions. Note that these decorators depend on "[[Set]] semantics" for field declarations (in Babel, loose mode). We recommend that these tools maintain support for [[Set]] semantics alongisde legacy decorators, until it's possible to transition to the decorators of this proposal.
+The decorators champion group would recommend continuing to use Babel "legacy" decorators or TypeScript "experimental" decorators. If you're using decorators today, you're probably already using one of these versions. Note that these decorators depend on "[[Set]] semantics" for field declarations (in Babel, loose mode). We recommend that these tools maintain support for [[Set]] semantics alongside legacy decorators, until it's possible to transition to the decorators of this proposal.
 
 Babel 7 supports the decorators proposal presented to TC39 in the November 2018 TC39 meeting. It's fine to use these for experimental purposes, but they face significant performance issues, are not yet widely adopted; we don't plan to continue pushing for this proposal in TC39. As such, we recommend against using this version for serious work. In follow-on proposals to add more built-in decorators, we hope to be able to recover the extra functionality that the November 2018 decorators proposal supported.
 
