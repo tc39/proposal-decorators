@@ -744,7 +744,7 @@ See [IMPLNOTES.md](./IMPLNOTES.md#native-implementations) for notes on how JS en
 
 ### What happened to coalescing getter/setter pairs?
 
-Given the initial decorator set of `@register`, `@wrap` and `@initialize`, nothing needs coalesced getter/setter pairs, and works just fine decorating individual class elements. Coalescing could be exposed as part of the semantics of a future built-in decorator, invoked only when that decorator is used. The use cases that require coalescing are a bit unclear, but see [issue #256](https://github.com/tc39/proposal-decorators/issues/256) for further discussion. Removing getter/setter coalescing is a relatively large simplification of both the specification and implementations, so all else being equal, we're better off without it.
+Given the initial decorator set of `@register`, `@wrap`, `@initialize` and `@expose`, nothing needs coalesced getter/setter pairs, and works just fine decorating individual class elements. Coalescing could be exposed as part of the semantics of a future built-in decorator, invoked only when that decorator is used. The use cases that require coalescing are a bit unclear, but see [issue #256](https://github.com/tc39/proposal-decorators/issues/256) for further discussion. Removing getter/setter coalescing is a relatively large simplification of both the specification and implementations, so all else being equal, we're better off without it.
 
 ### Why is decorators taking so long?
 
