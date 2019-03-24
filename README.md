@@ -23,7 +23,7 @@ Core elements:
 - Decorators can be **defined in JavaScript by composing** other decorators
   - A `decorator @foo { }` declaration defines a new decorator. These are lexically scoped and can be imported and exported.
   - Decorators cannot be treated as JavaScript values; they may only be applied in classes, composed, exported, imported, etc.
-  - As part of this, decorators have `@` as part of their name; `@decorator` names form a separate namespace. `@` 
+  - As part of this, decorators have `@` as part of their name; `@decorator` names form a separate namespace.
   - Decorators can only be composed in rather fixed ways, making them more statically analyzable.
 
 This proposal starts minimal, but more built-in decorators would be added over time, adding further capabilities like creating synthetic private names, statically changing the shape of the class, parameter and function decorators, etc.
