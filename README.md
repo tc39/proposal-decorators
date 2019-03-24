@@ -492,6 +492,26 @@ class C {
 }
 ```
 
+Likewise,
+
+```js
+class C {
+  @initialize(f) method() {}
+}
+```
+
+is roughly equivalent to
+
+```js
+class C {
+  method() {}
+
+  constructor() {
+    f.call(this, "method");
+  }
+}
+```
+
 The return value is checked to be `undefined`.
 
 ### `@expose`
