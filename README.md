@@ -197,7 +197,7 @@ The `@set` decorator is implemented with `@initialize`, which can decorate publi
 ```mjs
 // set.mjs
 
-export decorator @set { @initialize(function(value, key) { this[key] = value }) }
+export decorator @set { @initialize((instance, key, value) => instance[key] = value) }
 ```
 
 ### `@tracked`
@@ -226,7 +226,7 @@ e.increment();  // logs 2
 // tracked.mjs
 
 export decorator @tracked {
-  @initialize(function(value, name) { this[`__internal_${name}`] = value; })
+  @initialize((instance, name, value) => instance[`__internal_${name}`] = value)
   @register((target, name) => {
     Object.defineProperty(target, "name", {
       get() { return this[`__internal_${name}`]; },
@@ -262,7 +262,7 @@ The `@initialize` decorator could be used to ensure that, on construction of a c
 ```mjs
 // bound.mjs
 export decorator @bound {
-  @initialize(function(name) { this[name] = this[name].bind(this); })
+  @initialize((instance, name) => instance[name] = instance[name].bind(instance))
 }
 ```
 
@@ -346,10 +346,10 @@ export class FriendKey {
     this.#map.set(name, { get, set });
   }
   get(obj, name) {
-    return this.#map.get(name).get.call(obj);
+    return this.#map.get(name).get(obj);
   }
   set(obj, name, value) {
-    return this.#map.get(name).set.call(obj, value);
+    return this.#map.get(name).set(obj, value);
   }
 }
 
@@ -470,7 +470,7 @@ is roughly equivalent to the following:
 ```js
 class C {
   constructor() {
-    f.call(this, "a", b);
+    f(this, "a", b);
   }
 }
 ```
@@ -487,7 +487,7 @@ is roughly equivalent to the following:
 ```js
 class C {
   constructor() {
-    f.call(this);
+    f(this);
   }
 }
 ```
@@ -507,7 +507,7 @@ class C {
   method() {}
 
   constructor() {
-    f.call(this, "method");
+    f(this, "method");
   }
 }
 ```
@@ -530,8 +530,8 @@ would behave as:
 class C {
   @register(proto => f(proto,
                        "#x",
-                       function() { return this.#x },
-                       function(value) { this.#x = value }))
+                       instance => instance.#x,
+                       (instance, value) => instance.#x = value ))
       #x;
 }
 ```
