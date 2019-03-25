@@ -1,25 +1,94 @@
 # Built-in Decorators Synopsis
 
-|                           |                              `@wrap(f)`                                   |                                                       `@register(f)`                                                         |             `@expose(f)`                                                                                                     |             `@initialize(f)`          |
-|---------------------------|---------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------    |------------------------------------------------------------------------------------------------------------------------------|---------------------------------------|
-| **when**                  | while setting up the class                                                | after the class is created                                                                                                   | after the class is created                                                                                                   | after executing the class initializer |
-| **function f**            |                                                                           |                                                                                                                              |                                                                                                                              |                                       |
-| *parameters*              | - target: method (for method and accessor)<br>- target: class (for class) | - target: class (for static fields, static method and class)<br/>- target: class prototype (for instance fields and methods) | - target: class (for static fields, static method and class)<br/>- target: class prototype (for instance fields and methods) | - target: class instance              |
-|                           |                                                                           | - key (for public fields, methods or accessors)<br>- undefined (for private and class)                                       | - key: private name string                                                                                                   | - value: field value                  |
-|                           |                                                                           |                                                                                                                              | - get: function to get the member.`func(instance)` return the field value                                                    | - key: field key                      |
-|                           |                                                                           |                                                                                                                              | - set: function to get the member. `func(instance, value)` update field value and return the value                           |                                       |
-| *return*                  | replace method or class or undefined                                      | undefined                                                                                                                    | undefined                                                                                                                    | undefined                             |
-| **decorate**              |                                                                           |                                                                                                                              |                                                                                                                              |                                       |    
-| *class*                   |                                  X                                        |                                                             X                                                                |                                                             -                                                                |                   -                   |
-| *public method*           |                                  X                                        |                                                             X                                                                |                                                             -                                                                |                   -                   |
-| *public accessor*         |                      X (applies individually)                             |                                                 X (applies individually)                                                     |                                                             -                                                                |                   -                   |
-| *public field*            |                                  -                                        |                                                             X                                                                |                                                             -                                                                |                   X                   |
-| *static public method*    |                                  X                                        |                                                             X                                                                |                                                             -                                                                |                   -                   |
-| *static public accessor*  |                      X (applies individually)                             |                                                 X (applies individually)                                                     |                                                             -                                                                |                   -                   |
-| *static public field*     |                                  -                                        |                                                             X                                                                |                                                             -                                                                |                   X                   |
-| *private method*          |                                  X                                        |                                                             X                                                                |                                                             X                                                                |                   -                   |
-| *private accessor*        |                      X (applies individually)                             |                                                 X (applies individually)                                                     |                                                 X (applies individually)                                                     |                   -                   |
-| *private field*           |                                  -                                        |                                                             X                                                                |                                                             X                                                                |                   -                   |
-| *static private method*   |                                  X                                        |                                                             X                                                                |                                                             X                                                                |                   -                   |
-| *static private accessor* |                      X (applies individually)                             |                                                 X (applies individually)                                                     |                                                 X (applies individually)                                                     |                   -                   |
-| *static private field*    |                                  -                                        |                                                             X                                                                |                                                             X                                                                |                   -                   |
+|                           |                              `@wrap(f)`                                      /
+|---------------------------|------------------------------------------------------------------------------|
+| **when**                  | while setting up the class                                                   |
+| **function f**            |                                                                              |
+| *parameters*              | - target: method (for method and accessor) or class (for class)              |
+| *return*                  | replace method or class or undefined                                         |
+| **decorate**              |                                                                              |
+| *class*                   |                                  X                                           |
+| *public method*           |                                  X                                           |
+| *public accessor*         |                                  X                                           |
+| *public field*            |                                  -                                           |
+| *static public method*    |                                  X                                           |
+| *static public accessor*  |                                  X                                           |
+| *static public field*     |                                  -                                           |
+| *private method*          |                                  X                                           |
+| *private accessor*        |                                  X                                           |
+| *private field*           |                                  -                                           |
+| *static private method*   |                                  X                                           |
+| *static private accessor* |                                  X                                           |
+| *static private field*    |                                  -                                           |
+
+
+|                           |                            `@register(f)`                                    |
+|---------------------------|------------------------------------------------------------------------------|
+| **when**                  | after the class is created                                                   |
+| **function f**            |                                                                              |
+| *parameters*              | - target: class (for static fields, static method and class) or class prototype (for instance fields and methods) |
+|                           | - key (for public fields, methods or accessors) or undefined (for private and class)                              |
+| *return*                  | undefined                                                                    |
+| **decorate**              |                                                                              |
+| *class*                   |                                  X                                           |
+| *public method*           |                                  X                                           |
+| *public accessor*         |                                  X                                           |
+| *public field*            |                                  X                                           |
+| *static public method*    |                                  X                                           |
+| *static public accessor*  |                                  X                                           |
+| *static public field*     |                                  X                                           |
+| *private method*          |                                  X                                           |
+| *private accessor*        |                                  X                                           |
+| *private field*           |                                  X                                           |
+| *static private method*   |                                  X                                           |
+| *static private accessor* |                                  X                                           |
+| *static private field*    |                                  X                                           |
+
+|                           |                              `@expose(f)`                                    |
+|---------------------------|------------------------------------------------------------------------------|
+| **when**                  | after the class is created                                                   |
+| **function f**            |                                                                              |
+| *parameters*              | - target: class (for static fields, static method and class)<br/>class prototype (for instance fields and methods) |
+|                           | - key: private name string                                                   |
+|                           | - get: function to get the member.`func(instance)` return the field value                                          |
+|                           | - set: function to get the member. `func(instance, value)` update field value and return the value                 |
+| *return*                  | undefined                                                                    |
+| **decorate**              |                                                                              |
+| *class*                   |                                       -                                      |
+| *public method*           |                                       -                                      |
+| *public accessor*         |                                       -                                      |
+| *public field*            |                                       -                                      |
+| *static public method*    |                                       -                                      |
+| *static public accessor*  |                                       -                                      |
+| *static public field*     |                                       -                                      |
+| *private method*          |                                       X                                      |
+| *private accessor*        |                                       X                                      |
+| *private field*           |                                       X                                      |
+| *static private method*   |                                       X                                      |
+| *static private accessor* |                                       X                                      |
+| *static private field*    |                                       X                                      |
+
+|                           |                             `@initialize(f)`                                 |
+|---------------------------|------------------------------------------------------------------------------|
+| **when**                  | after executing the field initializer                                        |
+| **function f**            |                                                                              |
+| *parameters*              | - target: class instance (for public field)                                  |
+|                           | - value: field value (for public field) or undefined (for private field)     |
+|                           | - key: field key (for public field) or  or undefined (for private field)     |
+| *return*                  | undefined                                                                    |
+| **decorate**              |                                                                              |
+| *class*                   |                                       -                                      |
+| *public method*           |                                       X                                      |
+| *public accessor*         |                                       X                                      |
+| *public field*            |                                       X                                      |
+| *static public method*    |                                       X                                      |
+| *static public accessor*  |                                       X                                      |
+| *static public field*     |                                       X                                      |
+| *private method*          |                                       X                                      |
+| *private accessor*        |                                       X                                      |
+| *private field*           |                                       X                                      |
+| *static private method*   |                                       X                                      |
+| *static private accessor* |                                       X                                      |
+| *static private field*    |                                       X                                      |
+
+
