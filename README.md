@@ -6,13 +6,35 @@ Stage 2
 
 Decorators are a JavaScript language feature, proposed for standardization at TC39. Decorators are currently at Stage 2 in TC39's process, indicating that the committee expects them to eventually be included in the standard JavaScript programming language. The decorators champion group is considering a redesign of the proposal as "static decorators", which the rest of this document describes.
 
+## The idea of this proposal
+
+This decorators proposal aims to improve on past proposals by working towards twin goals:
+- It should be easy not just to use decorators, but also to write your own.
+- Decorators should be fast, both generating good code in transpilers, and executing fast in native JS implementations.
+
+This proposal enables the basic functionality of the JavaScript original decorators proposal (e.g., most of what is available in TypeScript decorators), as well as two additional capabilities of the previous Stage 2 proposal which were especially important: access to private fields and methods, and registering callbacks which are called during the constructor.
+
+Core elements:
+- There's a set of **built-in decorators** that serve as the basic building blocks.
+  - `@wrap`: Replace a method or the entire class with the return value of a given function
+  - `@register`: Call a callback after the class is created
+  - `@expose`: Call a callback given functions to access private fields or methods after the class is created
+  - `@initialize`: Run a given callback when creating an instance of the class
+- Decorators can be **defined in JavaScript by composing** other decorators
+  - A `decorator @foo { }` declaration defines a new decorator. These are lexically scoped and can be imported and exported.
+  - Decorators cannot be treated as JavaScript values; they may only be applied in classes, composed, exported, imported, etc.
+  - As part of this, decorators have `@` as part of their name; `@decorator` names form a separate namespace.
+  - Decorators can only be composed in rather fixed ways, making them more statically analyzable.
+
+This proposal starts minimal, but more built-in decorators would be added over time, adding further capabilities like creating synthetic private names, statically changing the shape of the class, parameter and function decorators, etc.
+
 ## Motivation and use cases
 
 ES6 classes were intentionally minimal, and they don't support some common behaviors needed from classes. Some of these use cases are handled by [class fields](https://github.com/tc39/proposal-class-fields) and [private methods](https://github.com/tc39/proposal-private-methods), but others require some kind of programmability or introspection. Decorators make class declarations programmable.
 
 Decorators are very widely used in JavaScript through transpilers today. For example, see the documentation of [core-decorators](https://www.npmjs.com/package/core-decorators), [ember-decorators](https://ember-decorators.github.io/ember-decorators/), [Angular](https://medium.com/@madhavmahesh/list-of-all-decorators-available-in-angular-71bdf4ad6976), [Stencil](https://stenciljs.com/docs/decorators/), and [MobX](https://mobx.js.org/refguide/modifiers.html) decorators.
 
-A few examples of how to implement and use decorators that are a bit more self-contained:
+A few examples of how to implement and use decorators in this proposal:
 
 ### `@logged`
 
@@ -175,7 +197,7 @@ The `@set` decorator is implemented with `@initialize`, which can decorate publi
 ```mjs
 // set.mjs
 
-export decorator @set { @initialize(function(value, key) { this[key] = value }) }
+export decorator @set { @initialize((instance, key, value) => instance[key] = value) }
 ```
 
 ### `@tracked`
@@ -204,7 +226,7 @@ e.increment();  // logs 2
 // tracked.mjs
 
 export decorator @tracked {
-  @initialize(function(value, name) { this[`__internal_${name}`] = value; })
+  @initialize((instance, name, value) => instance[`__internal_${name}`] = value)
   @register((target, name) => {
     Object.defineProperty(target, "name", {
       get() { return this[`__internal_${name}`]; },
@@ -235,25 +257,16 @@ class Foo {
 new Foo().queueMethod();  // will log 1, rather than undefined
 ```
 
-One possible implementation, based on `@register`:
+The `@initialize` decorator could be used to ensure that, on construction of a class, a shadowing property of the method bound to the instance is made available. This pattern is similar to a common idiom used in JavaScript directly.
 
 ```mjs
 // bound.mjs
 export decorator @bound {
-  @register((target, name) => {
-    const method = target[name];
-    Object.defineProperty(target, name, {
-      get() {
-        const bound = method.bind(this);
-        Object.defineProperty(this, name, { value: bound, configurable: true });
-      }
-      configurable: true
-    });
-  })
+  @initialize((instance, name) => instance[name] = instance[name].bind(instance))
 }
 ```
 
-There are various approaches to writing an auto-bound decorator, but ultimately, the most efficient way may be built into the JavaScript engine; see [NEXTBUILTINS.md](./NEXTBUILTINS.md#bound) for discussion of a built-in `@bound` decorator, and the [bound-decorator](https://github.com/mbrowne/bound-decorator) repository for another approach.
+There are various approaches to writing an auto-bound decorator, but ultimately, the most efficient way may be built into the JavaScript engine; see [NEXTBUILTINS.md](./NEXTBUILTINS.md#bound) for discussion of a built-in `@bound` decorator. The above approach is basically similar to that found in the [bound-decorator](https://github.com/mbrowne/bound-decorator) repository.
 
 ### `@callable`
 
@@ -296,6 +309,55 @@ export decorator @callable {
 
 Note that a decorator like `@call` could be considered for a future built-in decorator, in a way that avoids creating an additional subclass.
 
+### Limited access to private fields and methods
+
+Sometimes, certain code outside of a class may need to access private fields and methods. For example, two classes may be because a few classes are "collaborating", or test code in a different file needs to reach inside a class.
+
+Decorators can make this possible by giving someone access to a private field or method. This may be encapsulated in a "friend key"--an object which contains these references, to be shared only with who's appropriate.
+
+```mjs
+import { FriendKey, @show } from "./friend.mjs"
+
+let key = new FriendKey;
+
+export class Box {
+  @show(key) #contents;
+}
+
+export function setBox(box, contents) {
+  return key.set(box, "#x", contents);
+}
+
+export function getBox(box) {
+  return key.get(box, "#x");
+}
+```
+
+This notion of friend keys could be implemented using the `@expose` decorator, which is like `@register`, except it is with four arguments instead of one when applied to private fields and methods:
+- The target (either the class or the prototype)
+- The private identifier as a string (e.g., `"#x"`)
+- A function which gets the private field or method, taking the object as a receiver
+- A function which sets the private field or method, taking the object as a receiver
+
+```mjs
+export class FriendKey {
+  #map = new Map();
+  expose(name, get, set) {
+    this.#map.set(name, { get, set });
+  }
+  get(obj, name) {
+    return this.#map.get(name).get(obj);
+  }
+  set(obj, name, value) {
+    return this.#map.get(name).set(obj, value);
+  }
+}
+
+export decorator @show(key) {
+  @expose((target, name, get, set) => key.expose(name, get, set))
+}
+```
+
 ### Combined example
 
 Some of the above examples could be combined to form a mini-framework, to make it easier to write HTML Custom Elements.
@@ -319,18 +381,6 @@ class CounterWidget extends HTMLElement {
   render() { this.textContent = this.x.toString(); }
 }
 ```
-
-## The idea
-
-A new goal of this proposal: It should be possible for tools and JS engines to understand what's going on with decorators.
-
-Core elements:
-- Decorators have `@` as part of their name; `@decorator` names form a separate namespace.
-- There's a set of built-in decorators that serve as the basic building blocks.
-- Developers to create their own decorators by composing other decorators.
-- Decorators cannot be treated as JavaScript values; they may only be applied in classes, composed, exported, imported, etc.
-
-Decorators can only be composed in rather fixed ways, making them more statically analyzable.
 
 ## Built-in Decorators
 
@@ -420,15 +470,75 @@ is roughly equivalent to the following:
 ```js
 class C {
   constructor() {
-    f.call(this, f, b, "a");
+    f(this, "a", b);
   }
 }
 ```
 
-Details:
-- `@initialize` can only be used on public field declarations (including symbols/computed property names), not private.
-- `@initialize` can be used with both static and instance fields.
-- The return value of the callback must be undefined.
+When invoked on something which is not a public field, or when used on the left of another `@initialize` decorator on the same public field, the callback is called without the final "value" argument. The other "property key" argument is also omitted when not available. So this becomes simply a way to schedule work. For example:
+
+```js
+@initialize(f)
+class C { }
+```
+
+is roughly equivalent to the following:
+
+```js
+class C {
+  constructor() {
+    f(this);
+  }
+}
+```
+
+Likewise,
+
+```js
+class C {
+  @initialize(f) method() {}
+}
+```
+
+is roughly equivalent to
+
+```js
+class C {
+  method() {}
+
+  constructor() {
+    f(this, "method");
+  }
+}
+```
+
+The return value is checked to be `undefined`.
+
+### `@expose`
+
+The `@expose` decorator is used on a private class element to expose access to get and set it. It's basically like `@register`, except that callbacks are passed into the provided function to access the element. For example:
+
+```js
+class C {
+  @expose(f) #x;
+}
+```
+
+would behave as:
+
+```js
+class C {
+  @register(proto => f(proto,
+                       "#x",
+                       instance => instance.#x,
+                       (instance, value) => instance.#x = value ))
+      #x;
+}
+```
+
+`@expose` could be used as a building block for other decorators creating protected-like visibility, access to private elements for debugging or testing, etc.
+
+`@expose` is separated from `@register` to reduce the risk that the private identifier string `"#x"` will be mistaken for a property key, and to avoid unused allocations of these functions when not needed. Technically speaking, these extra arguments could be passed into `@register` as additional arguments instead, though.
 
 ## User-defined Decorators
 
@@ -522,9 +632,10 @@ Despite these differences, it should generally be possible to achieve the same s
 #### Comparison with the previous Stage 2 decorators proposal
 
 The previous Stage 2 decorators proposal was more full-featured than this proposal, including:
-- Access to reading and writing private fields, and declaring new private fields
+- Declaring new private fields
 - Class decorator access to manipulating all fields and methods within the class
 - More flexible handling of the initializer, treating it as a "thunk"
+- Changing the shape of the class directly through the decorators API, rather than through mechanisms like `Object.defineProperty`.
 
 These features aren't included in this initial proposal, but they may be provided by future built-in decorators.
 
@@ -556,7 +667,7 @@ Yes! Once we have validated this core approach, the authors of this proposal pla
 
 ### Will decorators let you access private fields and methods?
 
-The champion group feels very strongly that decorator access to private fields and methods in various different ways is very important, and we're trying to provide it as soon as possible. This proposal does not include any built-in decorators that would provide the primitives to access private fields or methods (beyond wrapping them). We hope to provide this capability with future built-in decorators. See [NEXTBUILTINS.md](./NEXTBUILTINS.md#expose). The focus of this proposal is on the *infrastructure* for built-in and user-defined decorators, and a minimum of functionality is provided.
+Yes: The `@expose` decorator is the core building block for accessing private fields and methods, but it does not allow new private fields or methods to be defined. Further capabilities are discussed in [NEXTBUILTINS.md](./NEXTBUILTINS.md). The focus of this proposal is on the *infrastructure* for built-in and user-defined decorators, and a minimum of functionality is provided.
 
 ### When are decorators evaluated?
 
@@ -564,7 +675,7 @@ The arguments to a decorator are evaluated inline with class evaluation, just li
 
 The built-in decorators take callbacks as arguments, which are scheduled to run later at different times:
 - The `@wrap` wrapping function is executed while setting up the class.
-- The `@register` callback is executed after the class is created.
+- The `@register` and `@expose` callbacks are executed after the class is created.
 - The `@initialize` callback is called just after executing the class initializer (normally, in the constructor).
 
 Whenever there are multiple callbacks, they are executed from "top to bottom, inside to out", regardless of the type or placement of class element. This goes for all three built-in decorators. Here's an example based on `@register`:
@@ -653,7 +764,7 @@ See [IMPLNOTES.md](./IMPLNOTES.md#native-implementations) for notes on how JS en
 
 ### What happened to coalescing getter/setter pairs?
 
-Given the initial decorator set of `@register`, `@wrap` and `@initialize`, nothing needs coalesced getter/setter pairs, and works just fine decorating individual class elements. Coalescing could be re-added as part of the semantics of an individual built-in decorator, invoked only when that decorator is used. However, the use cases are unclear; it may simply be unnecessary long-term. Removing getter/setter coalescing is a relatively large simplification of both the specification and implementations, so all else being equal, we're better off without it. (Being honest, this isn't really an FAQ--no one asked about this yet, maybe because no one really missed coalescing...)
+Given the initial decorator set of `@register`, `@wrap`, `@initialize` and `@expose`, nothing needs coalesced getter/setter pairs, and works just fine decorating individual class elements. Coalescing could be exposed as part of the semantics of a future built-in decorator, invoked only when that decorator is used. The use cases that require coalescing are a bit unclear, but see [issue #256](https://github.com/tc39/proposal-decorators/issues/256) for further discussion. Removing getter/setter coalescing is a relatively large simplification of both the specification and implementations, so all else being equal, we're better off without it.
 
 ### Why is decorators taking so long?
 

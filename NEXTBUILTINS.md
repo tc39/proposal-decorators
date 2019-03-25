@@ -41,30 +41,6 @@ class C {
 
 The `@metadata` decorator described in the main README could be a built-in decorator, making it so that the metadata can be set up all in one go, rather than incrementally, imperatively produced. For example, this could allow the V8 object boilerplate optimization to be used.
 
-### `@expose`
-
-The `@expose` decorator is used on a private class element to expose access to get and set it. It's basically like `@register`, except that callbacks are passed into the provided function to access the element. For example:
-
-```js
-class C {
-  @expose(f) #x;
-}
-```
-
-would behave as:
-
-```js
-class C {
-  @register(proto => f(proto,
-                       "#x",
-                       function() { return this.#x },
-                       function(value) { this.#x = value }))
-      #x;
-}
-```
-
-`@expose` could be used as a building block for other decorators creating protected-like visibility, access to private elements for debugging or testing, etc.
-
 ### `@accessor`
 
 The `@accessor` decorator creates a getter/setter pair which exposes a private field, method or accessor, as mediated by `get` and `set` callbacks. For example:
