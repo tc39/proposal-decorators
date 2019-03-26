@@ -73,8 +73,8 @@
 | **when**                  | after executing the field initializer                                        |
 | **function f**            |                                                                              |
 | *parameters*              | - target: class instance                                                     |
-|                           | - value: field value (for public field) or undefined (for class and private field) |
 |                           | - key: field key (for public field) or  or undefined (for class and private field) |
+|                           | - value: field value (for public field) or undefined (for class, method and private field) |
 | *return*                  | undefined                                                                    |
 | **decorate**              |                                                                              |
 | *class*                   |                                       X                                      |
