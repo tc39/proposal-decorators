@@ -228,7 +228,7 @@ e.increment();  // logs 2
 export decorator @tracked {
   @initialize((instance, name, value) => instance[`__internal_${name}`] = value)
   @register((target, name) => {
-    Object.defineProperty(target, "name", {
+    Object.defineProperty(target, name, {
       get() { return this[`__internal_${name}`]; },
       set() { this[`__internal_${name}`] = value; this.render(); },
       configurable: true
