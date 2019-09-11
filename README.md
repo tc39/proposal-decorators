@@ -200,7 +200,11 @@ The `@set` decorator is implemented with `@initialize`, which can decorate publi
 ```mjs
 // set.mjs
 
-export decorator @set { @initialize((instance, key, value) => instance[key] = value) }
+export decorator @set {
+  @initialize((instance, key, value) => {
+    instance[key] = value;
+  })
+}
 ```
 
 ### `@tracked`
@@ -229,7 +233,9 @@ e.increment();  // logs 2
 // tracked.mjs
 
 export decorator @tracked {
-  @initialize((instance, name, value) => instance[`__internal_${name}`] = value)
+  @initialize((instance, name, value) => {
+    instance[`__internal_${name}`] = value;
+  })
   @register((target, name) => {
     Object.defineProperty(target, name, {
       get() { return this[`__internal_${name}`]; },
@@ -265,7 +271,9 @@ The `@initialize` decorator could be used to ensure that, on construction of a c
 ```mjs
 // bound.mjs
 export decorator @bound {
-  @initialize((instance, name) => instance[name] = instance[name].bind(instance))
+  @initialize((instance, name) => {
+    instance[name] = instance[name].bind(instance);
+  })
 }
 ```
 
@@ -428,7 +436,7 @@ Details:
 - The return value is used to replace the method or accessor.
 - `@wrap` may be used on getters or setters, and applies to these individually.
 - `@wrap` may not be used on field declarations, as there's no clear meaning.
-- When `@wrap` is used on a class, if there is a use of `C` in a method or field initializer inside the class, it will refer to the original, unwrapped `C. See [#211](https://github.com/tc39/proposal-decorators/issues/211) for details.
+- When `@wrap` is used on a class, if there is a use of `C` in a method or field initializer inside the class, it will refer to the original, unwrapped `C`. See [#211](https://github.com/tc39/proposal-decorators/issues/211) for details.
 
 ### `@register`
 
@@ -478,6 +486,8 @@ class C {
 }
 ```
 
+The return value of the callback is checked to be `undefined` (so be careful with concise-body arrow functions, which return the value resulting from the expression in the concise body).
+
 When invoked on something which is not a public field, or when used on the left of another `@initialize` decorator on the same public field, the callback is called without the final "value" argument. The other "property key" argument is also omitted when not available. So this becomes simply a way to schedule work. For example:
 
 ```js
@@ -514,8 +524,6 @@ class C {
   }
 }
 ```
-
-The return value is checked to be `undefined`.
 
 ### `@expose`
 
