@@ -75,7 +75,10 @@ export decorator @logged {
       f.call(this, ...args);
       console.log(`ending ${name}`);
     }
-    wrapped.name = name;
+    Object.defineProperty(wrapped, "name", {
+      value: name,
+      configurable: true
+    });
     return wrapped;
   })
 }
