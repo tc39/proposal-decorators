@@ -110,7 +110,7 @@ This example uses a `decorator` declaration with a parameter list, which lets a 
 
 ### `@metadata`
 
-The `@metdata(key, value)` decorator is similar to [`@Reflect.metadata`](https://github.com/rbuckton/reflect-metadata): It allows the easy retrieval of information which was stored by annotating the class. The following examples are written in terms of the Reflect.metadata proposal, but you could imagine storing the metadata in any other form.
+The `@metadata(key, value)` decorator is similar to [`@Reflect.metadata`](https://github.com/rbuckton/reflect-metadata): It allows the easy retrieval of information which was stored by annotating the class. The following examples are written in terms of the Reflect.metadata proposal, but you could imagine storing the metadata in any other form.
 
 ```mjs
 import { @metadata } from "./metadata.mjs";
@@ -399,7 +399,7 @@ This proposal defines a few built-in decorators that can either be used directly
 
 ### `@wrap`
 
-The `@wrap` decorator can be used on a method to pass the function through another function. For example,
+The `@wrap` decorator can be used on a method to pass the function through another function. For example:
 
 ```js
 class C {
@@ -448,7 +448,7 @@ class C {
 }
 ```
 
-is roughly equivalent to
+is roughly equivalent to:
 
 ```js
 class C {
@@ -513,7 +513,7 @@ class C {
 }
 ```
 
-is roughly equivalent to
+is roughly equivalent to:
 
 ```js
 class C {
@@ -601,7 +601,7 @@ Decorators can be declared in any lexical scope. They are always declared with `
 
 Decorators, whether built-in or user-defined, are not JavaScript values--they can only be applied to classes or used in composed decorators.
 
-See further details in [PROTOSPEC.md](./PROTOSPEC.md)
+See further details in [PROTOSPEC.md](./PROTOSPEC.md).
 
 ## FAQ
 
@@ -646,7 +646,7 @@ The previous Stage 2 decorators proposal was more full-featured than this propos
 - Declaring new private fields
 - Class decorator access to manipulating all fields and methods within the class
 - More flexible handling of the initializer, treating it as a "thunk"
-- Changing the shape of the class directly through the decorators API, rather than through mechanisms like `Object.defineProperty`.
+- Changing the shape of the class directly through the decorators API, rather than through mechanisms like `Object.defineProperty`
 
 These features aren't included in this initial proposal, but they may be provided by future built-in decorators.
 
