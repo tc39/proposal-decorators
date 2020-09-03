@@ -87,7 +87,7 @@ class C {
   set #x(value) { return x_setter.call(this, value); }
 }
 
-C.prototype.method = logged(C.prototype.method, { kind: "method", name: "m", isStatic: false });
+C.prototype.method = logged(C.prototype.method, { kind: "method", name: "method", isStatic: false });
 x_setter = logged(x_setter, {kind: "setter", isStatic: false});
 ```
 
@@ -158,9 +158,9 @@ The desugarings in this article usually omit it, but metadata is desugared as su
 class C {
   method() {  }
 }
-let context = { kind: "method", name: "m", isStatic: false };
+let context = { kind: "method", name: "method", isStatic: false };
 C.prototype.method = annotate(C.prototype.method, context);
-C[Symbol.annotations].prototype.methods.method = {...{a: "b"}, ...(context[Symbol.annotations] ?? {})};
+C[Symbol.metadata].prototype.methods.method = {...{a: "b"}, ...(context[Symbol.metadata] ?? {})};
 -->
 
 Note that, since metadata is held on the class, not on the method, the metadata is not visible to earlier decorators. Metadata on classes is added to the constructor after all class decorators have run so that they are not lost by later wrapping.
