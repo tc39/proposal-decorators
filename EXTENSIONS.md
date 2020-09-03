@@ -18,7 +18,7 @@ C[Symbol.metadata].prototype.methods.method.a  // "a"
 C[Symbol.metadata].instance.fields.field.c     // "d"
 ```
 
-Annotations must always have a literal `@{` to start them. To use an existing object as an annotation, you can use the syntax `@{ ...obj }`. The entirity of object syntax is available, including computed property names, arbitrary expressions as values, shorthand names, concise methods, etc.
+Annotations must always have a literal `@{` to start them. To use an existing object as an annotation, you can use the syntax `@{ ...obj }`. The entirety of object syntax is available, including computed property names, arbitrary expressions as values, shorthand names, concise methods, etc.
 
 Libraries and frameworks which want to establish consistent conventions for using annotations may do so based on a Symbol property key that they export. Annotations have the potential advantage in load time performance that engines can directly execute them, as they are as declarative as an object literal.
 
