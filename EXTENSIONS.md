@@ -1,6 +1,6 @@
 # Possible extensions
 
-This decorators proposal was designed to permit other syntactic elements to be decorated:
+This file contains possible follow-on proposals which could be formulated within the framework of the class decorators proposal. This decorators proposal was designed to permit other syntactic elements to be decorated, but the Stage 2 proposal refers only to the class, field, method and accessor decorators. The main open question is whether to include parameter decorators initially, as they have attracted widespread interest and uptake in TypeScript within classes.
 
 ## Annotation syntax
 
