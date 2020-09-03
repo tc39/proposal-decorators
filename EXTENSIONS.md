@@ -85,7 +85,7 @@ function f(arg_) {
   return arg * 2 ;
 }
 
-f[Symbol.annotations] = []
+f[Symbol.annotations] = {}
 f[Symbol.annotations].parameters = []
 f[Symbol.annotations].parameters[0] = {x: "y"};
 ```
