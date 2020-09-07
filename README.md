@@ -286,7 +286,7 @@ export class Box {
     set = function(v) { this.#_contents = v; }
   )
 }
-{get, set, initialize} = key.show({get, set}, {kind: "field", isStatic: false});
+({get, set, initialize} = key.show({get, set}, {kind: "field", isStatic: false}));
 ```
 
 ### `@deprecated`
