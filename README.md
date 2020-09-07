@@ -119,7 +119,7 @@ This decorator usage could be desugared as follows:
 
 ```js
 class MyClass extends HTMLElement { }
-MyClass = defineElement(MyClass, {kind: "class"});
+MyClass = defineElement('my-class')(MyClass, {kind: "class"});
 ```
 
 ### Decorators adding metadata
