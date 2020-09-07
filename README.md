@@ -91,7 +91,7 @@ C.prototype.method = logged(C.prototype.method, { kind: "method", name: "method"
 x_setter = logged(x_setter, {kind: "setter", isStatic: false});
 ```
 
-Note that getters and setters are decorated separately. Accessors are not "coalesced" as in earlier decorators proposals  (unless they are generated for a field; see below).
+Note that getters and setters are decorated separately. Accessors are not "coalesced" as in earlier decorators proposals (unless they are generated for a field; see below).
 
 ## `@defineElement`
 
