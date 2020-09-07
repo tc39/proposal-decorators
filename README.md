@@ -687,16 +687,6 @@ Babel 7 supports the decorators proposal presented to TC39 in the November 2018 
 
 ### How does this proposal compare to other versions of decorators?
 
-#### Syntax changes
-
-On the side of using decorators, this proposal makes a couple changes compared to previous decorators proposals:
-- Forms like `@foo.bar` or `@(foo)` are no longer permitted, as decorators are not JavaScript expressions.
-- Decorators come after `export` and `default`, not before.
-
-Unfortunately, a codemod will be needed to make these changes, but no "legacy" code can be misinterpreted due to these syntax changes.
-
-Note that this version uses runtime function values as decorators, so `@` is not part of the name, unlike the "static decorators" proposal.
-
 #### Comparison with Babel "legacy" decorators
 
 Babel legacy-mode decorators are based on the state of the JavaScript decorators proposal as of 2014. In addition to the syntax changes listed above, the calling convention of Babel legacy decorators differs from this proposal:
@@ -735,7 +725,7 @@ See [V8's analysis of decorator optimizability](https://docs.google.com/document
 
 ### If the previous TC39 decorators proposals didn't work out, why not go back and standardize TS/Babel legacy decorators?
 
-**Optimizability**: This decorator proposal and legacy decorators are common in decorators being functions. However, the calling convention of this proposal is designed to be more optimizable by enginesby making the following changes vs legacy decorators:
+**Optimizability**: This decorator proposal and legacy decorators are common in decorators being functions. However, the calling convention of this proposal is designed to be more optimizable by engines by making the following changes vs legacy decorators:
 - The incomplete class under construction is not exposed to decorators, so it does not need to observably undergo shape changes during class definition evaluation.
 - Only the construct being decorated may be changed in its contents; the "shape" of the property descriptor may not change.
 
