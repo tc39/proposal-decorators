@@ -522,7 +522,7 @@ Decorators on further constructs are investigated in [EXTENSIONS.md](./EXTENSION
 
 This decorators proposal uses the syntax of the previous Stage 2 decorators proposal. This means that:
 - Decorator expressions are restricted to a chain of variables, property access with `.` but not `[]`, and calls `()`. To use an arbitrary expression as a decorator, `@(expression)` is an escape hatch.
-- Class expressions may be decorated, not just class declarations`.
+- Class expressions may be decorated, not just class declarations.
 - Class decorators come after `export` and `default`.
 
 There is no special syntax for defining decorators; any function can be applied as a decorator.
