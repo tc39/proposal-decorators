@@ -364,8 +364,8 @@ This decorator could be defined as follows:
 ```js
 const handler = Symbol("handler");
 function on(eventName)
-  return (method, {name}) => {
-    context.metadata = {[handlers]: eventName};
+  return (method, context) => {
+    context.metadata = {[handler]: eventName};
     return method;
   }
 }
