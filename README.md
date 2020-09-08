@@ -136,7 +136,7 @@ Decorators can add metadata about class elements by adding a `metadata` property
 
 C[Symbol.metadata].class.x                     // "y"
 C[Symbol.metadata].class.v                     // "w"
-C[Symbol.metadata].prototype.methods.method.a  // "a"
+C[Symbol.metadata].prototype.methods.method.a  // "b"
 C[Symbol.metadata].instance.fields.field.c     // "d"
 ```
 
