@@ -532,8 +532,7 @@ There is no special syntax for defining decorators; any function can be applied 
 # Detailed semantics 
 
 The three steps of decorator evaluation:
-1. Decorator expressions and 
-s (the thing after the `@`) are *evaluated* interspersed with computed property names.
+1. Decorator expressions (the thing after the `@`) are *evaluated* interspersed with computed property names.
 1. Decorators are *called* (as functions) during class definition, after the methods have been evaluated but before the constructor and prototype have been put together.
 1. Decorators are *applied* (mutating the constructor and prototype) all at once, after all of them have been called.
 
