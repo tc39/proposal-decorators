@@ -67,7 +67,7 @@ export function logged(f) {
     console.log(`ending ${name}`);
     return ret;
   }
-  wrapped.name = name;
+  Object.defineProperty(wrapped, 'name', { value: name, configurable: true })
   return wrapped;
 }
 ```
@@ -318,7 +318,7 @@ function wrapDeprecated(fn) {
     console.warn(`call to deprecated code ${name}`);
     return fn.call(this, ...args);
   }
-  method.name = name;
+  Object.defineProperty(method, 'name', { value: name, configurable: true })
   return method;
 }
 
