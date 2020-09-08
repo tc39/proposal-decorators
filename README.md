@@ -449,7 +449,7 @@ function WithBoundMethods(superclass) {
 }
 ```
 
-Note the common use of `MetadataLookupCache` across both examples; this proposal or a follow-on one should consider adding a standard library for accing metadata for this purpose.
+Note the common use of `MetadataLookupCache` across both examples; this proposal or a follow-on one should consider adding a standard library for adding metadata for this purpose.
 
 ### Option B: The `init` contextual keyword for methods
 
