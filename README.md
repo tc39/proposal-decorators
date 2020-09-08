@@ -78,20 +78,22 @@ This example roughly "desugars" to the following (i.e., could be transpiled as s
 let x_setter;
 
 class C {
-  method(arg) {
+  m(arg) {
     this.#x = arg;
   }
 
   static #x_setter(value) { }
-  static #_ = (x_setter = C.#x_setter, void 0);
+  static { x_setter = C.#x_setter; }
   set #x(value) { return x_setter.call(this, value); }
 }
 
-C.prototype.method = logged(C.prototype.method, { kind: "method", name: "method", isStatic: false });
+C.prototype.m = logged(C.prototype.m, { kind: "method", name: "method", isStatic: false });
 x_setter = logged(x_setter, {kind: "setter", isStatic: false});
 ```
 
 Note that getters and setters are decorated separately. Accessors are not "coalesced" as in earlier decorators proposals (unless they are generated for a field; see below).
+
+This desugaring is in terms of the [class static block proposal](https://github.com/tc39/proposal-class-static-block) which exposes a `static { }` construct to be used inside a class body, which runs in the lexical scope of the class. A desugaring in terms of throwaway static private fields would also be possible, but is messy and confusing. However, the decorators proposal does not depend on class static blocks; this is just an explanatory device.
 
 ## `@defineElement`
 
@@ -281,10 +283,10 @@ export class Box {
   get #contents() { return get.call(this); }
   set #contents(v) { set.call(this, v); }
 
-  static #_ = (
+  static {
     get = function() { return this.#_contents; },
     set = function(v) { this.#_contents = v; }
-  )
+  }
 }
 ({get, set, initialize} = key.show({get, set}, {kind: "field", isStatic: false}));
 ```
