@@ -540,7 +540,9 @@ The semantics here generally follow the consensus at the May 2016 TC39 meeting i
 
 ## 1. Evaluating decorators
 
-Decorators are evaluated as expressions, interspersed in their evaluation order with computed property names. This goes left to right, top to bottom. The result of decorators is stored in the equivalent of local variables to be later called after the class definition initially finishes executing.
+
+
+Decorators are evaluated as expressions, being ordered along with computed property names. This goes left to right, top to bottom. The result of decorators is stored in the equivalent of local variables to be later called after the class definition initially finishes executing.
 
 ## 2. Calling decorators
 
