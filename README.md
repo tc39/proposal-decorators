@@ -564,7 +564,7 @@ The context object--the object passed as the second argument to the decorator--c
     - `"init-method"`
     - `"getter"`
     - `"setter"`
-    - `"field"``
+    - `"field"`
 - `name`:
     - Public field or method: the `name` is the String or Symbol property key.
     - Private field or method: missing (could be provided as some representation of the private name, in a follow-on proposal) 
