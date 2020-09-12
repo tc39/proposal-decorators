@@ -48,9 +48,9 @@ new C().m(1);
 ```
 
 `@logged` can be implemented in JavaScript as a decorator. Decorators are functions that are called with an argument containing what's being decorated. For example:
-- A decorated method is called with the method being decorated
-- A decorated getter is called with the getter function being decorated
-- A decorated setter is called with the setter function being decorated
+- A method decorator is called with the method being decorated
+- A getter decorator is called with the getter function being decorated
+- A setter decorator is called with the setter function being decorated
 
 (Decorators are called with a second parameter giving more context, but we don't need those details for the `@logged` decorator.)
 
