@@ -451,9 +451,9 @@ function WithBoundMethods(superclass) {
 
 Note the common use of `MetadataLookupCache` across both examples; this proposal or a follow-on one should consider adding a standard library for adding metadata for this purpose.
 
-### Option B: The `init` contextual keyword for methods
+### Option B: `@init:` method decorators
 
-If it's not acceptable to require a superclass/mixin for cases requiring initialization action, an The `init` keyword in a method declaration changes a method into an "init method". This keyword allows decorators to add initialization actions, run when the constructor executes.
+If it's not acceptable to require a superclass/mixin for cases requiring initialization action, then the `@init:` decorator syntax in a method declaration allows decorators to add initialization actions, run when the constructor executes.
 
 #### `@on` with `init`
 
@@ -461,11 +461,11 @@ Usage:
 
 ```js
 class MyElement extends HTMLElement {
-  @on('click') init clickHandler() { }
+  @init: on('click') clickHandler() { }
 }
 ```
 
-An "init method" (method declared with `init`) is called similarly to a method decorator, but it is expected to return a pair `{method, initialize}`, where `initialize` is called with the `this` value being the new instance, taking no arguments and returning nothing. 
+`@init:` decorators are called similarly to a method decorator, but it is expected to return a pair `{method, initialize}`, where `initialize` is called with the `this` value being the new instance, taking no arguments and returning nothing. 
 
 ```js
 function on(eventName) {
@@ -494,12 +494,12 @@ class MyElement extends HTMLElement {
 
 #### `@bound` with `init`
 
-The `init` keyword for methods can also be used to build a `@bound` decorator, used as follows:
+The `@init:` syntax for methods can also be used to build a `@init: bound` decorator, used as follows:
 
 ```js
 class C {
   #x = 1;
-  @bound init method() { return this.#x; }
+  @init: bound method() { return this.#x; }
 }
 
 let c = new C;
