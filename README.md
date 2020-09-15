@@ -266,10 +266,10 @@ export class PrivateKey {
     return {get, set};
   }
   get(obj) {
-    return this.#get(obj);
+    return this.#get.call(obj);
   }
   set(obj, value) {
-    return this.#set(obj, value);
+    return this.#set.call(obj, value);
   }
 }
 ```
