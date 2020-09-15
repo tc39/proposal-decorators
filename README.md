@@ -87,7 +87,7 @@ class C {
   set #x(value) { return x_setter.call(this, value); }
 }
 
-C.prototype.m = logged(C.prototype.m, { kind: "method", name: "method", isStatic: false });
+C.prototype.m = logged(C.prototype.m, { kind: "method", key: "m", isStatic: false });
 x_setter = logged(x_setter, {kind: "setter", isStatic: false});
 ```
 
@@ -160,7 +160,7 @@ The desugarings in this article usually omit it, but metadata is desugared as su
 class C {
   method() {  }
 }
-let context = { kind: "method", name: "method", isStatic: false };
+let context = { kind: "method", key: "method", isStatic: false };
 C.prototype.method = annotate(C.prototype.method, context);
 C[Symbol.metadata].prototype.methods.method = {...{a: "b"}, ...(context[Symbol.metadata] ?? {})};
 -->
@@ -223,7 +223,7 @@ class Element {
 }
 
 { get, set } = Object.getOwnPropertyDescriptor(Element.prototype, "counter");
-{ get, set, initialize } = tracked({get, set}, { kind: "field", name: "counter", isStatic: false })
+{ get, set, initialize } = tracked({get, set}, { kind: "field", key: "counter", isStatic: false })
 Object.defineProperty(Element.prototype, "counter", {get, set});
 ```
 
@@ -489,7 +489,7 @@ class MyElement extends HTMLElement {
 }
 {method: MyElement.prototype.clickHandler, initialize} =
   on('click')(MyElement.prototype.clickHandler,
-              {kind: "init-method", isStatic: false, name: "clickHandler"});
+              {kind: "init-method", isStatic: false, key: "clickHandler"});
 ```
 
 #### `@bound` with `init`
@@ -540,8 +540,6 @@ The semantics here generally follow the consensus at the May 2016 TC39 meeting i
 
 ## 1. Evaluating decorators
 
-
-
 Decorators are evaluated as expressions, being ordered along with computed property names. This goes left to right, top to bottom. The result of decorators is stored in the equivalent of local variables to be later called after the class definition initially finishes executing.
 
 ## 2. Calling decorators
@@ -565,10 +563,10 @@ The context object--the object passed as the second argument to the decorator--c
     - `"getter"`
     - `"setter"`
     - `"field"`
-- `name`:
-    - Public field or method: the `name` is the String or Symbol property key.
+- `key`:
+    - Public field or method: the `key` is the String or Symbol property key.
     - Private field or method: missing (could be provided as some representation of the private name, in a follow-on proposal) 
-    - Class: missing
+    - Class: missing (you can get the class’s name through the first parameter’s `name` property)
 - `isStatic`:
     - Static field or method: `true`
     - Instance field or method: `false`
