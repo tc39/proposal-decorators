@@ -1,3 +1,5 @@
+# This branch has been merged. Please see the [main branch README](https://github.com/tc39/proposal-decorators) for the current proposal state.
+
 # Decorators
 
 This README describes a new proposal, to be presented to TC39 in the September 2020 meeting.
