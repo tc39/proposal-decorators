@@ -540,8 +540,6 @@ The semantics here generally follow the consensus at the May 2016 TC39 meeting i
 
 ## 1. Evaluating decorators
 
-
-
 Decorators are evaluated as expressions, being ordered along with computed property names. This goes left to right, top to bottom. The result of decorators is stored in the equivalent of local variables to be later called after the class definition initially finishes executing.
 
 ## 2. Calling decorators
@@ -639,9 +637,11 @@ The getter/setter pair are ordinary JS method objects, and non-enumerable like o
 ### Use case analysis
 
 Some essential use cases that we've found include:
-- Storing metadata about classes, fields and methods
+- Storing metadata about classes and methods
 - Turning a field into an accessor
-- Wrapping a method
+- Wrapping a method or class
+
+Previously, there was concern that it was important to store metadata about fields without converting them into accessors. However, the use cases that the decorator champion group has found for metadata around fields (e.g., serialization frameworks, ORMs) were each in conjunction with a specialized TypeScript option to emit metadata for types. Such a TypeScript extension is beyond the scope of what the JavaScript standard covers. We expect that either, types will continue to be covered by language extensions like TypeScript, or a future TC39 proposal would include the appropriate facilities for type-based metadata.
 
 (TODO: Fill this in with more detail)
 
@@ -656,7 +656,15 @@ A: The "shape" of the class should be apparent syntactically, without executing 
 B: It should not be too complicated to process decorators, as this corresponds to a complex implementation
 C: Minimize or eliminate observable mutations to objects while setting up the class
 
-Constraints 2 + A together imply that all shape changes must be syntactically apparent. This constraint is met by making all shape changes syntactically aparent where the class is defined, by making it explicit to either opt into an "annotation" instead of the default (or, in a previous proposal with the opposite default, a "trap").
+Constraint 1 is met by the simple desugarings, listed above, which avoid reliance on any kind of complex support library.
+
+Constraint 2 is met by treating the decorator as a function, so no cross-file knowledge is needed.
+
+Constraint A is met by making all shape changes syntactically apparent where the class is defined, by making each decorator type be associated with one fixed transformation.
+
+Constraint B is met by the same simple desugarings, and by eliminating the complicated descriptors present in Stage 2 decorators.
+
+Constraint C implies that we should not expose the class to JavaScript code while decorators are incrementally applying to it. This is met by eliminating the "target" concept from legacy/experimental decorators, and not passing the class under construction to decorators.
 
 ### Out of scope
 
@@ -665,17 +673,24 @@ Some things that have been described as potential decorators would *not* fit int
     - [[Set]] semantics drove how fields worked with legacy/experimental decorators which created accessors. These mechanics are replaced in this proposal by having decorated field declarations initialize the underlying storage, not shadow the accessor.
     - If a setter is inherited, it is possible to write a decorator for a field which specifically calls super getters and setters, rather than using the underlying storage.
 - `@frozen`: This decorator freezes the whole class, including static fields. Such a change is not possible within the phase ordering of decorators, where class decorators run before static fields are executed. Instead, the class can be frozen in a single line after the class, or potential future syntax for freezing the class.
+    - It is possible to write a `@frozen` class decorator which *mostly* works, but which prevents the use of static fields.
 - `@enumerable`: This decorator would make a method enumerable, overriding its default of non-enumerable. Decorators cannot change property attributes, as they do not receive property descriptors to manipulate them as in Stage 1 decorators, and they are not passed the constructor of the class to do so imperatively. This is to meet requirements from implementations that decorators leave classes with statically predictable shapes. Instead, changes like this could be done by `Object.defineProperty` calls after the class definition executes.
 - `@reader`: This decorator for a private field would create a public accessor to read it. It is impossible to create, as decorators are not given access to the class. Such a change in shape would run counter to the "static shape" goals from native implementers.
 
+## Open questions
+
+- **Accessor coalescing**: In the above proposal, getters and setters are decorated separately, whereas in earlier decorators proposals, they were coalesced into a unit which applies to the decorator together. This is done in order to keep the decorator desugaring simple and efficient, without the need for an intermediate data structure to associate getters with setters (which may be dynamic due to computed property names). Should decorator coalescing be restored?
+- **Metadata format**: How should metadata added by decorators be represented in the object graph? Should there be a built-in library of functions to query this metadata? How should adding metadata to class elements be timed relative to other observable operations with decorators?
+- **`@init:` decorators**: Should the initial version of decorators include [`@init:` decorators](#option-b-init-method-decorators), or should this be considered in a follow-on proposal?
+- **Parameter decorators**: Should we include [parameter decorators](./EXTENSIONS.md#parameter-decorators-and-annotations) in the initial proposal, or should this be considered in a follow-on proposal?
+- **Surface details**: Is the API surface as it should be, or should small changes be made? For example, maybe in the context object, we recently renamed `name` to `key`, and we could add a `spelling` property (name tbd) to give the name of the class, private names, etc.
+
 ## Standardization plan
 
-- Present in September 2020, or whenever it is ready
-- Iterate on open questions within the proposal, presenting them to TC39 and discussing further in the biweekly decorators calls, to bring a conclusion to committee in a future meeting:
-    - What should be within scope of the "MVP"? (E.g., should parameter decorators be added the first time around, or in a follow-on proposal?)
-    - What should the details of the annotation object model be? (This definitely needs iteration.)
-    - How should `init` method use cases be handled--the contextual keyword, mixins+annotations, or some other model? How important are these use cases for the MVP?
-- If feedback is positive, write spec text and implement in transpilers
+- Present in September 2020
+- If feedback is positive, write spec text and tests and implement in experimental transpilers
+- Collect feedback from JavaScript developers testing the transpiler implementation
+- Iterate on open questions within the proposal, presenting them to TC39 and discussing further in the biweekly decorators calls, to bring a conclusion to committee in a future meeting
 - Propose for Stage 3 no sooner than six months after prototyping begins, so we have time to collect experience from developers in transpilers
 
 ## FAQ
