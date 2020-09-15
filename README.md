@@ -681,9 +681,9 @@ Some things that have been described as potential decorators would *not* fit int
 
 - **Accessor coalescing**: In the above proposal, getters and setters are decorated separately, whereas in earlier decorators proposals, they were coalesced into a unit which applies to the decorator together. This is done in order to keep the decorator desugaring simple and efficient, without the need for an intermediate data structure to associate getters with setters (which may be dynamic due to computed property names). Should decorator coalescing be restored?
 - **Metadata format**: How should metadata added by decorators be represented in the object graph? Should there be a built-in library of functions to query this metadata? How should adding metadata to class elements be timed relative to other observable operations with decorators?
-- **`@item:` decorators**: Should the initial version of decorators include [`@item:` decorators](#option-b-init-method-decorators), or should this be considered in a follow-on proposal?
+- **`@init:` decorators**: Should the initial version of decorators include [`@init:` decorators](#option-b-init-method-decorators), or should this be considered in a follow-on proposal?
 - **Parameter decorators**: Should we include [parameter decorators](./EXTENSIONS.md#parameter-decorators-and-annotations) in the initial proposal, or should this be considered in a follow-on proposal?
-- **Surface details**: Is the API surface as it should be, or should small changes be made? For example, maybe in the context object, `name` should be renamed to `key`, and a `spelling` property (name tbd) should be added to give the name of the class, private names, etc.
+- **Surface details**: Is the API surface as it should be, or should small changes be made? For example, maybe in the context object, we recently renamed `name` to `key`, and we could add a `spelling` property (name tbd) to give the name of the class, private names, etc.
 
 ## Standardization plan
 
