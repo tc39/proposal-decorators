@@ -87,7 +87,7 @@ class C {
   set #x(value) { return x_setter.call(this, value); }
 }
 
-C.prototype.m = logged(C.prototype.m, { kind: "method", name: "method", isStatic: false });
+C.prototype.m = logged(C.prototype.m, { kind: "method", name: "m", isStatic: false });
 x_setter = logged(x_setter, {kind: "setter", isStatic: false});
 ```
 
