@@ -213,7 +213,7 @@ This example could be roughly desugared as follows:
 let initialize, get, set;
 
 class Element {
-  #counter = initialize(0);
+  #counter = initialize.call(this, 0);
   get counter() { return this.#counter; }
   set counter(v) { this.#counter = v; }
 
