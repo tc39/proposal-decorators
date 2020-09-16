@@ -327,7 +327,7 @@ export function deprecated(element, {kind}) {
     case 'method':
     case 'getter':
     case 'setter':
-      return wrapDecorated(element);
+      return wrapDeprecated(element);
     case 'field': {
       let { get, set } = element;
       return { get: wrapDeprecated(get), set: wrapDeprecated(set) };
