@@ -124,6 +124,37 @@ class MyClass extends HTMLElement { }
 MyClass = defineElement('my-class')(MyClass, {kind: "class"});
 ```
 
+For the cases where the class itself is used within any of the class members then we need to ensure the substituted class is used rather than the original one where applicable.
+For example, given:
+
+```js
+@defineElement('my-class')
+class MyClass extends HTMLElement { 
+    static create() {
+        return new MyClass()
+    }
+
+    create() {
+        return new MyClass()
+    }
+}
+```
+
+Then the decorator usage would be desugared as follows:
+
+```js
+var MyClass_1
+let MyClass = MyClass_1 = class MyClass extends HTMLElement {
+    static newObject() {
+        return new MyClass_1();
+    }
+    newObject() {
+        return new MyClass_1();
+    }
+}
+MyClass = MyClass_1 = defineElement('my-class')(MyClass, {kind: "class"});
+```
+
 ### Decorators adding metadata
 
 Decorators can add metadata about class elements by adding a `metadata` property of the context object that is passed in to them. All of the metadata objects are `Object.assign`'ed together and placed in a property reachable from `[Symbol.metadata]` on the class. For example:
