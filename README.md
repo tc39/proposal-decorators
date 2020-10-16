@@ -327,7 +327,7 @@ export function deprecated(element, {kind}) {
     case 'method':
     case 'getter':
     case 'setter':
-      return wrapDecorated(element);
+      return wrapDeprecated(element);
     case 'field': {
       let { get, set } = element;
       return { get: wrapDeprecated(get), set: wrapDeprecated(set) };
@@ -582,7 +582,7 @@ The return value is interpreted based on the type of decorator. The return value
 - field: An object with three properties (each individually optional):
     - `get`: A function of the same form as the `get` property of the first argument
     - `set`: Ditto, for `set`
-    - `initialize`: A called with the same arguments as `set`, which returns a value which is used for the initializing set of the variable. This is called when initially setting the underlying storage based on the field initializer or method definition. This method shouldn't call the `set` input, as that would trigger an error. If `initialize` isn't provided, `set` is not called, and the underlying storage is written directly. This way, `set` can count on the field already existing, and doesn't need to separately track that.
+    - `initialize`: A function called with the same arguments as `set`, which returns a value which is used for the initializing set of the variable. This is called when initially setting the underlying storage based on the field initializer or method definition. This method shouldn't call the `set` input, as that would trigger an error. If `initialize` isn't provided, `set` is not called, and the underlying storage is written directly. This way, `set` can count on the field already existing, and doesn't need to separately track that.
 - Init method: An object with the properties
     - `method`: A function to replace the method
     - `initialize`: A function with no arguments, whose return value is ignored, which is called with the newly constructed object as the receiver.
