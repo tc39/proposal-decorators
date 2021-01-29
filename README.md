@@ -1,526 +1,923 @@
 # Decorators
 
-This README describes a new proposal, to be presented to TC39 in the September 2020 meeting.
-
-# Introduction
-
 Decorators are a proposal for extending JavaScript classes which is widely adopted among developers in transpiler environments, with broad interest in standardization. TC39 has been iterating on decorators proposals for over five years. This document describes a new proposal for decorators based on elements from all past proposals.
 
-**Decorators** `@decorator` are *functions* called on class elements or other JavaScript syntax forms during definition, potentially *wrapping* or *replacing* them with a new value returned by the decorator.
+This README describes the current decorators proposal, which is a work in progress. For previous iterations of this proposal, see the commit history of this repository.
 
-A decorated class field is treated as wrapping a getter/setter pair for accessing that storage. Decorated storage is useful for observation/tracking, which has been a pain point for the original legacy/experimental decorators combined with [[Define]] semantics for class fields. These semantics are based on Michel Weststrate's ["trapping decorators" proposal](https://github.com/tc39/proposal-decorators/issues/299).
+## Introduction
 
-Decorators may also annotate a class element with *metadata*. These are simple, unrestricted object properties, which are collected from all decorators which add them, and made available as a set of nested objects in the `[Symbol.metadata]` property.
+**Decorators** are *functions* called on classes, class elements, or other JavaScript syntax forms during definition.
 
-By making decorators always simply wrap what they are decorating, rather than performing other transformations, this proposal aims to meet the following requirements:
-- The class "shape" is visible without executing the code, making decorators more optimizable for engines.
-- Implementations can work fully on a per-file basis, with no need for cross-file knowledge.
-- No new namespace or type of second-class value is added--decorators are functions.
+```js
+@defineElement("my-class")
+class C extends HTMLElement {
+  @reactive prop clicked = false;
+}
+```
 
-# Examples
+Decorators have three primary capabilities:
 
-A few examples of how to implement and use decorators in this proposal:
+1. They can **replace** the value that is being decorated with a _matching_ value that has the same semantics. (e.g. a decorator can replace a method with another method, a field with another field, a class with another class, and so on).
+2. They can associate **metadata** with the value that is being decorated. This metadata can then be read externally and used for metaprogramming and introspection.
+3. They can provide **access** to the value that is being decorated, via metadata. For public values, they can do this via the name of the value. For private values, they receive accessor functions which they can then choose to share.
 
-## `@logged`
+Essentially, decorators can be used to metaprogram and add functionality to a value, without fundamentally changing its external behavior.
 
-The `@logged` decorator logs a console message when a method starts and finishes. Many other popular decorators will also want to wrap a function, e.g., `@deprecated`, `@debounce`, `@memoize`, etc.
+This proposal differs from previous iterations where decorators could replace the decorated value with a completely different type of value. The requirement for decorators to only replace a value with one that has the same semantics as the original value fulfills two major design goals:
 
-Usage:
+- **It should be easy both to use decorators and to write your own decorators.** Previous iterations such as the _static decorators_ proposal were complicated for authors and implementers in particular. In this proposal, decorators are plain functions, and are accessible and easy to write.
+- **Decorators should affect the thing they're decorating, and avoid confusing/non-local effects.** Previously decorators could change the decorated value in unpredictable ways, and also add completely new values which were unrelated. This was problematic both for _runtimes_, since it meant decorated values could not be analyzed statically, and for _developers_, since decorated values could turn into completely different types of values without any indicator to the user.
 
-```mjs
-import { logged } from "./logged.mjs";
+In this proposal, decorators can be applied to the following existing types of values:
+
+- Classes
+- Class fields (public, private, and static)
+- Class methods (public, private, and static)
+- Class accessors (public, private, and static)
+
+In addition, this proposal introduces two new types of class elements that can be decorated:
+
+- Class _prop fields_, defined by applying the `prop` keyword to a class field. These have a getter and setter, unlike fields, which default to getting and setting the value on a private storage slot (equivalent to a private class field):
+
+  ```js
+  class Example {
+    @reactive prop myBool = false;
+  }
+  ```
+
+- Class _initialized methods_, defined by applying the `init` keyword to a class method. These methods are defined on the prototype of the class, but then assigned to a slot with the same name on the instance:
+
+  ```js
+  class Example {
+    @bound init myMethod() {
+      // ...
+    }
+  }
+  ```
+
+These new element types can be used independently, and have their own semantics separate from usage with decorators. The reason they are included in this proposal is primarily because there are a number of use cases for decorators which require their semantics, since decorators can only replace an element with a corresponding element that has the same semantics. These use cases are common in the existing decorators ecosystem, demonstrating a need for the capabilities they provide.
+
+## Detailed Design
+
+In general, decorators receive two parameters:
+
+1. The value being decorated, or `undefined` in the case of class fields which are a special case (see below for details).
+2. A context object containing metadata about the value being decorated
+
+Using TypeScript interfaces for brevity and clarity, this is the general shape of the API:
+
+```ts
+type Decorator = (value: Input, context: {
+  kind: string;
+  name?: string | symbol;
+  access?: {
+    get?(): unknown;
+    set?(value: unknown): void;
+  };
+  isPrivate?: boolean;
+  isStatic?: boolean;
+  defineMetadata(key: string | symbol | number, value: unknown);
+}) => Output | void;
+```
+
+`Input` and `Output` here represent the values passed to and returned from a given decorator. Each type of decorator has a different input and output, and these are covered below in more detail. All decorators can choose to return nothing, which defaults to using the original, undecorated value.
+
+The context object also varies depending on the value being decorated. Breaking down the properties:
+
+- `kind`: The kind of decorated value. This can be used to assert that the decorator is used correctly, or to have different behavior for different types of values. It is one of the following values.
+  - `"class"`
+  - `"method"`
+  - `"init-method"`
+  - `"getter"`
+  - `"setter"`
+  - `"field"`
+  - `"prop-field"`
+- `name`: The name of the value. This is only available for classes and _public_ class elements.
+- `access`: An object containing methods to access the value. This is only available for _private_ class elements, since public class elements can be accessed externally by knowing the name of the element. These methods also get the _final_ value of the private element on the instance, not the current value passed to the decorator. This is important for most use cases involving access, such as type validators or serializers. See the section on Access below for more details.
+- `isStatic`: Whether or not the value is a `static` class element. Only applies to class elements.
+- `isPrivate`: Whether or not the value is a private class element. Only applies to class elements.
+- `defineMetadata`: Allows the user to define some metadata to be associated with this property. This metadata can then be accessed on the class via `Symbol.metadata`. See the section on Metadata below for more details.
+
+### Decorator APIs
+
+#### Class Methods
+
+```ts
+type ClassMethodDecorator = (value: Function, context: {
+  kind: "method";
+  name?: string | symbol;
+  access?: { get(): unknown };
+  isStatic: boolean;
+  isPrivate: boolean;
+  defineMetadata(key: string | symbol | number, value: unknown);
+}) => Function | void;
+```
+
+Class method decorators receive the method that is being decorated as the first value, and can optionally return a new method to replace it. If a new method is returned, it will replace the original on the prototype (or on the class itself in the case of static methods). If any other type of value is returned, an error will be thrown.
+
+Method decorators do not receive access to the instances of the class, and cannot be used to add functionality that requires it. An example of such a decorator is the `@bound` decorator, which would bind the method to the instance of the class. In order to add instance initialization logic, users must convert the method into an Initialized Method (see below for more details).
+
+An example of a method decorator is the `@logged` decorator. This decorator receives the original function, and returns a new function that wraps the original and logs before and after it is called.
+
+```js
+function logged(value, { kind, name }) {
+  if (kind === "method") {
+    return function (...args) {
+      console.log(`starting ${name} with arguments ${args.join(", ")}`);
+      const ret = value.call(this, ...args);
+      console.log(`ending ${name}`);
+      return ret;
+    };
+  }
+}
 
 class C {
   @logged
-  m(arg) {
-    this.#x = arg;
-  }
-
-  @logged
-  set #x(value) { }
+  m(arg) {}
 }
 
 new C().m(1);
 // starting m with arguments 1
-// starting set #x with arguments 1
-// ending set #x
 // ending m
-```
-
-`@logged` can be implemented in JavaScript as a decorator. Decorators are functions that are called with an argument containing what's being decorated. For example:
-- A method decorator is called with the method being decorated
-- A getter decorator is called with the getter function being decorated
-- A setter decorator is called with the setter function being decorated
-
-(Decorators are called with a second parameter giving more context, but we don't need those details for the `@logged` decorator.)
-
-The return value of a decorator is a new value that replaces the thing it's wrapping. For methods, getters and setters, the return value is another function to replace that method, getter or setter.
-
-```mjs
-// logged.mjs
-
-export function logged(f) {
-  const name = f.name;
-  function wrapped(...args) {
-    console.log(`starting ${name} with arguments ${args.join(", ")}`);
-    const ret = f.call(this, ...args);
-    console.log(`ending ${name}`);
-    return ret;
-  }
-  Object.defineProperty(wrapped, 'name', { value: name, configurable: true })
-  return wrapped;
-}
 ```
 
 This example roughly "desugars" to the following (i.e., could be transpiled as such):
 
 ```js
-let x_setter;
-
 class C {
   m(arg) {
-    this.#x = arg;
-  }
-
-  static #x_setter(value) { }
-  static { x_setter = C.#x_setter; }
-  set #x(value) { return x_setter.call(this, value); }
-}
-
-C.prototype.m = logged(C.prototype.m, { kind: "method", name: "m", isStatic: false });
-x_setter = logged(x_setter, {kind: "setter", isStatic: false});
-```
-
-Note that getters and setters are decorated separately. Accessors are not "coalesced" as in earlier decorators proposals (unless they are generated for a field; see below).
-
-This desugaring is in terms of the [class static block proposal](https://github.com/tc39/proposal-class-static-block) which exposes a `static { }` construct to be used inside a class body, which runs in the lexical scope of the class. A desugaring in terms of throwaway static private fields would also be possible, but is messy and confusing. However, the decorators proposal does not depend on class static blocks; this is just an explanatory device.
-
-## `@defineElement`
-
-[HTML Custom Elements](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements) lets you define your own HTML element. Elements are registered using `customElements.define`. Using decorators, the registration can happen up-front:
-
-```mjs
-import { defineElement } from "./defineElement.mjs";
-
-@defineElement('my-class')
-class MyClass extends HTMLElement { }
-```
-
-Classes can be decorated just like methods and accessors. The class shows up in the `value` option.
-
-```mjs
-// defineElement.mjs
-export function defineElement(name, options) {
-  return klass => { customElements.define(name, klass, options); return klass; }
-}
-```
-
-The decorator takes arguments at its usage site, so it is implemented as a function that returns another function. You can think of it as a "decorator factory": after you apply the arguments, it gives you another decorator.
-
-This decorator usage could be desugared as follows:
-
-```js
-class MyClass extends HTMLElement { }
-MyClass = defineElement('my-class')(MyClass, {kind: "class"});
-```
-
-### Decorators adding metadata
-
-Decorators can add metadata about class elements by adding a `metadata` property of the context object that is passed in to them. All of the metadata objects are `Object.assign`'ed together and placed in a property reachable from `[Symbol.metadata]` on the class. For example:
-
-```mjs
-@annotate({x: "y"}) @annotate({v: "w"}) class C {
-  @annotate({a: "b"}) method() { }
-  @annotate({c: "d"}) field;
-}
-
-C[Symbol.metadata].class.x                     // "y"
-C[Symbol.metadata].class.v                     // "w"
-C[Symbol.metadata].prototype.methods.method.a  // "b"
-C[Symbol.metadata].instance.fields.field.c     // "d"
-```
-
-**NOTE:** The exact format of the annotations object is not very well-thought-out and could use more refinement. The main thing I'd like to illustrate here is, it's just an object, with no particular support library to read or write it, and it's automatically created by the system.
-
-This decorator `@annotate` could be implemented as follows:
-
-```js
-function annotate(metadata) {
-  return (_, context) => {
-    context.metadata = metadata;
-    return _;
+    this.x = arg;
   }
 }
+
+C.prototype.m = logged(C.prototype.m, {
+  kind: "method",
+  name: "m",
+  isStatic: false,
+  isPrivate: false,
+  defineMetadata() { /**/ }
+});
 ```
 
-Each time a decorator is called, it is passed a new context object, and after each decorator returns, the context object's `metadata` property is read, and if it's not undefined, it's included in the `[Symbol.metadata]` for that class element.
+#### Class Accessors
 
-<!--
-The desugarings in this article usually omit it, but metadata is desugared as such:
+```ts
+type ClassGetterDecorator = (value: Function, context: {
+  kind: "getter";
+  name?: string | symbol;
+  access?: { get?(): unknown };
+  isStatic: boolean;
+  isPrivate: boolean;
+  defineMetadata(key: string | symbol | number, value: unknown);
+}) => Function | void;
+
+type ClassSetterDecorator = (value: Function, context: {
+  kind: "setter";
+  name?: string | symbol;
+  access?: { set?(value: unknown): void };
+  isStatic: boolean;
+  isPrivate: boolean;
+  defineMetadata(key: string | symbol | number, value: unknown);
+}) => Function | void;
+```
+
+Accessor decorators receive the original underlying getter/setter function as the first value, and can optionally return a new getter/setter function to return it. Like method decorators, this new function is placed on the prototype in place of the original (or on the class for static accessors), and if any other type of value is returned, an error will be thrown.
+
+Accessor decorators are applied _separately_ to getters and setters. In the following example, `@foo` is applied only to `get x()` - `set x()` is undecorated:
+
+```js
 class C {
-  method() {  }
-}
-let context = { kind: "method", name: "method", isStatic: false };
-C.prototype.method = annotate(C.prototype.method, context);
-C[Symbol.metadata].prototype.methods.method = {...{a: "b"}, ...(context[Symbol.metadata] ?? {})};
--->
-
-Note that, since metadata is held on the class, not on the method, the metadata is not visible to earlier decorators. Metadata on classes is added to the constructor after all class decorators have run so that they are not lost by later wrapping.
-
-### `@tracked`
-
-The `@tracked` decorator watches a field and triggers a `render()` method when the setter is called. This pattern, or patterns like it, is common in frameworks to avoid extra bookkeeping scattered throughout the application to ask for re-rendering.
-
-Decorated fields have the semantics of getter/setter pairs around an underlying piece of private storage. The decorators can wrap these getter/setter functions. `@tracked` can wrap this getter/setter pair to implement the re-rendering behavior.
-
-```mjs
-import { tracked } from "./tracked.mjs";
-
-class Element {
-  @tracked counter = 0;
-
-  increment() { this.counter++; }
-
-  render() { console.log(counter); }
-}
-
-const e = new Element();
-e.increment();  // logs 1
-e.increment();  // logs 2
-```
-
-When fields are decorated, the "wrapped" value is an object with two properties: `get` and `set` functions that manipulate the underlying storage. They are built to be `.call()`ed with the instance of the class as a receiver. The decorator can then return a new object of the same form. (If one of the callbacks is missing, then it is left in place unwrapped.)
-
-```mjs
-// tracked.mjs
-
-export function tracked({get, set}) {
-  return {
-    get,
-    set(value) {
-      if (get.call(this) !== value) {
-        set.call(this, value);
-        this.render();
-      }
-    }
-  };
-}
-```
-
-This example could be roughly desugared as follows:
-
-```mjs
-let initialize, get, set;
-
-class Element {
-  #counter = initialize.call(this, 0);
-  get counter() { return this.#counter; }
-  set counter(v) { this.#counter = v; }
-
-  increment() { this.counter++; }
-
-  render() { console.log(counter); }
-}
-
-{ get, set } = Object.getOwnPropertyDescriptor(Element.prototype, "counter");
-{ get, set, initialize } = tracked({get, set}, { kind: "field", name: "counter", isStatic: false })
-Object.defineProperty(Element.prototype, "counter", {get, set});
-```
-
-### Limited access to private fields and methods
-
-Sometimes, certain code outside of a class may need to access private fields and methods. For example, two classes may be "collaborating", or test code in a different file needs to reach inside a class.
-
-Decorators can make this possible by giving someone access to a private field or method. This may be encapsulated in a "private key"--an object which contains these references, to be shared only with who's appropriate.
-
-```mjs
-import { PrivateKey } from "./private-key.mjs"
-
-let key = new PrivateKey;
-
-export class Box {
-  @key.show #contents;
-}
-
-export function setBox(box, contents) {
-  return key.set(box, contents);
-}
-
-export function getBox(box) {
-  return key.get(box);
-}
-```
-
-Note that this is a bit of a hack, and could be done better with constructs like references to private names with [`private.name`](https://gist.github.com/littledan/ab73ff08f98f33088a0072ad202445b1) and broader scope of private names with [`private`/`with`](https://gist.github.com/littledan/5451d6426a8ed65c0f3c2822c51314d1). But it shows that this decorator proposal "naturally" exposes existing things in a useful way.
-
-```mjs
-// private-key.mjs
-export class PrivateKey {
-  #get;
-  #set;
-  
-  show({get, set}) {
-    assert(this.#get === undefined && this.#set === undefined);
-    this.#get = get;
-    this.#set = set;
-    return {get, set};
+  @foo
+  get x() {
+    // ...
   }
-  get(obj) {
-    return this.#get.call(obj);
-  }
-  set(obj, value) {
-    return this.#set.call(obj, value);
+
+  set x(val) {
+    // ...
   }
 }
 ```
 
-This example could be roughly desugared as follows:
-
-```mjs
-let initialize, get, set;
-export class Box {
-  #_contents = initialize(undefined);
-  get #contents() { return get.call(this); }
-  set #contents(v) { set.call(this, v); }
-
-  static {
-    get = function() { return this.#_contents; },
-    set = function(v) { this.#_contents = v; }
-  }
-}
-({get, set, initialize} = key.show({get, set}, {kind: "field", isStatic: false}));
-```
-
-### `@deprecated`
-
-The `@deprecated` decorator prints warnings when a deprecated field, method or accessor is used. As an example usage:
-
-```mjs
-import { deprecated } from "./deprecated.mjs"
-
-export class MyClass {
-  @deprecated field;
-
-  @deprecated method() { }
-
-  otherMethod() { }
-}
-```
-
-To allow the `deprecated` to work on different kinds of class elements, the `kind` field of the context object lets decorators see which kind of syntactic construct they are deprecating. This technique also allows an error to be thrown when the decorator is used in a context where it can't apply--for example, the entire class cannot be marked as deprecated, since there is no way to intercept its access.
-
-```mjs
-// deprecated.mjs
-
-function wrapDeprecated(fn) {
-  let name = fn.name
-  function method(...args) {
-    console.warn(`call to deprecated code ${name}`);
-    return fn.call(this, ...args);
-  }
-  Object.defineProperty(method, 'name', { value: name, configurable: true })
-  return method;
-}
-
-export function deprecated(element, {kind}) {
-  switch (kind) {
-    case 'method':
-    case 'getter':
-    case 'setter':
-      return wrapDeprecated(element);
-    case 'field': {
-      let { get, set } = element;
-      return { get: wrapDeprecated(get), set: wrapDeprecated(set) };
-    }
-    default: // includes 'class'
-      throw new Error(`Unsupported @deprecated target ${kind}`);
-  }
-}
-```
-
-The desugaring here is analogous to the above examples, which show the use of `kind`.
-
-## Method decorators requiring initialization work
-
-Some method decorators are based on executing code when the class instance is being created. For example:
-
-- A `@on('event')` decorator for methods on classes extending `HTMLElement` which registers that method as an event listener in the constructor.
-- A `@bound` decorator, which does the equivalent of `this.method = this.method.bind(this)` in the constructor. This idiom meets Jordan Harband's goal of being friendlier to monkey-patching than the popular idiom of using an arrow function in a field initializer.
-
-We're considering multiple possible options for how to provide for this type of idiom.
-
-### Option A: Mixin constructors accessing metadata
-
-These decorators can be built with the combination of metadata, and a mixin which performs the initialization actions in its constructor.
-
-#### `@on` with a mixin
+We can extend the `@logged` decorator we defined previously for methods to also handle accessors. The code is essentially the same, we just need to handle additional `kind`s.
 
 ```js
-class MyElement extends WithActions(HTMLElement) {
-  @on('click') clickHandler() { }
+function logged(value, { kind, name }) {
+  if (kind === "method" || kind === "getter" || kind === "setter") {
+    return function (...args) {
+      console.log(`starting ${name} with arguments ${args.join(", ")}`);
+      const ret = value.call(this, ...args);
+      console.log(`ending ${name}`);
+      return ret;
+    };
+  }
+}
+
+class C {
+  @logged
+  set x(arg) {}
+}
+
+new C().x = 1
+// starting x with arguments 1
+// ending x
+```
+
+This example roughly "desugars" to the following (i.e., could be transpiled as such):
+
+```js
+class C {
+  set x(arg) {}
+}
+
+let { set } = Object.getOwnPropertyDescriptor(C.prototype, "x");
+set = logged(set, {
+  kind: "setter",
+  name: "x",
+  isStatic: false,
+  isPrivate: false,
+  defineMetadata() { /**/ }
+});
+
+Object.defineProperty(C.prototype, "x", { set });
+```
+
+#### Class Fields
+
+```ts
+type ClassFieldDecorator = (value: undefined, context: {
+  kind: "field";
+  name?: string | symbol;
+  access?: { get(): unknown, set(value: unknown): void };
+  isStatic: boolean;
+  isPrivate: boolean;
+  defineMetadata(key: string | symbol | number, value: unknown);
+}) => (initialValue: unknown) => unknown | void;
+```
+
+Unlike methods and accessors, class fields do not have a direct input value when being decorated. Instead, users can optionally return an initializer function which runs when the field is assigned, receiving the initial value of the field and returning a new initial value. If any other type of value besides a function is returned, an error will be thrown.
+
+We can expand our `@logged` decorator to be able to handle class fields as well, logging when the field is assigned and what the value is.
+
+```js
+function logged(value, { kind, name }) {
+  if (kind === "field") {
+    return function (initialValue) {
+      console.log(`initializing ${name} with value ${initialValue}`);
+      return initialValue;
+    };
+  }
+
+  // ...
+}
+
+class C {
+  @logged x = 1;
+}
+
+new C();
+// initializing x with value 1
+```
+
+This example roughly "desugars" to the following (i.e., could be transpiled as such):
+
+```js
+let initializeX = logged(undefined, {
+  kind: "field",
+  name: "x",
+  isStatic: false,
+  isPrivate: false,
+  defineMetadata() { /**/ }
+}) ?? (initialValue) => initialValue ;
+
+class C {
+  x = initializeX(1);
 }
 ```
 
-This decorator could be defined as follows:
+The initializer function is called with the instance of the class as `this`, so field decorators can also be used to bootstrap registration relationships. For instance, you could register children on a parent class:
 
 ```js
-const handler = Symbol("handler");
-function on(eventName)
-  return (method, context) => {
-    context.metadata = {[handler]: eventName};
-    return method;
+const CHILDREN = new WeakMap();
+
+function registerChild(parent, child) {
+  let children = CHILDREN.get(parent);
+
+  if (children === undefined) {
+    children = [];
+    CHILDREN.set(parent, children);
+  }
+
+  children.push(child);
+}
+
+function getChildren(parent) {
+  return CHILDREN.get(parent);
+}
+
+function register() {
+  return function(value) {
+    registerChild(this, value);
+
+    return value;
   }
 }
 
-class MetadataLookupCache {
-  #map = new WeakMap();
-  #name;
-  constructor(name) { this.#name = name; }
-  get(newTarget) {
-    let data = this.#map.get(newTarget);
-    if (data === undefined) {
-      data = [];
-      let klass = newTarget;
-      while (klass !== null && !(this.#name in klass)) {
-        for (const [name, {[this.#name]: eventName}]
-             of Object.entries(klass[Symbol.metadata].instance.methods)) {
-          if (eventName !== undefined) {
-            data.push({name, eventName});
-          }
-        }
-        klass = klass.__proto__;
-      }
-      this.#map.set(newTarget, data)
-    }
-    return data;
-  }
+class Child {}
+class OtherChild {}
+
+class Parent {
+  @register child1 = new Child();
+  @register child2 = new OtherChild();
 }
 
-let handlersMap = new MetadataLookupCache(handler);
+let parent = new Parent();
+getChildren(parent); // [Child, OtherChild]
+```
 
-function WithActions(superclass) {
-  return class C extends superclass {
-    constructor(...args) {
-      super(...args);
-      let handlers = handlersMap.get(new.target, C);
-      for (const {name, eventName} of handlers) {
-        this.addEventListener(eventName, this[name].bind(this));
+#### Classes
+
+```ts
+type ClassDecorator = (value: Function, context: {
+  kind: "class";
+  name: string | undefined;
+  defineMetadata(key: string | symbol | number, value: unknown);
+}) => Function | void;
+```
+
+Class decorator's receive the class that is being decorated as the first parameter, and may optionally return a new class to replace it. If a non-constructable value is returned, then an error is thrown.
+
+We can further extend our `@logged` decorator to log whenever an instance of a class is created:
+
+```js
+function logged(value, { kind, name }) {
+  if (kind === "class") {
+    return class extends value {
+      constructor(...args) {
+        console.log(`constructing an instance of ${name} with arguments ${args.join(", ")}`);
       }
     }
   }
+
+  // ...
 }
+
+@logged
+class C {}
+
+new C(1);
+// constructing an instance of C with arguments 1
 ```
 
-#### `@bound` with a mixin
-
-`@bound` could be used with a mixin superclass as follows:
+This example roughly "desugars" to the following (i.e., could be transpiled as such):
 
 ```js
-class C extends WithBoundMethod(Object) {
-  #x = 1;
-  @bound method() { return this.#x; }
-}
+class C {}
 
-let c = new C;
-let m = c.method;
-m();  // 1, not TypeError
+C = logged(C, {
+  kind: "class",
+  name: "C",
+  defineMetadata() { /**/ }
+}) ?? C;
+
+new C(1);
 ```
 
-This decorator could be defined as:
+If the class being decorated is an anonymous class, then the `name` property of the `context` object is `undefined`.
+
+### New Class Elements
+
+#### Class Prop-Fields
+
+Class prop-fields are a new construct, defined by adding the `prop` keyword in front of a class field:
 
 ```js
-const boundName = Symbol("boundName");
-function bound(method, context) {
-  context.metadata = {[boundName]: true};
-  return method;
-}
-let boundMap = new MetadataLookupCache(boundName);
-
-function WithBoundMethods(superclass) {
-  return class C extends superclass {
-    constructor(...args) {
-      super(...args);
-      let names = boundMap.get(new.target, C);
-      for (const {name} of names) {
-        this[name] = this[name].bind(this);
-      }
-    }
-  }
+class C {
+  prop x = 1;
 }
 ```
 
-Note the common use of `MetadataLookupCache` across both examples; this proposal or a follow-on one should consider adding a standard library for adding metadata for this purpose.
-
-### Option B: `@init:` method decorators
-
-If it's not acceptable to require a superclass/mixin for cases requiring initialization action, then the `@init:` decorator syntax in a method declaration allows decorators to add initialization actions, run when the constructor executes.
-
-#### `@on` with `init`
-
-Usage:
-
-```js
-class MyElement extends HTMLElement {
-  @init: on('click') clickHandler() { }
-}
-```
-
-`@init:` decorators are called similarly to a method decorator, but it is expected to return a pair `{method, initialize}`, where `initialize` is called with the `this` value being the new instance, taking no arguments and returning nothing. 
-
-```js
-function on(eventName) {
-  return (method, context) => {
-    assert(context.kind === "init-method");
-    return {method, initialize() { this.addEventListener(eventName, method); }};
-  }
-}
-```
-
-The class definition would be desugared roughly as follows:
-
-```js
-let initialize;
-class MyElement extends HTMLElement {
-  clickHandler() { }
-  constructor(...args) {
-    super(...args);
-    initialize.call(this);
-  }
-}
-{method: MyElement.prototype.clickHandler, initialize} =
-  on('click')(MyElement.prototype.clickHandler,
-              {kind: "init-method", isStatic: false, name: "clickHandler"});
-```
-
-#### `@bound` with `init`
-
-The `@init:` syntax for methods can also be used to build a `@init: bound` decorator, used as follows:
+Prop-fields, unlike regular fields, define a getter and setter on the class prototype. This getter and setter default to getting and setting a value on a private slot. The above roughly desugars to:
 
 ```js
 class C {
   #x = 1;
-  @init: bound method() { return this.#x; }
-}
 
-let c = new C;
-let m = c.method;
-m();  // 1, not TypeError
+  get x() {
+    return this.#x;
+  }
+
+  set x(val) {
+    this.#x = val;
+  }
+}
 ```
 
-The `@bound` decorator can be implemented as follows:
+Both static and private props can be defined as well:
 
 ```js
-function bound(method, {kind, name}) {
-  assert(kind === "init-method");
-  return {method, initialize() { this[name] = this[name].bind(this); }};
+class C {
+  static prop x = 1;
+  prop #y = 2;
 }
 ```
 
-## Possible extensions
+Prop-fields can be decorated, and prop-field decorators have the following signature:
 
-Decorators on further constructs are investigated in [EXTENSIONS.md](./EXTENSIONS.md).
+```ts
+type ClassPropDecorator = (
+  value: {
+    get: () => unknown;
+    set(value: unknown) => void;
+  },
+  context: {
+    kind: "prop-field";
+    name?: string | symbol;
+    access?: { get(): unknown, set(value: unknown): void };
+    isStatic: boolean;
+    isPrivate: boolean;
+    defineMetadata(key: string | symbol | number, value: unknown);
+  }
+) => {
+  get?: () => unknown;
+  set?: (value: unknown) => void;
+  initialize?: (initialValue: unknown) => unknown;
+} | void;
+```
 
-# Syntax
+Unlike field decorators, prop-field decorators receive a value, which is an object containing the `get` and `set` accessors defined on the prototype of the class (or the class itself in the case of static props). The decorator can then wrap these and return a _new_ `get` and/or `set`, allowing access to the property to be intercepted by the decorator. This is a capability that is not possible with fields, but is possible with props. In addition, props can return an `initialize` function, which can be used to change the initial value of the prop, similar to field decorators. If an object is returned but any of the values are omitted, then the default behavior for the omitted values is to use the original behavior. If any other type of value besides an object containing these properties is returned, an error will be thrown.
+
+Further extending the `@logged` decorator, we can make it handle prop-fields as well, logging when the prop-field is initialized and whenever it is accessed:
+
+```js
+function logged(value, { kind, name }) {
+  if (kind === "prop") {
+    let { get, set } = value;
+
+    return {
+      get() {
+        console.log(`getting ${name}`);
+
+        return get.call(this);
+      },
+
+      set(val) {
+        console.log(`setting ${name} to ${val}`);
+
+        return set.call(this, val);
+      },
+
+      initialize(initialValue) {
+        console.log(`initializing ${name} with value ${initialValue}`);
+        return initialValue;
+      }
+    };
+  }
+
+  // ...
+}
+
+class C {
+  @logged prop x = 1;
+}
+
+let c = new C();
+// initializing x with value 1
+c.x;
+// getting x
+c.x = 123;
+// setting x to 123
+```
+
+This example roughly "desugars" to the following:
+
+```js
+class C {
+  #x = initializeX(1);
+
+  get x() {
+    return this.#x;
+  }
+
+  set x(val) {
+    this.#x = val;
+  }
+}
+
+let { get: oldGet, set: oldSet } = Object.getOwnPropertyDescriptor(C.prototype, "x");
+
+let {
+  get: newGet,
+  set: newSet,
+  initialize: initializeX
+} = logged(
+  { get: oldGet, set: oldSet },
+  {
+    kind: "prop",
+    name: "x",
+    isStatic: false,
+    isPrivate: false,
+    defineMetadata() { /**/ }
+  }
+);
+
+Object.defineProperty(C.prototype, "x", { get: newGet, set: newSet });
+```
+
+#### Class Initialized Methods
+
+Class initialized methods are a new construct, defined by adding the `init` keyword in front of a class method:
+
+```js
+class C {
+  init m() {}
+}
+```
+
+Initialized methods are methods that are defined on the prototype, but then set as an instance property. The above roughly desugars to:
+
+```js
+class C {
+  m() {}
+  m = this.m;
+}
+```
+
+Private init-methods can be defined as well:
+
+```js
+class C {
+  init #m() {}
+}
+```
+
+Static init-methods cannot be defined, since they effectively have the same behavior as plain static methods. Init-methods can be decorated, and init-method decorators have the following signature:
+
+```ts
+type ClassInitMethodDecorator = (value: Function, context: {
+  kind: "init-method";
+  name?: string | symbol;
+  access?: { get(): unknown };
+  isPrivate: boolean;
+  defineMetadata(key: string | symbol | number, value: unknown);
+}) => {
+  method?: Function,
+  initialize?: (value: Function) => Function
+} | void;
+```
+
+Like method decorators, init-method decorators receive the original function defined on the prototype as the function being decorated. They can optionally return a new method and an initializer function. The new method, if present, is defined in place of the original method on the prototype, and the initializer function, if present, is called when initializing the method on the instance.
+
+Further extending the `@logged` decorator, we can make it handle init-methods as well, logging both when the method is initialized and whenever it is called.
+
+```js
+function logged(value, { kind, name }) {
+  if (kind === "init-method") {
+    return {
+      method(...args) {
+        console.log(`starting ${name} with arguments ${args.join(", ")}`);
+        const ret = value.call(this, ...args);
+        console.log(`ending ${name}`);
+        return ret;
+      },
+
+      initialize(initialValue) {
+        console.log(`initializing ${name}`);
+        return initialValue;
+      }
+    };
+  }
+
+  // ...
+}
+
+class C {
+  @logged
+  init m() {}
+}
+
+let c = new C();
+// initializing m
+c.m(1);
+// starting m with arguments 1
+// ending m
+```
+
+This example roughly "desugars" to the following:
+
+```js
+class C {
+  m() {}
+  m = initializeM(this.m);
+}
+
+let {
+  method,
+  initialize: initializeM
+} = logged(
+  C.prototype.m,
+  {
+    kind: "prop",
+    name: "x",
+    isPrivate: false,
+    defineMetadata() { /**/ }
+  }
+);
+
+C.prototype.m = method;
+```
+
+### Metadata
+
+Every decorator has the ability to expose metadata related to the decorated value via the `defineMetadata` method on the context object. This method recieves two parameters, a key which must be a valid property key (string/symbol/number), and a value which can be anything.
+
+```js
+const MY_META = Symbol();
+
+function myMeta(value, context) {
+  context.defineMetadata("my-meta", true);
+  context.defineMetadata(MY_META, 123);
+}
+```
+
+All of the metadata defined on a single decorated value is collected into an object with corresponding keys and values. For instance, the above decorator would produce the following object:
+
+```js
+let meta = {
+  "my-meta": true,
+  [MY_META]: 123,
+}
+```
+
+This object would then be assigned to another object representing all of the metadata on the class _or_ class prototype, depending on its placement. Static class elements are placed on one object, and non-static class elements are placed on another. In addition, public element metadata is namespaced under the `public` key of this object, and private element metadata is namespaced under the `private` key. So for instance, this example:
+
+```js
+const MY_META = Symbol();
+
+function myMeta(value, context) {
+  context.defineMetadata("my-meta", true);
+  context.defineMetadata(MY_META, true);
+}
+
+@myMeta
+class C {
+  @myMeta a = 123
+  @myMeta b() {}
+  @myMeta #c = 456;
+
+  @myMeta static x = 123;
+  @myMeta static y() {}
+  @myMeta static #z = 456;
+}
+```
+
+Would produce the following two metadata objects:
+
+```js
+let staticMeta = {
+  public: {
+    constructor: { "my-meta": true, [MY_META]: true },
+    x: { "my-meta": true, [MY_META]: true },
+    y: { "my-meta": true, [MY_META]: true },
+  },
+
+  private: {
+    "#z": { "my-meta": true, [MY_META]: true },
+  }
+}
+
+let nonStaticMeta = {
+  public: {
+    a: { "my-meta": true, [MY_META]: true },
+    b: { "my-meta": true, [MY_META]: true },
+  },
+
+  private: {
+    "#c": { "my-meta": true, [MY_META]: true },
+  }
+}
+```
+
+Notes:
+
+1. Metadata defined by a class decorator is assigned to the static `constructor` key. This is because `constructor` is a reserved name within class definitions, so it cannot conflict with another class element with the same name.
+2. Private fields are assigned to a property that is the _spelling_ of their name in code. This key cannot be used to access the private element itself, it only serves as a unique identifier to associate the metadata with. To see how metadata associated with private elements can be used, and how access can be exposed, read the section on Access below.
+
+These metadata objects are then exposed via the `Symbol.metadata` property on the class (for static metadata) and the class prototype (for non-static metadata). So the above example is roughly equivalent, when executed, to:
+
+```js
+C[Symbol.metadata] = {
+  constructor: { "my-meta": true, [MY_META]: true },
+  baz: { "my-meta": true, [MY_META]: true },
+  qux: { "my-meta": true, [MY_META]: true },
+};
+
+C.prototype[Symbol.metadata] = {
+  foo: { "my-meta": true, [MY_META]: true },
+  bar: { "my-meta": true, [MY_META]: true },
+};
+```
+
+This is not quite a "desugaring", since we would still need to execute the decorators to determine what metadata would be generated. This is mainly for illustrative purposes.
+
+If two class elements exist on the same class with the same name, then any metadata associated with either element gets combined with metadata on the other:
+
+```js
+function meta1(value, context) {
+  context.defineMetadata('meta1', 1);
+}
+
+function meta2(value, context) {
+  context.defineMetadata('meta2', 2);
+}
+
+class C {
+  @meta1
+  m() {};
+
+  @meta2
+  m = 123;
+}
+
+C.prototype[Symbol.metadata].m;
+// { meta1: 1, meta2: 2 }
+```
+
+In addition, subsequent definitions to the same key will result in an array of values instead of a single value.
+
+```js
+function validateString(value, context) {
+  context.defineMetadata("validations", (value) => typeof value === "string"));
+}
+
+function validateMaxLength(length) {
+  return (value, context) => {
+    context.defineMetadata("validations", (value) => value.length < length);
+  }
+}
+
+class C {
+  @validateString
+  @validateMaxLength(10)
+  foo = "hello!";
+}
+
+C.prototype[Symbol.metadata].foo.validations.length;
+// 2
+```
+
+This API design meets the following goals:
+
+- It is easy for any decorator library to directly access the metadata that it defined. Defining metadata requires a key, which the library can then use to access it later. Alternatives include placing all metadata in an array, but this would require users to manually sort through and find their own metadata.
+- Metadata is easy to access, and it's possible to tell which class element it was associated with.
+- Metadata access is uniform, all metadata is accessed the same way. There is no need to learn a different technique for each type of class element.
+- Multiple decorators can collaborate, progressively building up metadata on a single key. This means that libraries such as validation libraries can associate multiple values with a single key.
+
+#### Hiding metadata
+
+This metadata API is inherently open. By defining metadata, anyone can access it via `Symbol.metadata`. Even if a Symbol is used as the key, users can find these properties via `Object.getOwnPropertySymbols`.
+
+Sometimes, users may wish to hide the details of their metadata, to prevent external code from reading it. Users can do this by exposing a _key_ in the metadata, rather than the metadata itself. This key can then be used to read the metadata from a private data store, only available in module scope for instance. For example, you could do this with an object and a WeakMap like so:
+
+```js
+MY_META = new WeakMap();
+
+function myMeta(value, context) {
+  let key = {};
+
+  MY_META.set(key, { secret: "values" })
+
+  context.defineMetadata("my-meta", key);
+}
+```
+
+The metadata can then be accessed using this key. For example:
+
+```js
+class C {
+  @myMeta x = 1;
+}
+
+MY_META.get(C.prototype[Symbol.metadata].x);
+// { secret: "values" }
+```
+
+### Access
+
+So far we've seen how metadata can be defined for decorated values, and for public values its possible to see how this could be used. For instance, one could develop a validation library which annotates values with various validations, and then reads the metadata when validating:
+
+```js
+function validateString(value, context) {
+  context.defineMetadata("validation", (value) => typeof value === "string"));
+}
+
+function validate(instance) {
+  let metadata = Object.getPrototypeOf(instance)[Symbol.metadata];
+
+  for (let key in metadata) {
+    let validation = metadata[key].validation;
+
+    if (validation) {
+      let value = instance[key];
+      let isValid = validation(value);
+
+      if (!isValid) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+class C {
+  @validateString
+  foo = "hello!";
+}
+
+let c = new C();
+validate(c);
+// true
+
+c.foo = 123;
+validate(c);
+// false
+```
+
+However, it is not possible to do this as directly _private_ elements, as the key the metadata is defined with cannot be used to access it externally.
+
+This is the purpose of the `access` object that is passed to private elements. This object gives decorators a way to expose access via metadata, like so:
+
+```js
+validatePrivateString(value, context) {
+  let { get } = context.access;
+
+  context.defineMetadata("validation", (instance) => {
+    let value = get.call(instance);
+
+    return typeof value === "string")
+  });
+}
+
+function validate(instance) {
+  let metadata = Object.getPrototypeOf(instance)[Symbol.metadata];
+
+  for (let key in metadata) {
+    let validation = metadata[key].validation;
+
+    if (validation && !validation(instance)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+class C {
+  @validateString
+  #foo = "hello!";
+
+  updateFoo(val) {
+    this.#foo = val;
+  }
+}
+
+let c = new C();
+validate(c);
+// true
+
+c.updateFoo(123);
+validate(c);
+// false
+```
+
+Calling the `get` and `set` functions is equivalent to accessing the value on the instance.
+
+```js
+function exposeField(value, context) {
+  context.defineMetadata("fieldAccess", context.access);
+}
+
+class C {
+  @exposeField #x = 1;
+
+  updateX() {
+    let { get, set } = C.prototype[Symbol.metadata]["#x"];
+
+    let x1 = get.call(this);
+    set.call(this, x1 + 1);
+
+    // is equivalent to...
+    let x2 = this.#x;
+    this.#x = x2 + 1;
+  }
+}
+```
+
+This means that if you call `get` or `set` with a private prop or accessor, then it will _trigger_ the accessors on the instance.
+
+Access is generally provided based on whether or not the value is a value meant to be read or written. Fields and props can be both read and written to. Accessors can either be read in the case of getters, or wriitten in the case of setters. Methods can only be read.
+
+## Syntax
 
 This decorators proposal uses the syntax of the previous Stage 2 decorators proposal. This means that:
 - Decorator expressions are restricted to a chain of variables, property access with `.` but not `[]`, and calls `()`. To use an arbitrary expression as a decorator, `@(expression)` is an escape hatch.
@@ -529,22 +926,23 @@ This decorators proposal uses the syntax of the previous Stage 2 decorators prop
 
 There is no special syntax for defining decorators; any function can be applied as a decorator.
 
-# Detailed semantics 
+## Detailed semantics
 
 The three steps of decorator evaluation:
+
 1. Decorator expressions (the thing after the `@`) are *evaluated* interspersed with computed property names.
 1. Decorators are *called* (as functions) during class definition, after the methods have been evaluated but before the constructor and prototype have been put together.
 1. Decorators are *applied* (mutating the constructor and prototype) all at once, after all of them have been called.
 
 The semantics here generally follow the consensus at the May 2016 TC39 meeting in Munich.
 
-## 1. Evaluating decorators
+### 1. Evaluating decorators
 
 Decorators are evaluated as expressions, being ordered along with computed property names. This goes left to right, top to bottom. The result of decorators is stored in the equivalent of local variables to be later called after the class definition initially finishes executing.
 
-## 2. Calling decorators
+### 2. Calling decorators
 
-### The element being wrapped: the first parameter
+#### The element being wrapped: the first parameter
 
 The first parameter, of what the decorator is wrapping, depends on what is being decorated:
 - In a method, init-method, getter or setter decorator: the relevant function object
@@ -553,7 +951,7 @@ The first parameter, of what the decorator is wrapping, depends on what is being
     - `get`: A function which takes no arguments, expected to be called with a receiver which is the appropriate object, returning the underlying value.
     - `set`: A function which takes a single argument (the new value), expected to be called with a receiver which is the object being set, expected to return `undefined`.
 
-### The context object: the second parameter
+#### The context object: the second parameter
 
 The context object--the object passed as the second argument to the decorator--contains the following properties:
 - `kind`: One of
@@ -565,7 +963,7 @@ The context object--the object passed as the second argument to the decorator--c
     - `"field"`
 - `name`:
     - Public field or method: the `name` is the String or Symbol property key.
-    - Private field or method: missing (could be provided as some representation of the private name, in a follow-on proposal) 
+    - Private field or method: missing (could be provided as some representation of the private name, in a follow-on proposal)
     - Class: missing
 - `isStatic`:
     - Static field or method: `true`
@@ -574,7 +972,7 @@ The context object--the object passed as the second argument to the decorator--c
 
 The "target" (constructor or prototype) is not passed to field or method decorators, as it has not yet been built when the decorator runs.
 
-### The return value
+#### The return value
 
 The return value is interpreted based on the type of decorator. The return value is expected as follows:
 - Class: A new class
@@ -587,7 +985,7 @@ The return value is interpreted based on the type of decorator. The return value
     - `method`: A function to replace the method
     - `initialize`: A function with no arguments, whose return value is ignored, which is called with the newly constructed object as the receiver.
 
-## 3. Applying decorators
+### 3. Applying decorators
 
 Decorators are applied after all decorators have been called. The intermediate steps of the decorator application algorithm are not observable--the newly constructed class is not made available until after all method and non-static field decorators have been applied.
 
@@ -595,39 +993,9 @@ The class decorator is called only after all method and field decorators are cal
 
 Finally, static fields are executed and applied.
 
-## Decorated field semantics in depth
+## Possible extensions
 
-Decorated fields have the semantics of getter-setter pairs backed by a private field. That is,
-
-```js
-function id(v) { return v; }
-
-class C {
-  @id x = y;
-}
-```
-
-has the semantics of
-
-```js
-class C {
-  #x = y;
-  get x() { return this.#x; }
-  set x(v) { this.#x = v; }
-}
-```
-
-These semantics imply that decorated fields have "TDZ" like private fields. For example, the following is a TypeError because `y` is accessed before it is added to the instance.
-
-```js
-class C {
-  @id x = this.y;
-  @id y;
-}
-new C;  // TypeError
-```
-
-The getter/setter pair are ordinary JS method objects, and non-enumerable like other methods. The underlying private fields are added one-by-one, interspersed with initializers, just like ordinary private fields.
+Decorators on further constructs are investigated in [EXTENSIONS.md](./EXTENSIONS.md).
 
 ## Design goals
 
@@ -681,14 +1049,10 @@ Some things that have been described as potential decorators would *not* fit int
 
 - **Accessor coalescing**: In the above proposal, getters and setters are decorated separately, whereas in earlier decorators proposals, they were coalesced into a unit which applies to the decorator together. This is done in order to keep the decorator desugaring simple and efficient, without the need for an intermediate data structure to associate getters with setters (which may be dynamic due to computed property names). Should decorator coalescing be restored?
 - **Metadata format**: How should metadata added by decorators be represented in the object graph? Should there be a built-in library of functions to query this metadata? How should adding metadata to class elements be timed relative to other observable operations with decorators?
-- **`@init:` decorators**: Should the initial version of decorators include [`@init:` decorators](#option-b-init-method-decorators), or should this be considered in a follow-on proposal?
-- **Parameter decorators**: Should we include [parameter decorators](./EXTENSIONS.md#parameter-decorators-and-annotations) in the initial proposal, or should this be considered in a follow-on proposal?
-- **Surface details**: Is the API surface as it should be, or should small changes be made? For example, maybe in the context object, we recently renamed `name` to `key`, and we could add a `spelling` property (name tbd) to give the name of the class, private names, etc.
 
 ## Standardization plan
 
-- Present in September 2020
-- If feedback is positive, write spec text and tests and implement in experimental transpilers
+- Write spec text and tests and implement in experimental transpilers
 - Collect feedback from JavaScript developers testing the transpiler implementation
 - Iterate on open questions within the proposal, presenting them to TC39 and discussing further in the biweekly decorators calls, to bring a conclusion to committee in a future meeting
 - Propose for Stage 3 no sooner than six months after prototyping begins, so we have time to collect experience from developers in transpilers
@@ -759,7 +1123,7 @@ Yes! Once we have validated this core approach, the authors of this proposal pla
 
 ### Will decorators let you access private fields and methods?
 
-Yes, private fields and methods can be decorated just like ordinary fields and methods. The only difference is that no property key is available in the context object. See the example under the heading, "Limited access to private fields and methods".
+Yes, private fields and methods can be decorated just like ordinary fields and methods. The only difference is that no property key is available in the context object, and instead an `access` object with `get`/`set` functions is provided. See the example under the heading, "Access".
 
 ### How should this new proposal be used in transpilers, when it's implemented?
 
@@ -769,7 +1133,7 @@ Modules exporting decorators are able to easily check whether they are being inv
 
 ### What would the specification look like in detail?
 
-(We haven't written it yet; the plan would be to do so after the proposal is discussed in the September 2020 TC39 meeting.)
+We are currently in the process of writing it, and will be updating the repo as progress is made.
 
 ### What makes this decorators proposal more statically analyzable than previous proposals? Is this proposal still statically analyzable even though it is based on runtime values?
 
