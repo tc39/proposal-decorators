@@ -232,5 +232,6 @@ class C {
   #_() { return bar; }
   x = foo.call(this, this.#_);
 }
+```
 
 This pattern may improve certain "computed" reactivity patterns.
