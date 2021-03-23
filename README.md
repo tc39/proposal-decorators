@@ -90,6 +90,7 @@ The context object also varies depending on the value being decorated. Breaking 
 
 - `kind`: The kind of decorated value. This can be used to assert that the decorator is used correctly, or to have different behavior for different types of values. It is one of the following values.
   - `"class"`
+  - `"init-class"`
   - `"method"`
   - `"init-method"`
   - `"getter"`
