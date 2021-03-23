@@ -11,7 +11,7 @@ This README describes the current decorators proposal, which is a work in progre
 ```js
 @defineElement("my-class")
 class C extends HTMLElement {
-  @reactive prop clicked = false;
+  @reactive accessor clicked = false;
 }
 ```
 
@@ -37,11 +37,11 @@ In this proposal, decorators can be applied to the following existing types of v
 
 In addition, this proposal introduces a new type of class element that can be decorated:
 
-- Class _prop fields_, defined by applying the `prop` keyword to a class field. These have a getter and setter, unlike fields, which default to getting and setting the value on a private storage slot (equivalent to a private class field):
+- Class _auto accessors_, defined by applying the `accessor` keyword to a class field. These have a getter and setter, unlike fields, which default to getting and setting the value on a private storage slot (equivalent to a private class field):
 
   ```js
   class Example {
-    @reactive prop myBool = false;
+    @reactive accessor myBool = false;
   }
   ```
 
@@ -95,7 +95,7 @@ The context object also varies depending on the value being decorated. Breaking 
   - `"getter"`
   - `"setter"`
   - `"field"`
-  - `"prop-field"`
+  - `"auto-accessor"`
 - `name`: The name of the value. This is only available for classes and _public_ class elements.
 - `access`: An object containing methods to access the value. This is only available for _private_ class elements, since public class elements can be accessed externally by knowing the name of the element. These methods also get the _final_ value of the private element on the instance, not the current value passed to the decorator. This is important for most use cases involving access, such as type validators or serializers. See the section on Access below for more details.
 - `isStatic`: Whether or not the value is a `static` class element. Only applies to class elements.
@@ -390,17 +390,17 @@ If the class being decorated is an anonymous class, then the `name` property of 
 
 ### New Class Elements
 
-#### Class Prop-Fields
+#### Class Auto-Accessors
 
-Class prop-fields are a new construct, defined by adding the `prop` keyword in front of a class field:
+Class auto-accessors are a new construct, defined by adding the `accessor` keyword in front of a class field:
 
 ```js
 class C {
-  prop x = 1;
+  accessor x = 1;
 }
 ```
 
-Prop-fields, unlike regular fields, define a getter and setter on the class prototype. This getter and setter default to getting and setting a value on a private slot. The above roughly desugars to:
+Auto-accessors, unlike regular fields, define a getter and setter on the class prototype. This getter and setter default to getting and setting a value on a private slot. The above roughly desugars to:
 
 ```js
 class C {
@@ -416,16 +416,16 @@ class C {
 }
 ```
 
-Both static and private props can be defined as well:
+Both static and private auto-accessors can be defined as well:
 
 ```js
 class C {
-  static prop x = 1;
-  prop #y = 2;
+  static accessor x = 1;
+  accessor #y = 2;
 }
 ```
 
-Prop-fields can be decorated, and prop-field decorators have the following signature:
+Auto-accessors can be decorated, and auto-accessor decorators have the following signature:
 
 ```ts
 type ClassPropDecorator = (
@@ -434,7 +434,7 @@ type ClassPropDecorator = (
     set(value: unknown) => void;
   },
   context: {
-    kind: "prop-field";
+    kind: "auto-accessor";
     name?: string | symbol;
     access?: { get(): unknown, set(value: unknown): void };
     isStatic: boolean;
@@ -448,13 +448,13 @@ type ClassPropDecorator = (
 } | void;
 ```
 
-Unlike field decorators, prop-field decorators receive a value, which is an object containing the `get` and `set` accessors defined on the prototype of the class (or the class itself in the case of static props). The decorator can then wrap these and return a _new_ `get` and/or `set`, allowing access to the property to be intercepted by the decorator. This is a capability that is not possible with fields, but is possible with props. In addition, props can return an `initialize` function, which can be used to change the initial value of the prop, similar to field decorators. If an object is returned but any of the values are omitted, then the default behavior for the omitted values is to use the original behavior. If any other type of value besides an object containing these properties is returned, an error will be thrown.
+Unlike field decorators, auto-accessor decorators receive a value, which is an object containing the `get` and `set` accessors defined on the prototype of the class (or the class itself in the case of static props). The decorator can then wrap these and return a _new_ `get` and/or `set`, allowing access to the property to be intercepted by the decorator. This is a capability that is not possible with fields, but is possible with props. In addition, props can return an `initialize` function, which can be used to change the initial value of the prop, similar to field decorators. If an object is returned but any of the values are omitted, then the default behavior for the omitted values is to use the original behavior. If any other type of value besides an object containing these properties is returned, an error will be thrown.
 
-Further extending the `@logged` decorator, we can make it handle prop-fields as well, logging when the prop-field is initialized and whenever it is accessed:
+Further extending the `@logged` decorator, we can make it handle auto-accessors as well, logging when the auto-accessor is initialized and whenever it is accessed:
 
 ```js
 function logged(value, { kind, name }) {
-  if (kind === "prop") {
+  if (kind === "auto-accessor") {
     let { get, set } = value;
 
     return {
@@ -481,7 +481,7 @@ function logged(value, { kind, name }) {
 }
 
 class C {
-  @logged prop x = 1;
+  @logged accessor x = 1;
 }
 
 let c = new C();
@@ -516,7 +516,7 @@ let {
 } = logged(
   { get: oldGet, set: oldSet },
   {
-    kind: "prop",
+    kind: "auto-accessor",
     name: "x",
     isStatic: false,
     isPrivate: false,
@@ -1063,7 +1063,7 @@ class C {
 }
 ```
 
-This means that if you call `get` or `set` with a private prop or accessor, then it will _trigger_ the accessors on the instance.
+This means that if you call `get` or `set` with a private field or accessor, then it will _trigger_ the accessors on the instance.
 
 Access is generally provided based on whether or not the value is a value meant to be read or written. Fields and props can be both read and written to. Accessors can either be read in the case of getters, or wriitten in the case of setters. Methods can only be read.
 
