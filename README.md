@@ -344,7 +344,7 @@ type ClassDecorator = (value: Function, context: {
 }) => Function | void;
 ```
 
-Class decorator's receive the class that is being decorated as the first parameter, and may optionally return a new class to replace it. If a non-constructable value is returned, then an error is thrown.
+Class decorators receive the class that is being decorated as the first parameter, and may optionally return a new class to replace it. If a non-constructable value is returned, then an error is thrown.
 
 We can further extend our `@logged` decorator to log whenever an instance of a class is created:
 
@@ -848,13 +848,13 @@ However, it is not possible to do this as directly _private_ elements, as the ke
 This is the purpose of the `access` object that is passed to private elements. This object gives decorators a way to expose access via metadata, like so:
 
 ```js
-validatePrivateString(value, context) {
+function validatePrivateString(value, context) {
   let { get } = context.access;
 
   context.defineMetadata("validation", (instance) => {
     let value = get.call(instance);
 
-    return typeof value === "string")
+    return typeof value === "string";
   });
 }
 
@@ -873,7 +873,7 @@ function validate(instance) {
 }
 
 class C {
-  @validateString
+  @validatePrivateString
   #foo = "hello!";
 
   updateFoo(val) {
