@@ -585,7 +585,7 @@ This example roughly "desugars" to the following (i.e., could be transpiled as s
 class C {}
 
 let { definition, initialize } = logged(C, {
-  kind: "class",
+  kind: "init-class",
   name: "C",
   defineMetadata() { /**/ }
 });
