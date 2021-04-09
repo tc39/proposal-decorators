@@ -1,5 +1,7 @@
 # Decorators
 
+![Stage 3](https://badges.aleen42.com/src/tc39_4.svg)
+
 Decorators are a proposal for extending JavaScript classes which is widely adopted among developers in transpiler environments, with broad interest in standardization. TC39 has been iterating on decorators proposals for over five years. This document describes a new proposal for decorators based on elements from all past proposals.
 
 This README describes the current decorators proposal, which is a work in progress. For previous iterations of this proposal, see the commit history of this repository.
