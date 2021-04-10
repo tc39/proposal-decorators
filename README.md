@@ -9,7 +9,7 @@ This README describes the current decorators proposal, which is a work in progre
 **Decorators** are *functions* called on classes, class elements, or other JavaScript syntax forms during definition.
 
 ```js
-@defineElement("my-class")
+@init:defineElement("my-class")
 class C extends HTMLElement {
   @reactive accessor clicked = false;
 }
@@ -94,9 +94,13 @@ The context object also varies depending on the value being decorated. Breaking 
   - `"method"`
   - `"init-method"`
   - `"getter"`
+  - `"init-getter"`
   - `"setter"`
+  - `"init-setter"`
   - `"field"`
+  - `"init-field"`
   - `"auto-accessor"`
+  - `"init-auto-accessor"`
 - `name`: The name of the value. This is only available for classes and _public_ class elements.
 - `access`: An object containing methods to access the value. This is only available for _private_ class elements, since public class elements can be accessed externally by knowing the name of the element. These methods also get the _final_ value of the private element on the instance, not the current value passed to the decorator. This is important for most use cases involving access, such as type validators or serializers. See the section on Access below for more details.
 - `isStatic`: Whether or not the value is a `static` class element. Only applies to class elements.
@@ -1081,7 +1085,7 @@ There is no special syntax for defining decorators; any function can be applied 
 
 The three steps of decorator evaluation:
 
-1. Decorator expressions (the thing after the `@`) are *evaluated* interspersed with computed property names.
+1. Decorator expressions (the thing after the `@` or `@init:`) are *evaluated* interspersed with computed property names.
 1. Decorators are *called* (as functions) during class definition, after the methods have been evaluated but before the constructor and prototype have been put together.
 1. Decorators are *applied* (mutating the constructor and prototype) all at once, after all of them have been called.
 
@@ -1106,12 +1110,18 @@ The first parameter, of what the decorator is wrapping, depends on what is being
 
 The context object--the object passed as the second argument to the decorator--contains the following properties:
 - `kind`: One of
-    - `"class"`
-    - `"method"`
-    - `"init-method"`
-    - `"getter"`
-    - `"setter"`
-    - `"field"`
+  - `"class"`
+  - `"init-class"`
+  - `"method"`
+  - `"init-method"`
+  - `"getter"`
+  - `"init-getter"`
+  - `"setter"`
+  - `"init-setter"`
+  - `"field"`
+  - `"init-field"`
+  - `"auto-accessor"`
+  - `"init-auto-accessor"`
 - `name`:
     - Public field or method: the `name` is the String or Symbol property key.
     - Private field or method: missing (could be provided as some representation of the private name, in a follow-on proposal)
@@ -1127,14 +1137,20 @@ The "target" (constructor or prototype) is not passed to field or method decorat
 
 The return value is interpreted based on the type of decorator. The return value is expected as follows:
 - Class: A new class
+- Init class: An object with the properties
+    - `definition`: A new class
+    - `initialize`: A function with no arguments, whose return value is ignored, which is called with the class as the receiver.
 - Method, getter or setter: A new function
-- field: An object with three properties (each individually optional):
+- Init method, init getter, or init setter: An object with the properties
+    - `method`: A function to replace the method
+    - `initialize`: A function with no arguments, whose return value is ignored, which is called with the newly constructed object as the receiver.
+- Field: A function called with the original field value, which returns a value which is used for the initializing set of the variable.
+- Init field: Same as field
+- Auto-accessor: An object with three properties (each individually optional):
     - `get`: A function of the same form as the `get` property of the first argument
     - `set`: Ditto, for `set`
     - `initialize`: A function called with the same arguments as `set`, which returns a value which is used for the initializing set of the variable. This is called when initially setting the underlying storage based on the field initializer or method definition. This method shouldn't call the `set` input, as that would trigger an error. If `initialize` isn't provided, `set` is not called, and the underlying storage is written directly. This way, `set` can count on the field already existing, and doesn't need to separately track that.
-- Init method: An object with the properties
-    - `method`: A function to replace the method
-    - `initialize`: A function with no arguments, whose return value is ignored, which is called with the newly constructed object as the receiver.
+- Init auto-accessor: Same as auto-accessor
 
 ### 3. Applying decorators
 
