@@ -449,7 +449,7 @@ type ClassPropDecorator = (
 } | void;
 ```
 
-Unlike field decorators, auto-accessor decorators receive a value, which is an object containing the `get` and `set` accessors defined on the prototype of the class (or the class itself in the case of static props). The decorator can then wrap these and return a _new_ `get` and/or `set`, allowing access to the property to be intercepted by the decorator. This is a capability that is not possible with fields, but is possible with props. In addition, props can return an `initialize` function, which can be used to change the initial value of the prop, similar to field decorators. If an object is returned but any of the values are omitted, then the default behavior for the omitted values is to use the original behavior. If any other type of value besides an object containing these properties is returned, an error will be thrown.
+Unlike field decorators, auto-accessor decorators receive a value, which is an object containing the `get` and `set` accessors defined on the prototype of the class (or the class itself in the case of static auto-accessors). The decorator can then wrap these and return a _new_ `get` and/or `set`, allowing access to the property to be intercepted by the decorator. This is a capability that is not possible with fields, but is possible with auto-accessors. In addition, auto-accessors can return an `initialize` function, which can be used to change the initial value of the backing value in the private slot, similar to field decorators. If an object is returned but any of the values are omitted, then the default behavior for the omitted values is to use the original behavior. If any other type of value besides an object containing these properties is returned, an error will be thrown.
 
 Further extending the `@logged` decorator, we can make it handle auto-accessors as well, logging when the auto-accessor is initialized and whenever it is accessed:
 
@@ -536,7 +536,7 @@ The `@init:` syntax can be used with any decorator, and allows the decorator to 
 - Class element initializers run after an instance of the class has been created and the constructor for the class has been run, but _before_ any subclass constructors are run.
 - Class _static_ element initializers run after the class has been fully defined, and class static fields have been assigned.
 
-In general, init decorators have the same signatures as the equivalent standard decorators, with the exception that they always return an object and can optionally return an `initialize` function on that object. Since class fields and props already have the ability to run code on initialization, their signatures do not change, but the syntax can be used with them for consistency.
+In general, init decorators have the same signatures as the equivalent standard decorators, with the exception that they always return an object and can optionally return an `initialize` function on that object. Since class fields and auto-accessors already have the ability to run code on initialization, their signatures do not change, but the syntax can be used with them for consistency.
 
 #### Class Init Decorator
 
@@ -1066,7 +1066,7 @@ class C {
 
 This means that if you call `get` or `set` with a private field or accessor, then it will _trigger_ the accessors on the instance.
 
-Access is generally provided based on whether or not the value is a value meant to be read or written. Fields and props can be both read and written to. Accessors can either be read in the case of getters, or wriitten in the case of setters. Methods can only be read.
+Access is generally provided based on whether or not the value is a value meant to be read or written. Fields and auto-accessors can be both read and written to. Accessors can either be read in the case of getters, or wriitten in the case of setters. Methods can only be read.
 
 ## Syntax
 
