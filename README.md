@@ -186,7 +186,7 @@ type ClassSetterDecorator = (value: Function, context: {
 }) => Function | void;
 ```
 
-Accessor decorators receive the original underlying getter/setter function as the first value, and can optionally return a new getter/setter function to return it. Like method decorators, this new function is placed on the prototype in place of the original (or on the class for static accessors), and if any other type of value is returned, an error will be thrown.
+Accessor decorators receive the original underlying getter/setter function as the first value, and can optionally return a new getter/setter function to replace it. Like method decorators, this new function is placed on the prototype in place of the original (or on the class for static accessors), and if any other type of value is returned, an error will be thrown.
 
 Accessor decorators are applied _separately_ to getters and setters. In the following example, `@foo` is applied only to `get x()` - `set x()` is undecorated:
 
