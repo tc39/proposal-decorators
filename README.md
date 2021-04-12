@@ -444,13 +444,15 @@ type ClassAutoAccessorDecorator = (
     defineMetadata(key: string | symbol | number, value: unknown);
   }
 ) => {
-  get?: () => unknown;
-  set?: (value: unknown) => void;
+  definition?: {
+    get?: () => unknown;
+    set?: (value: unknown) => void;
+  };
   initialize?: (initialValue: unknown) => unknown;
 } | void;
 ```
 
-Unlike field decorators, auto-accessor decorators receive a value, which is an object containing the `get` and `set` accessors defined on the prototype of the class (or the class itself in the case of static auto-accessors). The decorator can then wrap these and return a _new_ `get` and/or `set`, allowing access to the property to be intercepted by the decorator. This is a capability that is not possible with fields, but is possible with auto-accessors. In addition, auto-accessors can return an `initialize` function, which can be used to change the initial value of the backing value in the private slot, similar to field decorators. If an object is returned but any of the values are omitted, then the default behavior for the omitted values is to use the original behavior. If any other type of value besides an object containing these properties is returned, an error will be thrown.
+Unlike field decorators, auto-accessor decorators receive a value, which is an object containing a `definition` object with the `get` and `set` accessors defined on the prototype of the class (or the class itself in the case of static auto-accessors). The decorator can then wrap these and return a _new_ `get` and/or `set`, allowing access to the property to be intercepted by the decorator. This is a capability that is not possible with fields, but is possible with auto-accessors. In addition, auto-accessors can return an `initialize` function, which can be used to change the initial value of the backing value in the private slot, similar to field decorators. If an object is returned but any of the values are omitted, then the default behavior for the omitted values is to use the original behavior. If any other type of value besides an object containing these properties is returned, an error will be thrown.
 
 Further extending the `@logged` decorator, we can make it handle auto-accessors as well, logging when the auto-accessor is initialized and whenever it is accessed:
 
@@ -460,16 +462,18 @@ function logged(value, { kind, name }) {
     let { get, set } = value;
 
     return {
-      get() {
-        console.log(`getting ${name}`);
-
-        return get.call(this);
-      },
-
-      set(val) {
-        console.log(`setting ${name} to ${val}`);
-
-        return set.call(this, val);
+      definition: {
+      
+        get() {
+          console.log(`getting ${name}`);
+          return get.call(this);
+        },
+        
+        set(val) {
+          console.log(`setting ${name} to ${val}`);
+          return set.call(this, val);
+        }
+        
       },
 
       initialize(initialValue) {
@@ -512,8 +516,7 @@ class C {
 let { get: oldGet, set: oldSet } = Object.getOwnPropertyDescriptor(C.prototype, "x");
 
 let {
-  get: newGet = oldGet,
-  set: newSet = oldSet,
+  definition,
   initialize: initializeX = (initialValue) => initialValue
 } = logged(
   { get: oldGet, set: oldSet },
@@ -526,7 +529,7 @@ let {
   }
 ) ?? {};
 
-Object.defineProperty(C.prototype, "x", { get: newGet, set: newSet });
+Object.defineProperty(C.prototype, "x", { get: definition?.get || oldGet, set: definition?.set || oldSet });
 ```
 
 ### `@init:` Decorators
@@ -612,7 +615,7 @@ type ClassInitMethodDecorator = (value: Function, context: {
   isPrivate: boolean;
   defineMetadata(key: string | symbol | number, value: unknown);
 }) => {
-  method?: Function,
+  definition?: Function,
   initialize?: () => void
 } | void;
 ```
@@ -625,7 +628,7 @@ Further extending the `@logged` decorator, we can make it handle init-methods as
 function logged(value, { kind, name }) {
   if (kind === "init-method") {
     return {
-      method(...args) {
+      definition(...args) {
         console.log(`starting ${name} with arguments ${args.join(", ")}`);
         const ret = value.call(this, ...args);
         console.log(`ending ${name}`);
@@ -666,7 +669,7 @@ class C {
 }
 
 let {
-  method,
+  definition,
   initialize: initializeM
 } = logged(
   C.prototype.m,
@@ -680,7 +683,7 @@ let {
 ) ?? {};
 
 initializeM = initialize;
-C.prototype.m = method ?? C.prototype.m;
+C.prototype.m = definition ?? C.prototype.m;
 ```
 
 #### Class Init Accessor Decorators
@@ -694,7 +697,7 @@ type ClassInitGetterDecorator = (value: Function, context: {
   isPrivate: boolean;
   defineMetadata(key: string | symbol | number, value: unknown);
 }) => {
-  get?: () => unknown;
+  definition?: () => unknown;
   initialize?: () => void;
 } | void;
 
@@ -706,7 +709,7 @@ type ClassInitSetterDecorator = (value: Function, context: {
   isPrivate: boolean;
   defineMetadata(key: string | symbol | number, value: unknown);
 }) => {
-  set?: (value: unknown) => void;
+  definition?: (value: unknown) => void;
   initialize?: () => void;
 } | void;
 ```
@@ -719,7 +722,7 @@ Further extending the `@logged` decorator, we can make it handle init-methods as
 function logged(value, { kind, name }) {
   if (kind === "init-getter") {
     return {
-      method(...args) {
+      definition(...args) {
         console.log(`accessing ${name}`);
         return value.call(this, ...args);
       },
@@ -760,7 +763,7 @@ class C {
 let { get: oldGet } = Object.getOwnPropertyDescriptor(C.prototype, "x");
 
 let {
-  get: newGet = oldGet,
+  definition,
   initialize: initializeX
 } = logged(
   { get: oldGet },
@@ -774,7 +777,7 @@ let {
 ) ?? {};
 
 Object.defineProperty(C.prototype, {
-  get: newGet,
+  get: definition.get || oldGet,
 });
 ```
 
