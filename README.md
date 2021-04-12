@@ -161,7 +161,7 @@ C.prototype.m = logged(C.prototype.m, {
   isStatic: false,
   isPrivate: false,
   defineMetadata() { /**/ }
-});
+}) ?? C.prototype.m;
 ```
 
 #### Class Accessors
@@ -241,7 +241,7 @@ set = logged(set, {
   isStatic: false,
   isPrivate: false,
   defineMetadata() { /**/ }
-});
+}) ?? set;
 
 Object.defineProperty(C.prototype, "x", { set });
 ```
@@ -292,10 +292,10 @@ let initializeX = logged(undefined, {
   isStatic: false,
   isPrivate: false,
   defineMetadata() { /**/ }
-}) ?? (initialValue) => initialValue ;
+}) ?? (initialValue) => initialValue;
 
 class C {
-  x = initializeX(1);
+  x = initializeX.call(this, 1);
 }
 ```
 
@@ -429,7 +429,7 @@ class C {
 Auto-accessors can be decorated, and auto-accessor decorators have the following signature:
 
 ```ts
-type ClassPropDecorator = (
+type ClassAutoAccessorDecorator = (
   value: {
     get: () => unknown;
     set(value: unknown) => void;
@@ -497,7 +497,7 @@ This example roughly "desugars" to the following:
 
 ```js
 class C {
-  #x = initializeX(1);
+  #x = initializeX.call(this, 1);
 
   get x() {
     return this.#x;
@@ -511,9 +511,9 @@ class C {
 let { get: oldGet, set: oldSet } = Object.getOwnPropertyDescriptor(C.prototype, "x");
 
 let {
-  get: newGet,
-  set: newSet,
-  initialize: initializeX
+  get: newGet = oldGet,
+  set: newSet = oldSet,
+  initialize: initializeX = (initialValue) => initialValue
 } = logged(
   { get: oldGet, set: oldSet },
   {
@@ -523,7 +523,7 @@ let {
     isPrivate: false,
     defineMetadata() { /**/ }
   }
-);
+) ?? {};
 
 Object.defineProperty(C.prototype, "x", { get: newGet, set: newSet });
 ```
@@ -541,13 +541,13 @@ In general, init decorators have the same signatures as the equivalent standard 
 #### Class Init Decorator
 
 ```ts
-type ClassDecorator = (value: Function, context: {
+type ClassInitDecorator = (value: Function, context: {
   kind: "init-class";
   name: string | undefined;
   defineMetadata(key: string | symbol | number, value: unknown);
 }) => {
   definition?: Function;
-  initialize?: (value: Function) => void;
+  initialize?: () => void;
 }
 ```
 
@@ -588,11 +588,11 @@ let { definition, initialize } = logged(C, {
   kind: "init-class",
   name: "C",
   defineMetadata() { /**/ }
-});
+}) ?? {};
 
 C = definition ?? C;
 
-initialize.call(C);
+initialize?.call(C);
 
 new C(1);
 ```
@@ -611,7 +611,7 @@ type ClassInitMethodDecorator = (value: Function, context: {
   defineMetadata(key: string | symbol | number, value: unknown);
 }) => {
   method?: Function,
-  initialize?: (value: Function) => void
+  initialize?: () => void
 } | void;
 ```
 
@@ -655,11 +655,9 @@ c.m(1);
 This example roughly "desugars" to the following:
 
 ```js
-let initializeM;
-
 class C {
   constructor() {
-    initializeM.apply(this);
+    initializeM?.call(this);
   }
 
   m() {}
@@ -667,25 +665,26 @@ class C {
 
 let {
   method,
-  initialize
+  initialize: initializeM
 } = logged(
   C.prototype.m,
   {
-    kind: "prop",
-    name: "x",
+    kind: "init-method",
+    name: "m",
+    isStatic: false,
     isPrivate: false,
     defineMetadata() { /**/ }
   }
-);
+) ?? {};
 
 initializeM = initialize;
-C.prototype.m = method;
+C.prototype.m = method ?? C.prototype.m;
 ```
 
 #### Class Init Accessor Decorators
 
 ```ts
-type ClassGetterDecorator = (value: Function, context: {
+type ClassInitGetterDecorator = (value: Function, context: {
   kind: "init-getter";
   name?: string | symbol;
   access?: { get?(): unknown };
@@ -693,11 +692,11 @@ type ClassGetterDecorator = (value: Function, context: {
   isPrivate: boolean;
   defineMetadata(key: string | symbol | number, value: unknown);
 }) => {
-  get?: Function,
-  initialize?: (value: Function) => Function
+  get?: () => unknown;
+  initialize?: () => void;
 } | void;
 
-type ClassSetterDecorator = (value: Function, context: {
+type ClassInitSetterDecorator = (value: Function, context: {
   kind: "init-setter";
   name?: string | symbol;
   access?: { set?(value: unknown): void };
@@ -705,8 +704,8 @@ type ClassSetterDecorator = (value: Function, context: {
   isPrivate: boolean;
   defineMetadata(key: string | symbol | number, value: unknown);
 }) => {
-  set?: Function,
-  initialize?: (value: Function) => Function
+  set?: (value: unknown) => void;
+  initialize?: () => void;
 } | void;
 ```
 
@@ -735,45 +734,45 @@ function logged(value, { kind, name }) {
 
 class C {
   @init:logged
-  get m() {}
+  get x() {}
 }
 
 let c = new C();
-// initializing m
-c.m;
-// accessing m
-// ending m
+// initializing x
+c.x;
+// accessing x
+// ending x
 ```
 
 This example roughly "desugars" to the following:
 
 ```js
-let initializeM;
-
 class C {
   constructor() {
-    initializeM.apply(this);
+    initializeX?.call(this);
   }
 
-  get m() {}
+  get x() {}
 }
 
+let { get: oldGet } = Object.getOwnPropertyDescriptor(C.prototype, "x");
+
 let {
-  method,
-  initialize
+  get: newGet = oldGet,
+  initialize: initializeX
 } = logged(
-  Object.getOwnPropertyDescriptor(C.prototype, 'm'),
+  { get: oldGet },
   {
-    kind: "prop",
+    kind: "init-getter",
     name: "x",
+    isStatic: false,
     isPrivate: false,
     defineMetadata() { /**/ }
   }
-);
+) ?? {};
 
-initializeM = initialize;
 Object.defineProperty(C.prototype, {
-  get: method,
+  get: newGet,
 });
 ```
 
