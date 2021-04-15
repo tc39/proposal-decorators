@@ -172,7 +172,7 @@ C.prototype.m = logged(C.prototype.m, {
 type ClassGetterDecorator = (value: Function, context: {
   kind: "getter";
   name?: string | symbol;
-  access?: { get?(): unknown };
+  access?: { get(): unknown };
   isStatic: boolean;
   isPrivate: boolean;
   defineMetadata(key: string | symbol | number, value: unknown);
@@ -181,7 +181,7 @@ type ClassGetterDecorator = (value: Function, context: {
 type ClassSetterDecorator = (value: Function, context: {
   kind: "setter";
   name?: string | symbol;
-  access?: { set?(value: unknown): void };
+  access?: { set(value: unknown): void };
   isStatic: boolean;
   isPrivate: boolean;
   defineMetadata(key: string | symbol | number, value: unknown);
@@ -440,7 +440,7 @@ type ClassAutoAccessorDecorator = (
   context: {
     kind: "auto-accessor";
     name?: string | symbol;
-    access?: { get(): unknown, set(value: unknown): void };
+    access: { get(): unknown, set(value: unknown): void };
     isStatic: boolean;
     isPrivate: boolean;
     defineMetadata(key: string | symbol | number, value: unknown);
