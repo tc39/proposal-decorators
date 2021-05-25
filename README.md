@@ -82,6 +82,7 @@ type Decorator = (value: Input, context: {
   };
   isPrivate?: boolean;
   isStatic?: boolean;
+  addInitializer?(initializer: () => void): void;
   defineMetadata(key: string | symbol | number, value: unknown);
 }) => Output | void;
 ```
@@ -92,9 +93,7 @@ The context object also varies depending on the value being decorated. Breaking 
 
 - `kind`: The kind of decorated value. This can be used to assert that the decorator is used correctly, or to have different behavior for different types of values. It is one of the following values.
   - `"class"`
-  - `"init-class"`
   - `"method"`
-  - `"init-method"`
   - `"getter"`
   - `"setter"`
   - `"field"`
@@ -103,6 +102,7 @@ The context object also varies depending on the value being decorated. Breaking 
 - `access`: An object containing methods to access the value. This is only available for _private_ class elements, since public class elements can be accessed externally by knowing the name of the element. These methods also get the _final_ value of the private element on the instance, not the current value passed to the decorator. This is important for most use cases involving access, such as type validators or serializers. See the section on Access below for more details.
 - `isStatic`: Whether or not the value is a `static` class element. Only applies to class elements.
 - `isPrivate`: Whether or not the value is a private class element. Only applies to class elements.
+- `addInitializer`: This is available _if_ the decorator was called as an `@init:` decorator, which is discussed in more detail below.
 - `defineMetadata`: Allows the user to define some metadata to be associated with this property. This metadata can then be accessed on the class via `Symbol.metadata`. See the section on Metadata below for more details.
 
 ### Decorator APIs
@@ -116,13 +116,14 @@ type ClassMethodDecorator = (value: Function, context: {
   access?: { get(): unknown };
   isStatic: boolean;
   isPrivate: boolean;
+  addInitializer?(initializer: () => void): void;
   defineMetadata(key: string | symbol | number, value: unknown);
 }) => Function | void;
 ```
 
 Class method decorators receive the method that is being decorated as the first value, and can optionally return a new method to replace it. If a new method is returned, it will replace the original on the prototype (or on the class itself in the case of static methods). If any other type of value is returned, an error will be thrown.
 
-Method decorators do not receive access to the instances of the class, and cannot be used to add functionality that requires it. An example of such a decorator is the `@bound` decorator, which would bind the method to the instance of the class. In order to add instance initialization logic, users must convert the method into an Initialized Method (see below for more details).
+By default, method decorators do not receive access to the instances of the class, and cannot be used to add functionality that requires it. An example of such a decorator is the `@bound` decorator, which would bind the method to the instance of the class. In order to add instance initialization logic, users must use the `@init:` modifier (see below for more details).
 
 An example of a method decorator is the `@logged` decorator. This decorator receives the original function, and returns a new function that wraps the original and logs before and after it is called.
 
@@ -175,6 +176,7 @@ type ClassGetterDecorator = (value: Function, context: {
   access?: { get(): unknown };
   isStatic: boolean;
   isPrivate: boolean;
+  addInitializer?(initializer: () => void): void;
   defineMetadata(key: string | symbol | number, value: unknown);
 }) => Function | void;
 
@@ -184,6 +186,7 @@ type ClassSetterDecorator = (value: Function, context: {
   access?: { set(value: unknown): void };
   isStatic: boolean;
   isPrivate: boolean;
+  addInitializer?(initializer: () => void): void;
   defineMetadata(key: string | symbol | number, value: unknown);
 }) => Function | void;
 ```
@@ -257,6 +260,7 @@ type ClassFieldDecorator = (value: undefined, context: {
   access?: { get(): unknown, set(value: unknown): void };
   isStatic: boolean;
   isPrivate: boolean;
+  addInitializer?(initializer: () => void): void;
   defineMetadata(key: string | symbol | number, value: unknown);
 }) => (initialValue: unknown) => unknown | void;
 ```
@@ -347,6 +351,7 @@ getChildren(parent); // [Child, OtherChild]
 type ClassDecorator = (value: Function, context: {
   kind: "class";
   name: string | undefined;
+  addInitializer?(initializer: () => void): void;
   defineMetadata(key: string | symbol | number, value: unknown);
 }) => Function | void;
 ```
@@ -443,6 +448,7 @@ type ClassAutoAccessorDecorator = (
     access: { get(): unknown, set(value: unknown): void };
     isStatic: boolean;
     isPrivate: boolean;
+    addInitializer?(initializer: () => void): void;
     defineMetadata(key: string | symbol | number, value: unknown);
   }
 ) => {
@@ -533,127 +539,81 @@ Object.defineProperty(C.prototype, "x", { get: newGet, set: newSet });
 
 ### `@init:` Decorators
 
-The `@init:` syntax can be used with any decorator, and allows the decorator to return an `initialize` function along with the new decorated value. This initializer has different semantics depending on the type of value decorated, and the placement of the value.
+The `@init:` syntax can be used with any decorator, and adds the `addInitializer` method to the context object that is provided to the decorator. This method can be called to associate an initializer function with the class or class element, which can be used to run arbitrary code after the value has been defined in order to finish setting it up. The timing of these initializers depends on the type of decorator:
 
 - Class decorator initializers are run after the class has been fully defined, and class static fields have been assigned.
-- Class element initializers run after an instance of the class has been created and the constructor for the class has been run, but _before_ any subclass constructors are run.
-- Class _static_ element initializers run after the class has been fully defined, and class static fields have been assigned.
+- Class element initializers run during class construction, and are interleaved with standard class field initializers. Like class field initializers, they run in element order, and after any pre-existing standard initializer (e.g. the initializer for a class field or auto-accessor).
+- Class _static_ element initializers run during class definition, and are interleaved with standard static class field initializers, similar to non-static class element initializers.
 
-In general, init decorators have the same signatures as the equivalent standard decorators, with the exception that they always return an object and can optionally return an `initialize` function on that object. Since class fields and auto-accessors already have the ability to run code on initialization, their signatures do not change, but the syntax can be used with them for consistency.
+#### Example: `@init:customElement`
 
-#### Class Init Decorator
-
-```ts
-type ClassInitDecorator = (value: Function, context: {
-  kind: "init-class";
-  name: string | undefined;
-  defineMetadata(key: string | symbol | number, value: unknown);
-}) => {
-  definition?: Function;
-  initialize?: () => void;
-}
-```
-
-Like class decorators, init-class decorators receive the class definition and can return a new class definition, alongside an `initialize` function. We can further extend our `@logged` decorator to log when the class has finished being defined:
+We can use `@init:` with class decorators in order to create a decorator which registers a web component in the browser.
 
 ```js
-function logged(value, { kind, name }) {
-  if (kind === "init-class") {
-    return {
-      definition: class extends value {
-        constructor(...args) {
-          super(...args);
-          console.log(`constructing an instance of ${name} with arguments ${args.join(", ")}`);
-        }
-      },
-
-      initialize() {
-        console.log(`finished defining ${this.name}`);
-      }
-    };
+function customElement(name) {
+  (value, { addInitializer }) => {
+    addInitializer?.(function() {
+      customElements.define(name, this);
+    });
   }
-
-  // ...
 }
 
-@init:logged
-class C {}
-
-new C(1);
-// constructing an instance of C with arguments 1
+@init:customElement('my-element')
+class MyElement extends HTMLElement {
+  static get observedAttributes() {
+    return ['some', 'attrs'];
+  }
+}
 ```
 
 This example roughly "desugars" to the following (i.e., could be transpiled as such):
 
 ```js
-class C {}
+class MyElement {
+  static get observedAttributes() {
+    return ['some', 'attrs'];
+  }
+}
 
-let { definition, initialize } = logged(C, {
-  kind: "init-class",
-  name: "C",
+let initializersForMyElement = [];
+
+MyElement = customElement(MyElement, {
+  kind: "class",
+  name: "MyElement",
+  addInitializer(fn) {
+    initializersForMyElement.push(fn);
+  },
   defineMetadata() { /**/ }
-}) ?? {};
+}) ?? MyElement;
 
-C = definition ?? C;
-
-initialize?.call(C);
-
-new C(1);
+for (let initializer of initializersForMyElement) {
+  initializer.call(MyElement);
+}
 ```
 
-If the class being decorated is an anonymous class, then the `name` property of the `context` object is `undefined`.
+#### Example: `@init:bound`
 
-#### Class Init Method Decorators
-
-```ts
-type ClassInitMethodDecorator = (value: Function, context: {
-  kind: "init-method";
-  name?: string | symbol;
-  access?: { get(): unknown };
-  isStatic: boolean;
-  isPrivate: boolean;
-  defineMetadata(key: string | symbol | number, value: unknown);
-}) => {
-  method?: Function,
-  initialize?: () => void
-} | void;
-```
-
-Like method decorators, init-method decorators receive the original function defined on the prototype as the function being decorated. They can optionally return a new method and an initializer function. The new method, if present, is defined in place of the original method on the prototype, and the initializer function, if present, is called during construction of class instances.
-
-Further extending the `@logged` decorator, we can make it handle init-methods as well, logging both whenever an instance of the class is initialized and whenever it is called.
+We could also use `@init:` with method decorators to create a `@init:bound` decorator, which binds the method to the instance of the class:
 
 ```js
-function logged(value, { kind, name }) {
-  if (kind === "init-method") {
-    return {
-      method(...args) {
-        console.log(`starting ${name} with arguments ${args.join(", ")}`);
-        const ret = value.call(this, ...args);
-        console.log(`ending ${name}`);
-        return ret;
-      },
-
-      initialize(initialValue) {
-        console.log(`initializing ${name}`);
-        return initialValue;
-      }
-    };
-  }
-
-  // ...
+function bound(value, { name, addInitializer }) {
+  addInitializer(function () {
+    this[name] = this[name].bind(this);
+  });
 }
 
 class C {
-  @init:logged
-  m() {}
+  message = "hello!";
+
+  @init:bound
+  m() {
+    console.log(this.message);
+  }
 }
 
-let c = new C();
-// initializing m
-c.m(1);
-// starting m with arguments 1
-// ending m
+let { m } = new C();
+
+m(); // hello!
 ```
 
 This example roughly "desugars" to the following:
@@ -661,123 +621,29 @@ This example roughly "desugars" to the following:
 ```js
 class C {
   constructor() {
-    initializeM?.call(this);
+    for (let initializer of initializersForM) {
+      initializer.call(this);
+    }
   }
 
   m() {}
 }
 
-let {
-  method,
-  initialize: initializeM
-} = logged(
+let initializersForM = []
+
+C.prototype.m = logged(
   C.prototype.m,
   {
-    kind: "init-method",
+    kind: "method",
     name: "m",
     isStatic: false,
     isPrivate: false,
+    addInitializer(fn) {
+      initializersForM.push(fn);
+    },
     defineMetadata() { /**/ }
   }
-) ?? {};
-
-initializeM = initialize;
-C.prototype.m = method ?? C.prototype.m;
-```
-
-#### Class Init Accessor Decorators
-
-```ts
-type ClassInitGetterDecorator = (value: Function, context: {
-  kind: "init-getter";
-  name?: string | symbol;
-  access?: { get?(): unknown };
-  isStatic: boolean;
-  isPrivate: boolean;
-  defineMetadata(key: string | symbol | number, value: unknown);
-}) => {
-  get?: () => unknown;
-  initialize?: () => void;
-} | void;
-
-type ClassInitSetterDecorator = (value: Function, context: {
-  kind: "init-setter";
-  name?: string | symbol;
-  access?: { set?(value: unknown): void };
-  isStatic: boolean;
-  isPrivate: boolean;
-  defineMetadata(key: string | symbol | number, value: unknown);
-}) => {
-  set?: (value: unknown) => void;
-  initialize?: () => void;
-} | void;
-```
-
-Like accessor decorators, init-getter and init-setter decorators receive the original getter/setter defined on the prototype as the value being decorated. They can optionally return a new method and an initializer function. The new method, if present, is defined in place of the original method on the prototype, and the initializer function, if present, is called when during the construction of the class instance.
-
-Further extending the `@logged` decorator, we can make it handle init-methods as well, logging both whenever an instance of the class is initialized and whenever it is called.
-
-```js
-function logged(value, { kind, name }) {
-  if (kind === "init-getter") {
-    return {
-      method(...args) {
-        console.log(`accessing ${name}`);
-        return value.call(this, ...args);
-      },
-
-      initialize(initialValue) {
-        console.log(`initializing ${name}`);
-        return initialValue;
-      }
-    };
-  }
-
-  // ...
-}
-
-class C {
-  @init:logged
-  get x() {}
-}
-
-let c = new C();
-// initializing x
-c.x;
-// accessing x
-// ending x
-```
-
-This example roughly "desugars" to the following:
-
-```js
-class C {
-  constructor() {
-    initializeX?.call(this);
-  }
-
-  get x() {}
-}
-
-let { get: oldGet } = Object.getOwnPropertyDescriptor(C.prototype, "x");
-
-let {
-  get: newGet = oldGet,
-  initialize: initializeX
-} = logged(
-  { get: oldGet },
-  {
-    kind: "init-getter",
-    name: "x",
-    isStatic: false,
-    isPrivate: false,
-    defineMetadata() { /**/ }
-  }
-) ?? {};
-
-Object.defineProperty(C.prototype, {
-  get: newGet,
-});
+) ?? C.prototype.m;
 ```
 
 ### Metadata
@@ -1111,7 +977,6 @@ The context object--the object passed as the second argument to the decorator--c
 - `kind`: One of
     - `"class"`
     - `"method"`
-    - `"init-method"`
     - `"getter"`
     - `"setter"`
     - `"field"`
@@ -1131,13 +996,11 @@ The "target" (constructor or prototype) is not passed to field or method decorat
 The return value is interpreted based on the type of decorator. The return value is expected as follows:
 - Class: A new class
 - Method, getter or setter: A new function
-- field: An object with three properties (each individually optional):
+- Field: A new class initializer
+- Auto-accessor: An object with three properties (each individually optional):
     - `get`: A function of the same form as the `get` property of the first argument
     - `set`: Ditto, for `set`
     - `initialize`: A function called with the same arguments as `set`, which returns a value which is used for the initializing set of the variable. This is called when initially setting the underlying storage based on the field initializer or method definition. This method shouldn't call the `set` input, as that would trigger an error. If `initialize` isn't provided, `set` is not called, and the underlying storage is written directly. This way, `set` can count on the field already existing, and doesn't need to separately track that.
-- Init method: An object with the properties
-    - `method`: A function to replace the method
-    - `initialize`: A function with no arguments, whose return value is ignored, which is called with the newly constructed object as the receiver.
 
 ### 3. Applying decorators
 
