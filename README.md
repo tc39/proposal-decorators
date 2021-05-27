@@ -75,7 +75,7 @@ Using TypeScript interfaces for brevity and clarity, this is the general shape o
 ```ts
 type Decorator = (value: Input, context: {
   kind: string;
-  name?: string | symbol;
+  name: string | symbol;
   access?: {
     get?(): unknown;
     set?(value: unknown): void;
@@ -83,7 +83,8 @@ type Decorator = (value: Input, context: {
   isPrivate?: boolean;
   isStatic?: boolean;
   addInitializer?(initializer: () => void): void;
-  defineMetadata(key: string | symbol | number, value: unknown);
+  getMetadata(key: symbol);
+  setMetadata(key: symbol, value: unknown);
 }) => Output | void;
 ```
 
@@ -98,12 +99,12 @@ The context object also varies depending on the value being decorated. Breaking 
   - `"setter"`
   - `"field"`
   - `"auto-accessor"`
-- `name`: The name of the value. This is only available for classes and _public_ class elements.
+- `name`: The name of the value, or in the case of private elements the _description_ of it (e.g. the readable name).
 - `access`: An object containing methods to access the value. This is only available for _private_ class elements, since public class elements can be accessed externally by knowing the name of the element. These methods also get the _final_ value of the private element on the instance, not the current value passed to the decorator. This is important for most use cases involving access, such as type validators or serializers. See the section on Access below for more details.
 - `isStatic`: Whether or not the value is a `static` class element. Only applies to class elements.
 - `isPrivate`: Whether or not the value is a private class element. Only applies to class elements.
 - `addInitializer`: This is available _if_ the decorator was called as an `@init:` decorator, which is discussed in more detail below.
-- `defineMetadata`: Allows the user to define some metadata to be associated with this property. This metadata can then be accessed on the class via `Symbol.metadata`. See the section on Metadata below for more details.
+- `setMetadata`: Allows the user to define some metadata to be associated with this property. This metadata can then be accessed on the class via `Symbol.metadata`. See the section on Metadata below for more details.
 
 ### Decorator APIs
 
@@ -112,12 +113,13 @@ The context object also varies depending on the value being decorated. Breaking 
 ```ts
 type ClassMethodDecorator = (value: Function, context: {
   kind: "method";
-  name?: string | symbol;
+  name: string | symbol;
   access?: { get(): unknown };
   isStatic: boolean;
   isPrivate: boolean;
   addInitializer?(initializer: () => void): void;
-  defineMetadata(key: string | symbol | number, value: unknown);
+  getMetadata(key: symbol);
+  setMetadata(key: symbol, value: unknown);
 }) => Function | void;
 ```
 
@@ -163,7 +165,7 @@ C.prototype.m = logged(C.prototype.m, {
   name: "m",
   isStatic: false,
   isPrivate: false,
-  defineMetadata() { /**/ }
+  setMetadata() { /**/ }
 }) ?? C.prototype.m;
 ```
 
@@ -172,22 +174,23 @@ C.prototype.m = logged(C.prototype.m, {
 ```ts
 type ClassGetterDecorator = (value: Function, context: {
   kind: "getter";
-  name?: string | symbol;
+  name: string | symbol;
   access?: { get(): unknown };
   isStatic: boolean;
   isPrivate: boolean;
   addInitializer?(initializer: () => void): void;
-  defineMetadata(key: string | symbol | number, value: unknown);
+  setMetadata(key: symbol, value: unknown);
 }) => Function | void;
 
 type ClassSetterDecorator = (value: Function, context: {
   kind: "setter";
-  name?: string | symbol;
+  name: string | symbol;
   access?: { set(value: unknown): void };
   isStatic: boolean;
   isPrivate: boolean;
   addInitializer?(initializer: () => void): void;
-  defineMetadata(key: string | symbol | number, value: unknown);
+  getMetadata(key: symbol);
+  setMetadata(key: symbol, value: unknown);
 }) => Function | void;
 ```
 
@@ -245,7 +248,8 @@ set = logged(set, {
   name: "x",
   isStatic: false,
   isPrivate: false,
-  defineMetadata() { /**/ }
+  getMetadata() { /**/ }
+  setMetadata() { /**/ }
 }) ?? set;
 
 Object.defineProperty(C.prototype, "x", { set });
@@ -256,12 +260,13 @@ Object.defineProperty(C.prototype, "x", { set });
 ```ts
 type ClassFieldDecorator = (value: undefined, context: {
   kind: "field";
-  name?: string | symbol;
+  name: string | symbol;
   access?: { get(): unknown, set(value: unknown): void };
   isStatic: boolean;
   isPrivate: boolean;
   addInitializer?(initializer: () => void): void;
-  defineMetadata(key: string | symbol | number, value: unknown);
+  getMetadata(key: symbol);
+  setMetadata(key: symbol, value: unknown);
 }) => (initialValue: unknown) => unknown | void;
 ```
 
@@ -297,7 +302,7 @@ let initializeX = logged(undefined, {
   name: "x",
   isStatic: false,
   isPrivate: false,
-  defineMetadata() { /**/ }
+  setMetadata() { /**/ }
 }) ?? (initialValue) => initialValue;
 
 class C {
@@ -352,7 +357,8 @@ type ClassDecorator = (value: Function, context: {
   kind: "class";
   name: string | undefined;
   addInitializer?(initializer: () => void): void;
-  defineMetadata(key: string | symbol | number, value: unknown);
+  getMetadata(key: symbol);
+  setMetadata(key: symbol, value: unknown);
 }) => Function | void;
 ```
 
@@ -389,7 +395,8 @@ class C {}
 C = logged(C, {
   kind: "class",
   name: "C",
-  defineMetadata() { /**/ }
+  getMetadata() { /**/ }
+  setMetadata() { /**/ }
 }) ?? C;
 
 new C(1);
@@ -444,12 +451,13 @@ type ClassAutoAccessorDecorator = (
   },
   context: {
     kind: "auto-accessor";
-    name?: string | symbol;
+    name: string | symbol;
     access: { get(): unknown, set(value: unknown): void };
     isStatic: boolean;
     isPrivate: boolean;
     addInitializer?(initializer: () => void): void;
-    defineMetadata(key: string | symbol | number, value: unknown);
+    getMetadata(key: symbol);
+    setMetadata(key: symbol, value: unknown);
   }
 ) => {
   get?: () => unknown;
@@ -530,7 +538,8 @@ let {
     name: "x",
     isStatic: false,
     isPrivate: false,
-    defineMetadata() { /**/ }
+    getMetadata() { /**/ }
+    setMetadata() { /**/ }
   }
 ) ?? {};
 
@@ -583,7 +592,8 @@ MyElement = customElement(MyElement, {
   addInitializer(fn) {
     initializersForMyElement.push(fn);
   },
-  defineMetadata() { /**/ }
+  getMetadata() { /**/ }
+  setMetadata() { /**/ }
 }) ?? MyElement;
 
 for (let initializer of initializersForMyElement) {
@@ -641,41 +651,50 @@ C.prototype.m = logged(
     addInitializer(fn) {
       initializersForM.push(fn);
     },
-    defineMetadata() { /**/ }
+    setMetadata() { /**/ }
   }
 ) ?? C.prototype.m;
 ```
 
 ### Metadata
 
-Every decorator has the ability to expose metadata related to the decorated value via the `defineMetadata` method on the context object. This method recieves two parameters, a key which must be a valid property key (string/symbol/number), and a value which can be anything.
+Every decorator has the ability to expose metadata related to the decorated value via the `setMetadata` method on the context object. This method recieves two parameters, a key which must be _symbol_, minimizing the possibility of collisions, and a value which can be anything.
+
+```js
+const MY_META = Symbol();
+const OTHER_META = Symbol();
+
+function myMeta(value, context) {
+  context.setMetadata(MY_META, 123);
+  context.setMetadata(OTHER_META, 123);
+}
+```
+
+All metadata defined under a particular symbol is gathered across the class and placed into a metadata object with the following interface:
+
+```ts
+interface Metadata {
+  constructor?: unknown;
+  public?: Record<string, unknown>;
+  private?: unknown[];
+}
+```
+
+Two of these objects may exist, one for static elements and the class itself, and one for non-static elements. These objects are then accessed via the `Symbol.metadata` property on the class, like so:
+
+```js
+target[Symbol.metadata][key];
+```
+
+Where `key` also must be a symbol. Static element metadata and class decorator metadata is accessed on the constructor directly, and non-static element metadata is accessed on the prototype.
+
+Given the following example decorator and class:
 
 ```js
 const MY_META = Symbol();
 
 function myMeta(value, context) {
-  context.defineMetadata("my-meta", true);
-  context.defineMetadata(MY_META, 123);
-}
-```
-
-All of the metadata defined on a single decorated value is collected into an object with corresponding keys and values. For instance, the above decorator would produce the following object:
-
-```js
-let meta = {
-  "my-meta": true,
-  [MY_META]: 123,
-}
-```
-
-This object would then be assigned to another object representing all of the metadata on the class _or_ class prototype, depending on its placement. Static class elements are placed on one object, and non-static class elements are placed on another. In addition, public element metadata is namespaced under the `public` key of this object, and private element metadata is namespaced under the `private` key. So for instance, this example:
-
-```js
-const MY_META = Symbol();
-
-function myMeta(value, context) {
-  context.defineMetadata("my-meta", true);
-  context.defineMetadata(MY_META, true);
+  context.setMetadata(MY_META, 'metadata');
 }
 
 @myMeta
@@ -690,64 +709,75 @@ class C {
 }
 ```
 
-Would produce the following two metadata objects:
+You would be able to access the metadata for this class like so:
 
 ```js
-let staticMeta = {
-  public: {
-    constructor: { "my-meta": true, [MY_META]: true },
-    x: { "my-meta": true, [MY_META]: true },
-    y: { "my-meta": true, [MY_META]: true },
-  },
+C.prototype[Symbol.metadata][MY_META];
+// {
+//   public: {
+//     a: 'metadata',
+//     b: 'metadata',
+//   },
 
-  private: {
-    "#z": { "my-meta": true, [MY_META]: true },
+//   private: ['metadata']
+// }
+
+C[Symbol.metadata][MY_META];
+// {
+//   constructor: 'metadata',
+
+//   public: {
+//     x: 'metadata',
+//     y: 'metadata',
+//   },
+
+//   private: ['metadata']
+// }
+```
+
+Subsequent definitions to the same metadata key overwrite the existing value, if one exists. If decorators wish to instead build upon existing metadata, they can use the `getMetadata` method of the context object to get the current value and modify it.
+
+```js
+const VALIDATIONS = Symbol();
+
+function validateString(value, context) {
+  let validations = context.getMetadata(VALIDATIONS) ?? [];
+
+  validations.push((value) => typeof value === "string");
+
+  context.setMetadata(VALIDATIONS, validations);
+}
+
+function validateMaxLength(length) {
+  return (value, context) => {
+    let validations = context.getMetadata(VALIDATIONS) ?? [];
+
+    validations.push((value) => value.length < length);
+
+    context.setMetadata(VALIDATIONS, validations);
   }
 }
 
-let nonStaticMeta = {
-  public: {
-    a: { "my-meta": true, [MY_META]: true },
-    b: { "my-meta": true, [MY_META]: true },
-  },
-
-  private: {
-    "#c": { "my-meta": true, [MY_META]: true },
-  }
+class C {
+  @validateString
+  @validateMaxLength(10)
+  foo = "hello!";
 }
+
+C.prototype[Symbol.metadata][VALIDATIONS].public.foo.length; // 2
 ```
 
-Notes:
-
-1. Metadata defined by a class decorator is assigned to the static `constructor` key. This is because `constructor` is a reserved name within class definitions, so it cannot conflict with another class element with the same name.
-2. Private fields are assigned to a property that is the _spelling_ of their name in code. This key cannot be used to access the private element itself, it only serves as a unique identifier to associate the metadata with. To see how metadata associated with private elements can be used, and how access can be exposed, read the section on Access below.
-
-These metadata objects are then exposed via the `Symbol.metadata` property on the class (for static metadata) and the class prototype (for non-static metadata). So the above example is roughly equivalent, when executed, to:
+In addition, if two public class elements exist on the same class with the same name, then metadata defined on the second element will overwrite metadata defined on the element.
 
 ```js
-C[Symbol.metadata] = {
-  constructor: { "my-meta": true, [MY_META]: true },
-  baz: { "my-meta": true, [MY_META]: true },
-  qux: { "my-meta": true, [MY_META]: true },
-};
+const MY_META = Symbol();
 
-C.prototype[Symbol.metadata] = {
-  foo: { "my-meta": true, [MY_META]: true },
-  bar: { "my-meta": true, [MY_META]: true },
-};
-```
-
-This is not quite a "desugaring", since we would still need to execute the decorators to determine what metadata would be generated. This is mainly for illustrative purposes.
-
-If two class elements exist on the same class with the same name, then any metadata associated with either element gets combined with metadata on the other:
-
-```js
 function meta1(value, context) {
-  context.defineMetadata('meta1', 1);
+  context.setMetadata(MY_META, 1);
 }
 
 function meta2(value, context) {
-  context.defineMetadata('meta2', 2);
+  context.setMetadata(MY_META, 2);
 }
 
 class C {
@@ -758,32 +788,44 @@ class C {
   m = 123;
 }
 
-C.prototype[Symbol.metadata].m;
-// { meta1: 1, meta2: 2 }
+C.prototype[Symbol.metadata][MY_META].public.m; // 2
 ```
 
-In addition, subsequent definitions to the same key will result in an array of values instead of a single value.
+Finally, the metadata object itself inherits from the parent class' metadata object if it exists, the `public` object inherits from the parent's `public` object if it exists. The `private` array inherits as well by appending the private metadata of the class to the private metadata array of the parent.
+
+> Note: Private metadata inheritance is done dynamically via a getter. This means that if users update the prototype of the metadata object via `Object.setPrototypeOf`, the metadata array will also update dynamically.
 
 ```js
-function validateString(value, context) {
-  context.defineMetadata("validations", (value) => typeof value === "string"));
+const MY_META = Symbol();
+
+function myMeta(value, context) {
+  context.setMetadata(MY_META, 'metadata');
 }
 
-function validateMaxLength(length) {
-  return (value, context) => {
-    context.defineMetadata("validations", (value) => value.length < length);
-  }
-}
-
+@myMeta
 class C {
-  @validateString
-  @validateMaxLength(10)
-  foo = "hello!";
+  @myMeta a = 123;
+  @myMeta #b = 456;
 }
 
-C.prototype[Symbol.metadata].foo.validations.length;
-// 2
+class D extends C {
+  @myMeta c = 123;
+  @myMeta #d = 456;
+}
+
+D[Symbol.metadata].constructor; // 'metadata'
+D.prototype[Symbol.metadata];
+// {
+//   public: {
+//     a: 'metadata',
+//     c: 'metadata',
+//   }
+
+//   private: ['metadata', 'metadata'],
+// }
 ```
+
+This inheritance is prototype based in the case of public fields and `constructor`, allowing users to distinguish between _own_ metadata and inherited metadata in these cases.
 
 This API design meets the following goals:
 
@@ -794,19 +836,20 @@ This API design meets the following goals:
 
 #### Hiding metadata
 
-This metadata API is inherently open. By defining metadata, anyone can access it via `Symbol.metadata`. Even if a Symbol is used as the key, users can find these properties via `Object.getOwnPropertySymbols`.
+This metadata API is inherently open. By defining metadata, anyone can access it via `Symbol.metadata`. Even though Symbols are used as the keys, users can find these properties via `Object.getOwnPropertySymbols`.
 
-Sometimes, users may wish to hide the details of their metadata, to prevent external code from reading it. Users can do this by exposing a _key_ in the metadata, rather than the metadata itself. This key can then be used to read the metadata from a private data store, only available in module scope for instance. For example, you could do this with an object and a WeakMap like so:
+Sometimes, users may wish to hide the details of their metadata, to prevent external code from reading it. Users can do this by exposing a key in the metadata, rather than the metadata itself. This key can then be used to read the metadata from a private data store, only available in module scope for instance. For example, you could do this with an object and a WeakMap like so:
 
 ```js
-MY_META = new WeakMap();
+const HIDDEN_META = new WeakMap();
+const META_KEY = Symbol();
 
 function myMeta(value, context) {
   let key = {};
 
-  MY_META.set(key, { secret: "values" })
+  HIDDEN_META.set(key, { secret: "values" })
 
-  context.defineMetadata("my-meta", key);
+  context.setMetadata(META_KEY, key);
 }
 ```
 
@@ -817,111 +860,140 @@ class C {
   @myMeta x = 1;
 }
 
-MY_META.get(C.prototype[Symbol.metadata].x);
+HIDDEN_META.get(C.prototype[Symbol.metadata][META_KEY].public.x);
 // { secret: "values" }
 ```
 
 ### Access
 
-So far we've seen how metadata can be defined for decorated values, and for public values its possible to see how this could be used. For instance, one could develop a validation library which annotates values with various validations, and then reads the metadata when validating:
+So far we've seen how metadata can be defined for decorated values, and for public values its possible to see how this could be used. For instance, one could develop a dependency injection library which annotates fields with values to inject, and then injects them when creating the instance:
 
 ```js
-function validateString(value, context) {
-  context.defineMetadata("validation", (value) => typeof value === "string"));
+const INJECTIONS = Symbol();
+
+function inject(injectionKey) {
+  return (value, context) => {
+    context.setMetadata(INJECTIONS, { injectionKey })
+  }
 }
 
-function validate(instance) {
-  let metadata = Object.getPrototypeOf(instance)[Symbol.metadata];
+class Container {
+  registry = new Map();
 
-  for (let key in metadata) {
-    let validation = metadata[key].validation;
-
-    if (validation) {
-      let value = instance[key];
-      let isValid = validation(value);
-
-      if (!isValid) {
-        return false;
-      }
-    }
+  register(injectionKey, value) {
+    this.registry.set(injectionKey, value);
   }
 
-  return true;
+  lookup(injectionKey) {
+    this.register.get(injectionKey);
+  }
+
+  create(Class) {
+    let instance = new Class();
+
+    const { public } = instance[Symbol.metadata][INJECTIONS];
+
+    for (let key in public) {
+      instance[key] = this.lookup(public[key].injectionKey);
+    }
+
+    return instance;
+  }
 }
+
+class Store {}
 
 class C {
-  @validateString
-  foo = "hello!";
+  @inject('store') store;
 }
 
-let c = new C();
-validate(c);
-// true
+let container = new Container();
+let store = new Store();
 
-c.foo = 123;
-validate(c);
-// false
+container.register('store', store);
+
+let c = container.create(C);
+
+c.store === store; // true
 ```
 
 However, it is not possible to do this as directly _private_ elements, as the key the metadata is defined with cannot be used to access it externally.
 
-This is the purpose of the `access` object that is passed to private elements. This object gives decorators a way to expose access via metadata, like so:
+This is the purpose of the `access` object that is passed to private elements. This object gives decorators a way to expose access via metadata, which can be used in a number of ways. For instance, we can update our dependency injection example to allow injection on private fields:
 
 ```js
-function validatePrivateString(value, context) {
-  let { get } = context.access;
+const INJECTIONS = Symbol();
 
-  context.defineMetadata("validation", (instance) => {
-    let value = get.call(instance);
+function inject(injectionKey) {
+  return (value, context) => {
+    let set = context.access?.set;
 
-    return typeof value === "string";
-  });
+    context.setMetadata(INJECTIONS, { injectionKey, set })
+  }
 }
 
-function validate(instance) {
-  let metadata = Object.getPrototypeOf(instance)[Symbol.metadata];
+class Container {
+  registry = new Map();
 
-  for (let key in metadata) {
-    let validation = metadata[key].validation;
-
-    if (validation && !validation(instance)) {
-      return false;
-    }
+  register(injectionKey, value) {
+    this.registry.set(injectionKey, value);
   }
 
-  return true;
+  lookup(injectionKey) {
+    this.register.get(injectionKey);
+  }
+
+  create(Class) {
+    let instance = new Class();
+
+    const { public, private } = instance[Symbol.metadata][INJECTIONS];
+
+    for (let key in public) {
+      instance[key] = this.lookup(public[key].injectionKey);
+    }
+
+    for (let { injectionKey, set } of private) {
+      set.call(instance, this.lookup(injectionKey))
+    }
+
+    return instance;
+  }
 }
+
+class Store {}
 
 class C {
-  @validatePrivateString
-  #foo = "hello!";
+  @inject('store') #store;
 
-  updateFoo(val) {
-    this.#foo = val;
+  get store() {
+    return this.#store;
   }
 }
 
-let c = new C();
-validate(c);
-// true
+let container = new Container();
+let store = new Store();
 
-c.updateFoo(123);
-validate(c);
-// false
+container.register('store', store);
+
+let c = container.create(C);
+
+c.store === store; // true
 ```
 
 Calling the `get` and `set` functions is equivalent to accessing the value on the instance.
 
 ```js
+const FIELD_ACCESS = Symbol();
+
 function exposeField(value, context) {
-  context.defineMetadata("fieldAccess", context.access);
+  context.setMetadata(FIELD_ACCESS, context.access);
 }
 
 class C {
   @exposeField #x = 1;
 
   updateX() {
-    let { get, set } = C.prototype[Symbol.metadata]["#x"];
+    let { get, set } = this[Symbol.metadata][FIELD_ACCESS].private[0];
 
     let x1 = get.call(this);
     set.call(this, x1 + 1);
@@ -982,7 +1054,7 @@ The context object--the object passed as the second argument to the decorator--c
     - `"field"`
 - `name`:
     - Public field or method: the `name` is the String or Symbol property key.
-    - Private field or method: missing (could be provided as some representation of the private name, in a follow-on proposal)
+    - Private field or method: a description of the private field or method (e.g. the "spelling" of the element).
     - Class: missing
 - `isStatic`:
     - Static field or method: `true`
@@ -1140,7 +1212,7 @@ Yes! Once we have validated this core approach, the authors of this proposal pla
 
 ### Will decorators let you access private fields and methods?
 
-Yes, private fields and methods can be decorated just like ordinary fields and methods. The only difference is that no property key is available in the context object, and instead an `access` object with `get`/`set` functions is provided. See the example under the heading, "Access".
+Yes, private fields and methods can be decorated just like ordinary fields and methods. The only difference is that the `name` key on the context object is only a description of the element, not something we can be used to access it. Instead, an `access` object with `get`/`set` functions is provided. See the example under the heading, "Access".
 
 ### How should this new proposal be used in transpilers, when it's implemented?
 
