@@ -793,8 +793,6 @@ C.prototype[Symbol.metadata][MY_META].public.m; // 2
 
 Finally, the metadata object itself inherits from the parent class' metadata object if it exists, the `public` object inherits from the parent's `public` object if it exists. The `private` array inherits as well by appending the private metadata of the class to the private metadata array of the parent.
 
-> Note: Private metadata inheritance is done dynamically via a getter. This means that if users update the prototype of the metadata object via `Object.setPrototypeOf`, the metadata array will also update dynamically.
-
 ```js
 const MY_META = Symbol();
 
