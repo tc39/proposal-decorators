@@ -28,7 +28,7 @@ Essentially, decorators can be used to metaprogram and add functionality to a va
 This proposal differs from previous iterations where decorators could replace the decorated value with a completely different type of value. The requirement for decorators to only replace a value with one that has the same semantics as the original value fulfills two major design goals:
 
 - **It should be easy both to use decorators and to write your own decorators.** Previous iterations such as the _static decorators_ proposal were complicated for authors and implementers in particular. In this proposal, decorators are plain functions, and are accessible and easy to write.
-- **Decorators should affect the thing they're decorating, and avoid confusing/non-local effects.** Previously decorators could change the decorated value in unpredictable ways, and also add completely new values which were unrelated. This was problematic both for _runtimes_, since it meant decorated values could not be analyzed statically, and for _developers_, since decorated values could turn into completely different types of values without any indicator to the user.
+- **Decorators should affect the thing they're decorating, and avoid confusing/non-local effects.** Previously, decorators could change the decorated value in unpredictable ways, and also add completely new values which were unrelated. This was problematic both for _runtimes_, since it meant decorated values could not be analyzed statically, and for _developers_, since decorated values could turn into completely different types of values without any indicator to the user.
 
 In this proposal, decorators can be applied to the following existing types of values:
 
@@ -65,9 +65,23 @@ This syntax can be used with any decorator type, and is used in cases where addi
 
 ## Detailed Design
 
-In general, decorators receive two parameters:
+The three steps of decorator evaluation:
 
-1. The value being decorated, or `undefined` in the case of class fields which are a special case (see below for details).
+1. Decorator expressions (the thing after the `@`) are *evaluated* interspersed with computed property names.
+1. Decorators are *called* (as functions) during class definition, after the methods have been evaluated but before the constructor and prototype have been put together.
+1. Decorators are *applied* (mutating the constructor and prototype) all at once, after all of them have been called.
+
+> The semantics here generally follow the consensus at the May 2016 TC39 meeting in Munich.
+
+### 1. Evaluating decorators
+
+Decorators are evaluated as expressions, being ordered along with computed property names. This goes left to right, top to bottom. The result of decorators is stored in the equivalent of local variables to be later called after the class definition initially finishes executing.
+
+### 2. Calling decorators
+
+When decorators are called, they receive two parameters:
+
+1. The value being decorated, or `undefined` in the case of class fields which are a special case.
 2. A context object containing metadata about the value being decorated
 
 Using TypeScript interfaces for brevity and clarity, this is the general shape of the API:
@@ -105,6 +119,25 @@ The context object also varies depending on the value being decorated. Breaking 
 - `isPrivate`: Whether or not the value is a private class element. Only applies to class elements.
 - `addInitializer`: This is available _if_ the decorator was called as an `@init:` decorator, which is discussed in more detail below.
 - `setMetadata`: Allows the user to define some metadata to be associated with this property. This metadata can then be accessed on the class via `Symbol.metadata`. See the section on Metadata below for more details.
+
+See the Decorator APIs section below for a detailed breakdown of each type of decorator and how it is applied.
+
+### 3. Applying decorators
+
+Decorators are applied after all decorators have been called. The intermediate steps of the decorator application algorithm are not observable--the newly constructed class is not made available until after all method and non-static field decorators have been applied.
+
+The class decorator is called only after all method and field decorators are called and applied.
+
+Finally, static fields are executed and applied.
+
+### Syntax
+
+This decorators proposal uses the syntax of the previous Stage 2 decorators proposal. This means that:
+- Decorator expressions are restricted to a chain of variables, property access with `.` but not `[]`, and calls `()`. To use an arbitrary expression as a decorator, `@(expression)` is an escape hatch.
+- Class expressions may be decorated, not just class declarations.
+- Class decorators come after `export` and `default`.
+
+There is no special syntax for defining decorators; any function can be applied as a decorator.
 
 ### Decorator APIs
 
@@ -1007,142 +1040,23 @@ This means that if you call `get` or `set` with a private field or accessor, the
 
 Access is generally provided based on whether or not the value is a value meant to be read or written. Fields and auto-accessors can be both read and written to. Accessors can either be read in the case of getters, or wriitten in the case of setters. Methods can only be read.
 
-## Syntax
-
-This decorators proposal uses the syntax of the previous Stage 2 decorators proposal. This means that:
-- Decorator expressions are restricted to a chain of variables, property access with `.` but not `[]`, and calls `()`. To use an arbitrary expression as a decorator, `@(expression)` is an escape hatch.
-- Class expressions may be decorated, not just class declarations.
-- Class decorators come after `export` and `default`.
-
-There is no special syntax for defining decorators; any function can be applied as a decorator.
-
-## Detailed semantics
-
-The three steps of decorator evaluation:
-
-1. Decorator expressions (the thing after the `@`) are *evaluated* interspersed with computed property names.
-1. Decorators are *called* (as functions) during class definition, after the methods have been evaluated but before the constructor and prototype have been put together.
-1. Decorators are *applied* (mutating the constructor and prototype) all at once, after all of them have been called.
-
-The semantics here generally follow the consensus at the May 2016 TC39 meeting in Munich.
-
-### 1. Evaluating decorators
-
-Decorators are evaluated as expressions, being ordered along with computed property names. This goes left to right, top to bottom. The result of decorators is stored in the equivalent of local variables to be later called after the class definition initially finishes executing.
-
-### 2. Calling decorators
-
-#### The element being wrapped: the first parameter
-
-The first parameter, of what the decorator is wrapping, depends on what is being decorated:
-- In a method, init-method, getter or setter decorator: the relevant function object
-- In a class decorator: the class
-- In a field: An object with two properties
-    - `get`: A function which takes no arguments, expected to be called with a receiver which is the appropriate object, returning the underlying value.
-    - `set`: A function which takes a single argument (the new value), expected to be called with a receiver which is the object being set, expected to return `undefined`.
-
-#### The context object: the second parameter
-
-The context object--the object passed as the second argument to the decorator--contains the following properties:
-- `kind`: One of
-    - `"class"`
-    - `"method"`
-    - `"getter"`
-    - `"setter"`
-    - `"field"`
-- `name`:
-    - Public field or method: the `name` is the String or Symbol property key.
-    - Private field or method: a description of the private field or method (e.g. the "spelling" of the element).
-    - Class: missing
-- `isStatic`:
-    - Static field or method: `true`
-    - Instance field or method: `false`
-    - Class: missing
-
-The "target" (constructor or prototype) is not passed to field or method decorators, as it has not yet been built when the decorator runs.
-
-#### The return value
-
-The return value is interpreted based on the type of decorator. The return value is expected as follows:
-- Class: A new class
-- Method, getter or setter: A new function
-- Field: A new class initializer
-- Auto-accessor: An object with three properties (each individually optional):
-    - `get`: A function of the same form as the `get` property of the first argument
-    - `set`: Ditto, for `set`
-    - `initialize`: A function called with the same arguments as `set`, which returns a value which is used for the initializing set of the variable. This is called when initially setting the underlying storage based on the field initializer or method definition. This method shouldn't call the `set` input, as that would trigger an error. If `initialize` isn't provided, `set` is not called, and the underlying storage is written directly. This way, `set` can count on the field already existing, and doesn't need to separately track that.
-
-### 3. Applying decorators
-
-Decorators are applied after all decorators have been called. The intermediate steps of the decorator application algorithm are not observable--the newly constructed class is not made available until after all method and non-static field decorators have been applied.
-
-The class decorator is called only after all method and field decorators are called and applied.
-
-Finally, static fields are executed and applied.
-
 ## Possible extensions
 
 Decorators on further constructs are investigated in [EXTENSIONS.md](./EXTENSIONS.md).
 
-## Design goals
-
-- It should be easy both to use decorators and to write your own decorators.
-- Decorators should affect the thing they're decorating, and avoid confusing/non-local effects.
-
-### Use case analysis
-
-Some essential use cases that we've found include:
-- Storing metadata about classes and methods
-- Turning a field into an accessor
-- Wrapping a method or class
-
-Previously, there was concern that it was important to store metadata about fields without converting them into accessors. However, the use cases that the decorator champion group has found for metadata around fields (e.g., serialization frameworks, ORMs) were each in conjunction with a specialized TypeScript option to emit metadata for types. Such a TypeScript extension is beyond the scope of what the JavaScript standard covers. We expect that either, types will continue to be covered by language extensions like TypeScript, or a future TC39 proposal would include the appropriate facilities for type-based metadata.
-
-(TODO: Fill this in with more detail)
-
-### Transpiler and native implementation constraints
-
-From transpilers:
-1. The transpiler output shouldn't be too big (both in terms of the direct output of the translation, and the size of the support library)
-2. It should be possible to transpile on a file-by-file basis, without cross-file information
-
-From native implementations:
-A: The "shape" of the class should be apparent syntactically, without executing code
-B: It should not be too complicated to process decorators, as this corresponds to a complex implementation
-C: Minimize or eliminate observable mutations to objects while setting up the class
-
-Constraint 1 is met by the simple desugarings, listed above, which avoid reliance on any kind of complex support library.
-
-Constraint 2 is met by treating the decorator as a function, so no cross-file knowledge is needed.
-
-Constraint A is met by making all shape changes syntactically apparent where the class is defined, by making each decorator type be associated with one fixed transformation.
-
-Constraint B is met by the same simple desugarings, and by eliminating the complicated descriptors present in Stage 2 decorators.
-
-Constraint C implies that we should not expose the class to JavaScript code while decorators are incrementally applying to it. This is met by eliminating the "target" concept from legacy/experimental decorators, and not passing the class under construction to decorators.
-
-### Out of scope
-
-Some things that have been described as potential decorators would *not* fit into the scheme here, and would require either dedicated syntax to meet the constraints raised by TC39 delegates, or the use of existing idioms to work around the need for a decorator.
-- `@set`: This decorator would change a field from [[Define]] semantics to [[Set]]. This decorator changes which kind of code executes in the constructor in a different way which is not visible from syntax. These semantics can be accessed by putting a line of code in the constructor rather than a field declaration. However, note that this proposal reduces the need for opting into [[Set]] semantics in multiple ways:
-    - [[Set]] semantics drove how fields worked with legacy/experimental decorators which created accessors. These mechanics are replaced in this proposal by having decorated field declarations initialize the underlying storage, not shadow the accessor.
-    - If a setter is inherited, it is possible to write a decorator for a field which specifically calls super getters and setters, rather than using the underlying storage.
-- `@frozen`: This decorator freezes the whole class, including static fields. Such a change is not possible within the phase ordering of decorators, where class decorators run before static fields are executed. Instead, the class can be frozen in a single line after the class, or potential future syntax for freezing the class.
-    - It is possible to write a `@frozen` class decorator which *mostly* works, but which prevents the use of static fields.
-- `@enumerable`: This decorator would make a method enumerable, overriding its default of non-enumerable. Decorators cannot change property attributes, as they do not receive property descriptors to manipulate them as in Stage 1 decorators, and they are not passed the constructor of the class to do so imperatively. This is to meet requirements from implementations that decorators leave classes with statically predictable shapes. Instead, changes like this could be done by `Object.defineProperty` calls after the class definition executes.
-- `@reader`: This decorator for a private field would create a public accessor to read it. It is impossible to create, as decorators are not given access to the class. Such a change in shape would run counter to the "static shape" goals from native implementers.
-
-## Open questions
-
-- **Accessor coalescing**: In the above proposal, getters and setters are decorated separately, whereas in earlier decorators proposals, they were coalesced into a unit which applies to the decorator together. This is done in order to keep the decorator desugaring simple and efficient, without the need for an intermediate data structure to associate getters with setters (which may be dynamic due to computed property names). Should decorator coalescing be restored?
-- **Metadata format**: How should metadata added by decorators be represented in the object graph? Should there be a built-in library of functions to query this metadata? How should adding metadata to class elements be timed relative to other observable operations with decorators?
-
 ## Standardization plan
 
-- Write spec text and tests and implement in experimental transpilers
-- Collect feedback from JavaScript developers testing the transpiler implementation
-- Iterate on open questions within the proposal, presenting them to TC39 and discussing further in the biweekly decorators calls, to bring a conclusion to committee in a future meeting
-- Propose for Stage 3 no sooner than six months after prototyping begins, so we have time to collect experience from developers in transpilers
+- [x] Iterate on open questions within the proposal, presenting them to TC39 and discussing further in the biweekly decorators calls, to bring a conclusion to committee in a future meeting
+  - STATUS: Open questions have been resolved, decorators working group has reached general consensus on the design.
+- [x] Write spec text
+  - STATUS: Complete, available [here](https://arai-a.github.io/ecma262-compare/?pr=2417).
+- [x] Implement in experimental transpilers
+  - STATUS: An experimental implementation has been created and is available for general use. Work is ongoing to implement in Babel and get more feedback.
+    - [x] Independent implentation: https://javascriptdecorators.org/
+    - [ ] Babel plugin implementation
+- [ ] Collect feedback from JavaScript developers testing the transpiler implementation
+  - STATUS: Feedback is being collected using the experimental implementation. More feedback will be collected from the Babel plugin once it is completed.
+- [ ] Propose for Stage 3 no sooner than six months after prototyping begins, so we have time to collect experience from developers in transpilers
 
 ## FAQ
 
