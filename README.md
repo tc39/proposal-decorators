@@ -674,7 +674,7 @@ class C {
 
 let initializersForM = []
 
-C.prototype.m = logged(
+C.prototype.m = bound(
   C.prototype.m,
   {
     kind: "method",
