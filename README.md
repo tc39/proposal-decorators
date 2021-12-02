@@ -83,7 +83,7 @@ type Decorator = (value: Input, context: {
   };
   isPrivate?: boolean;
   isStatic?: boolean;
-  addInitializer(initializer: () => void): void;
+  addInitializer?(initializer: () => void): void;
   getMetadata(key: symbol);
   setMetadata(key: symbol, value: unknown);
 }) => Output | void;
@@ -104,7 +104,7 @@ The context object also varies depending on the value being decorated. Breaking 
 - `access`: An object containing methods to access the value. This is only available for _private_ class elements, since public class elements can be accessed externally by knowing the name of the element. These methods also get the _final_ value of the private element on the instance, not the current value passed to the decorator. This is important for most use cases involving access, such as type validators or serializers. See the section on Access below for more details.
 - `isStatic`: Whether or not the value is a `static` class element. Only applies to class elements.
 - `isPrivate`: Whether or not the value is a private class element. Only applies to class elements.
-- `addInitializer`: Allows the user to add additional initialization logic. This is available for all decorators.
+- `addInitializer`: Allows the user to add additional initialization logic. This is available for all decorators which do not have kind `"field"` (discussed in more detail below).
 - `setMetadata`: Allows the user to define some metadata to be associated with this property. This metadata can then be accessed on the class via `Symbol.metadata`. See the section on Metadata below for more details.
 
 See the Decorator APIs section below for a detailed breakdown of each type of decorator and how it is applied.
@@ -282,7 +282,6 @@ type ClassFieldDecorator = (value: undefined, context: {
   access?: { get(): unknown, set(value: unknown): void };
   isStatic: boolean;
   isPrivate: boolean;
-  addInitializer(initializer: () => void): void;
   getMetadata(key: symbol);
   setMetadata(key: symbol, value: unknown);
 }) => (initialValue: unknown) => unknown | void;
@@ -367,6 +366,8 @@ class Parent {
 let parent = new Parent();
 getChildren(parent); // [Child, OtherChild]
 ```
+
+Since class fields already return an initializer, they do not receive `addInitializer` and cannot add additional initialization logic.
 
 #### Classes
 
@@ -566,13 +567,11 @@ Object.defineProperty(C.prototype, "x", { get: newGet, set: newSet });
 
 ### Adding initialization logic with `addInitializer`
 
-The `addInitializer` method is available on the context object that is provided to the decorator. This method can be called to associate an initializer function with the class or class element, which can be used to run arbitrary code after the value has been defined in order to finish setting it up. The timing of these initializers depends on the type of decorator:
+The `addInitializer` method is available on the context object that is provided to the decorator for every type of value _except_ class fields. This method can be called to associate an initializer function with the class or class element, which can be used to run arbitrary code after the value has been defined in order to finish setting it up. The timing of these initializers depends on the type of decorator:
 
 - Class decorator initializers are run _after_ the class has been fully defined, and _after_ class static fields have been assigned.
-- Class method and accessor initializers run during class construction, _before_ class fields are initialized.
-- Class field initializers run after the field has been defined on the class instance.
-- Class _static_ method and element initializers run during class definition, _before_ static class fields are defined, but _after_ class elements have been defined.
-- Class _static_ field initializers run after the field has been defined on the class.
+- Class element initializers run during class construction, _before_ class fields are initialized.
+- Class _static_ element initializers run during class definition, _before_ static class fields are defined, but _after_ class elements have been defined.
 
 #### Example: `@customElement`
 
