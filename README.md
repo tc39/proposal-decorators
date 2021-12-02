@@ -104,7 +104,7 @@ The context object also varies depending on the value being decorated. Breaking 
 - `access`: An object containing methods to access the value. This is only available for _private_ class elements, since public class elements can be accessed externally by knowing the name of the element. These methods also get the _final_ value of the private element on the instance, not the current value passed to the decorator. This is important for most use cases involving access, such as type validators or serializers. See the section on Access below for more details.
 - `isStatic`: Whether or not the value is a `static` class element. Only applies to class elements.
 - `isPrivate`: Whether or not the value is a private class element. Only applies to class elements.
-- `addInitializer`: Allows the user to add additional initialization logic. This is available for all decorators which do not have kind `"field"` (discussed in more detail below).
+- `addInitializer`: Allows the user to add additional initialization logic. This is available for all decorators which operate per-class, as opposed to per-instance (in other words, decorators which do not have kind `"field"` - discussed in more detail below).
 - `setMetadata`: Allows the user to define some metadata to be associated with this property. This metadata can then be accessed on the class via `Symbol.metadata`. See the section on Metadata below for more details.
 
 See the Decorator APIs section below for a detailed breakdown of each type of decorator and how it is applied.
