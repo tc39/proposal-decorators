@@ -83,7 +83,7 @@ type Decorator = (value: Input, context: {
   };
   isPrivate?: boolean;
   isStatic?: boolean;
-  addInitializer?(initializer: () => void): void;
+  addInitializer(initializer: (obj: object) => void): void;
   getMetadata(key: symbol);
   setMetadata(key: symbol, value: unknown);
 }) => Output | void;
@@ -137,7 +137,7 @@ type ClassMethodDecorator = (value: Function, context: {
   access?: { get(): unknown };
   isStatic: boolean;
   isPrivate: boolean;
-  addInitializer(initializer: () => void): void;
+  addInitializer(initializer: (obj: object) => void): void;
   getMetadata(key: symbol);
   setMetadata(key: symbol, value: unknown);
 }) => Function | void;
@@ -183,6 +183,8 @@ C.prototype.m = logged(C.prototype.m, {
   name: "m",
   isStatic: false,
   isPrivate: false,
+  addInitializer() { /**/ },
+  getMetadata() { /**/ },
   setMetadata() { /**/ }
 }) ?? C.prototype.m;
 ```
@@ -196,7 +198,7 @@ type ClassGetterDecorator = (value: Function, context: {
   access?: { get(): unknown };
   isStatic: boolean;
   isPrivate: boolean;
-  addInitializer(initializer: () => void): void;
+  addInitializer(initializer: (obj: object) => void): void;
   setMetadata(key: symbol, value: unknown);
 }) => Function | void;
 
@@ -206,7 +208,7 @@ type ClassSetterDecorator = (value: Function, context: {
   access?: { set(value: unknown): void };
   isStatic: boolean;
   isPrivate: boolean;
-  addInitializer(initializer: () => void): void;
+  addInitializer(initializer: (obj: object) => void): void;
   getMetadata(key: symbol);
   setMetadata(key: symbol, value: unknown);
 }) => Function | void;
@@ -266,6 +268,7 @@ set = logged(set, {
   name: "x",
   isStatic: false,
   isPrivate: false,
+  addInitializer() { /**/ },
   getMetadata() { /**/ }
   setMetadata() { /**/ }
 }) ?? set;
@@ -319,6 +322,7 @@ let initializeX = logged(undefined, {
   name: "x",
   isStatic: false,
   isPrivate: false,
+  getMetadata() { /**/ },
   setMetadata() { /**/ }
 }) ?? (initialValue) => initialValue;
 
@@ -375,7 +379,7 @@ Since class fields already return an initializer, they do not receive `addInitia
 type ClassDecorator = (value: Function, context: {
   kind: "class";
   name: string | undefined;
-  addInitializer(initializer: () => void): void;
+  addInitializer(initializer: (obj: object) => void): void;
   getMetadata(key: symbol);
   setMetadata(key: symbol, value: unknown);
 }) => Function | void;
@@ -414,7 +418,8 @@ class C {}
 C = logged(C, {
   kind: "class",
   name: "C",
-  getMetadata() { /**/ }
+  addInitializer() { /**/ },
+  getMetadata() { /**/ },
   setMetadata() { /**/ }
 }) ?? C;
 
@@ -474,7 +479,7 @@ type ClassAutoAccessorDecorator = (
     access: { get(): unknown, set(value: unknown): void };
     isStatic: boolean;
     isPrivate: boolean;
-    addInitializer(initializer: () => void): void;
+    addInitializer(initializer: (obj: object) => void): void;
     getMetadata(key: symbol);
     setMetadata(key: symbol, value: unknown);
   }
@@ -573,6 +578,8 @@ The `addInitializer` method is available on the context object that is provided 
 - Class element initializers run during class construction, _before_ class fields are initialized.
 - Class _static_ element initializers run during class definition, _before_ static class fields are defined, but _after_ class elements have been defined.
 
+Initializers are called with `this` and the first argument set to the instance of the class for non-static element decorators, and with `this` and the first argument set to the class itself for static element and class decorators.
+
 #### Example: `@customElement`
 
 We can use `addInitializer` with class decorators in order to create a decorator which registers a web component in the browser.
@@ -580,8 +587,8 @@ We can use `addInitializer` with class decorators in order to create a decorator
 ```js
 function customElement(name) {
   (value, { addInitializer }) => {
-    addInitializer(function() {
-      customElements.define(name, this);
+    addInitializer((Class) => {
+      customElements.define(name, Class);
     });
   }
 }
@@ -616,7 +623,7 @@ MyElement = customElement(MyElement, {
 }) ?? MyElement;
 
 for (let initializer of initializersForMyElement) {
-  initializer.call(MyElement);
+  initializer.call(MyElement, MyElement);
 }
 ```
 
@@ -626,8 +633,8 @@ We could also use `addInitializer` with method decorators to create a `@bound` d
 
 ```js
 function bound(value, { name, addInitializer }) {
-  addInitializer(function () {
-    this[name] = this[name].bind(this);
+  addInitializer((instance) => {
+    instance[name] = instance[name].bind(instance);
   });
 }
 
@@ -651,7 +658,7 @@ This example roughly "desugars" to the following:
 class C {
   constructor() {
     for (let initializer of initializersForM) {
-      initializer.call(this);
+      initializer.call(this, this);
     }
 
     this.message = "hello!";
