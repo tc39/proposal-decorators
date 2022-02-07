@@ -173,9 +173,7 @@ This example roughly "desugars" to the following (i.e., could be transpiled as s
 
 ```js
 class C {
-  m(arg) {
-    this.x = arg;
-  }
+  m(arg) {}
 }
 
 C.prototype.m = logged(C.prototype.m, {
