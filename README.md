@@ -743,7 +743,7 @@ C.prototype[Symbol.metadata][MY_META];
 
 C[Symbol.metadata][MY_META];
 // {
-//   constructor: 'metadata',
+//   own: 'metadata',
 
 //   public: {
 //     x: 'metadata',
@@ -830,7 +830,7 @@ class D extends C {
   @myMeta #d = 456;
 }
 
-D[Symbol.metadata].constructor; // 'metadata'
+D[Symbol.metadata].own; // 'metadata'
 D.prototype[Symbol.metadata];
 // {
 //   public: {
@@ -842,7 +842,7 @@ D.prototype[Symbol.metadata];
 // }
 ```
 
-This inheritance is prototype based in the case of public fields and `constructor`, allowing users to distinguish between _own_ metadata and inherited metadata in these cases.
+This inheritance is prototype based in the case of public fields and `own`, allowing users to distinguish between _own_ metadata and inherited metadata in these cases.
 
 This API design meets the following goals:
 
