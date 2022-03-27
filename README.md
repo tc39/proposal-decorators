@@ -77,7 +77,7 @@ Using TypeScript interfaces for brevity and clarity, this is the general shape o
 type Decorator = (value: Input, context: {
   kind: string;
   name: string | symbol;
-  access?: {
+  access: {
     get?(): unknown;
     set?(value: unknown): void;
   };
@@ -101,7 +101,7 @@ The context object also varies depending on the value being decorated. Breaking 
   - `"field"`
   - `"accessor"`
 - `name`: The name of the value, or in the case of private elements the _description_ of it (e.g. the readable name).
-- `access`: An object containing methods to access the value. This is only available for _private_ class elements, since public class elements can be accessed externally by knowing the name of the element. These methods also get the _final_ value of the private element on the instance, not the current value passed to the decorator. This is important for most use cases involving access, such as type validators or serializers. See the section on Access below for more details.
+- `access`: An object containing methods to access the value on the instance.
 - `isStatic`: Whether or not the value is a `static` class element. Only applies to class elements.
 - `isPrivate`: Whether or not the value is a private class element. Only applies to class elements.
 - `addInitializer`: Allows the user to add additional initialization logic. This is available for all decorators which operate per-class, as opposed to per-instance (in other words, decorators which do not have kind `"field"` - discussed in more detail below).
@@ -134,7 +134,7 @@ There is no special syntax for defining decorators; any function can be applied 
 type ClassMethodDecorator = (value: Function, context: {
   kind: "method";
   name: string | symbol;
-  access?: { get(): unknown };
+  access: { get(): unknown };
   isStatic: boolean;
   isPrivate: boolean;
   addInitializer(initializer: () => void): void;
@@ -191,7 +191,7 @@ C.prototype.m = logged(C.prototype.m, {
 type ClassGetterDecorator = (value: Function, context: {
   kind: "getter";
   name: string | symbol;
-  access?: { get(): unknown };
+  access: { get(): unknown };
   isStatic: boolean;
   isPrivate: boolean;
   addInitializer(initializer: () => void): void;
@@ -201,7 +201,7 @@ type ClassGetterDecorator = (value: Function, context: {
 type ClassSetterDecorator = (value: Function, context: {
   kind: "setter";
   name: string | symbol;
-  access?: { set(value: unknown): void };
+  access: { set(value: unknown): void };
   isStatic: boolean;
   isPrivate: boolean;
   addInitializer(initializer: () => void): void;
@@ -277,7 +277,7 @@ Object.defineProperty(C.prototype, "x", { set });
 type ClassFieldDecorator = (value: undefined, context: {
   kind: "field";
   name: string | symbol;
-  access?: { get(): unknown, set(value: unknown): void };
+  access: { get(): unknown, set(value: unknown): void };
   isStatic: boolean;
   isPrivate: boolean;
   getMetadata(key: symbol);
@@ -883,67 +883,14 @@ HIDDEN_META.get(C.prototype[Symbol.metadata][META_KEY].public.x);
 
 ### Access
 
-So far we've seen how metadata can be defined for decorated values, and for public values its possible to see how this could be used. For instance, one could develop a dependency injection library which annotates fields with values to inject, and then injects them when creating the instance:
+So far we've seen how metadata can be defined for decorated values, and for public values its possible to see how this could be used. For instance, one could develop a dependency injection library which annotates fields with values to inject, and then injects them when creating the instance by using the name of the property. However, this would not work for _private_ elements. This is the purpose of the `access` object that is passed to the decorator, it provides a uniform interface for accessing the decorated value. Using this, our dependency injection decorator could look like so:
 
 ```js
 const INJECTIONS = Symbol();
 
 function inject(injectionKey) {
   return (value, context) => {
-    context.setMetadata(INJECTIONS, { injectionKey })
-  }
-}
-
-class Container {
-  registry = new Map();
-
-  register(injectionKey, value) {
-    this.registry.set(injectionKey, value);
-  }
-
-  lookup(injectionKey) {
-    this.register.get(injectionKey);
-  }
-
-  create(Class) {
-    let instance = new Class();
-
-    const { public } = instance[Symbol.metadata][INJECTIONS];
-
-    for (let key in public) {
-      instance[key] = this.lookup(public[key].injectionKey);
-    }
-
-    return instance;
-  }
-}
-
-class Store {}
-
-class C {
-  @inject('store') store;
-}
-
-let container = new Container();
-let store = new Store();
-
-container.register('store', store);
-
-let c = container.create(C);
-
-c.store === store; // true
-```
-
-However, it is not possible to do this as directly _private_ elements, as the key the metadata is defined with cannot be used to access it externally.
-
-This is the purpose of the `access` object that is passed to private elements. This object gives decorators a way to expose access via metadata, which can be used in a number of ways. For instance, we can update our dependency injection example to allow injection on private fields:
-
-```js
-const INJECTIONS = Symbol();
-
-function inject(injectionKey) {
-  return (value, context) => {
-    let set = context.access?.set;
+    const { set } = context.access;
 
     context.setMetadata(INJECTIONS, { injectionKey, set })
   }
@@ -965,8 +912,8 @@ class Container {
 
     const { public, private } = instance[Symbol.metadata][INJECTIONS];
 
-    for (let key in public) {
-      instance[key] = this.lookup(public[key].injectionKey);
+    for (let { injectionKey, set } in public) {
+      set.call(instance, this.lookup(injectionKey))
     }
 
     for (let { injectionKey, set } of private) {
