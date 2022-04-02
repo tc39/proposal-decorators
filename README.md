@@ -580,7 +580,7 @@ class MyElement {
 
 let initializersForMyElement = [];
 
-MyElement = customElement(MyElement, {
+MyElement = customElement('my-element')(MyElement, {
   kind: "class",
   name: "MyElement",
   addInitializer(fn) {
@@ -680,7 +680,7 @@ class Container {
   }
 
   lookup(injectionKey) {
-    this.register.get(injectionKey);
+    this.registry.get(injectionKey);
   }
 
   create(Class) {
@@ -713,7 +713,7 @@ let c = container.create(C);
 c.store === store; // true
 ```
 
-Access is generally provided based on whether or not the value is a value meant to be read or written. Fields and auto-accessors can be both read and written to. Accessors can either be read in the case of getters, or wriitten in the case of setters. Methods can only be read.
+Access is generally provided based on whether or not the value is a value meant to be read or written. Fields and auto-accessors can be both read and written to. Accessors can either be read in the case of getters, or written in the case of setters. Methods can only be read.
 
 ## Possible extensions
 
