@@ -727,7 +727,7 @@ Decorators on further constructs are investigated in [EXTENSIONS.md](./EXTENSION
   - STATUS: Complete, available [here](https://arai-a.github.io/ecma262-compare/?pr=2417).
 - [x] Implement in experimental transpilers
   - STATUS: An experimental implementation has been created and is available for general use. Work is ongoing to implement in Babel and get more feedback.
-    - [x] Independent implentation: https://javascriptdecorators.org/
+    - [x] Independent implementation: https://javascriptdecorators.org/
     - [x] Babel plugin implementation
 - [x] Collect feedback from JavaScript developers testing the transpiler implementation
 - [x] Propose for Stage 3.
