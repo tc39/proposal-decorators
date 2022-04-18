@@ -728,7 +728,7 @@ Decorators on further constructs are investigated in [EXTENSIONS.md](./EXTENSION
 - [x] Implement in experimental transpilers
   - STATUS: An experimental implementation has been created and is available for general use. Work is ongoing to implement in Babel and get more feedback.
     - [x] Independent implementation: https://javascriptdecorators.org/
-    - [x] Babel plugin implementation
+    - [x] Babel plugin implementation ([docs](https://babeljs.io/docs/en/babel-plugin-proposal-decorators#options))
 - [x] Collect feedback from JavaScript developers testing the transpiler implementation
 - [x] Propose for Stage 3.
 ## FAQ
