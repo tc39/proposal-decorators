@@ -1,6 +1,6 @@
 # Decorators
 
-**Stage**: 2
+**Stage**: 3
 
 Decorators are a proposal for extending JavaScript classes which is widely adopted among developers in transpiler environments, with broad interest in standardization. TC39 has been iterating on decorators proposals for over five years. This document describes a new proposal for decorators based on elements from all past proposals.
 
@@ -98,7 +98,7 @@ The context object also varies depending on the value being decorated. Breaking 
   - `"field"`
   - `"accessor"`
 - `name`: The name of the value, or in the case of private elements the _description_ of it (e.g. the readable name).
-- `access`: An object containing methods to access the value. These methods also get the _final_ value of the private element on the instance, not the current value passed to the decorator. This is important for most use cases involving access, such as type validators or serializers. See the section on Access below for more details.
+- `access`: An object containing methods to access the value. These methods also get the _final_ value of the element on the instance, not the current value passed to the decorator. This is important for most use cases involving access, such as type validators or serializers. See the section on Access below for more details.
 - `isStatic`: Whether or not the value is a `static` class element. Only applies to class elements.
 - `isPrivate`: Whether or not the value is a private class element. Only applies to class elements.
 - `addInitializer`: Allows the user to add additional initialization logic. This is available for all decorators which operate per-class, as opposed to per-instance (in other words, decorators which do not have kind `"field"` - discussed in more detail below).
@@ -727,12 +727,10 @@ Decorators on further constructs are investigated in [EXTENSIONS.md](./EXTENSION
   - STATUS: Complete, available [here](https://arai-a.github.io/ecma262-compare/?pr=2417).
 - [x] Implement in experimental transpilers
   - STATUS: An experimental implementation has been created and is available for general use. Work is ongoing to implement in Babel and get more feedback.
-    - [x] Independent implentation: https://javascriptdecorators.org/
-    - [ ] Babel plugin implementation
-- [ ] Collect feedback from JavaScript developers testing the transpiler implementation
-  - STATUS: Feedback is being collected using the experimental implementation. More feedback will be collected from the Babel plugin once it is completed.
-- [ ] Propose for Stage 3 no sooner than six months after prototyping begins, so we have time to collect experience from developers in transpilers
-
+    - [x] Independent implementation: https://javascriptdecorators.org/
+    - [x] Babel plugin implementation ([docs](https://babeljs.io/docs/en/babel-plugin-proposal-decorators#options))
+- [x] Collect feedback from JavaScript developers testing the transpiler implementation
+- [x] Propose for Stage 3.
 ## FAQ
 
 ### How should I use decorators in transpilers today?
