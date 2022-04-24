@@ -80,8 +80,8 @@ type Decorator = (value: Input, context: {
     get?(): unknown;
     set?(value: unknown): void;
   };
-  isPrivate?: boolean;
-  isStatic?: boolean;
+  private?: boolean;
+  static?: boolean;
   addInitializer?(initializer: () => void): void;
 }) => Output | void;
 ```
@@ -99,8 +99,8 @@ The context object also varies depending on the value being decorated. Breaking 
   - `"accessor"`
 - `name`: The name of the value, or in the case of private elements the _description_ of it (e.g. the readable name).
 - `access`: An object containing methods to access the value. These methods also get the _final_ value of the element on the instance, not the current value passed to the decorator. This is important for most use cases involving access, such as type validators or serializers. See the section on Access below for more details.
-- `isStatic`: Whether or not the value is a `static` class element. Only applies to class elements.
-- `isPrivate`: Whether or not the value is a private class element. Only applies to class elements.
+- `static`: Whether or not the value is a `static` class element. Only applies to class elements.
+- `private`: Whether or not the value is a private class element. Only applies to class elements.
 - `addInitializer`: Allows the user to add additional initialization logic. This is available for all decorators which operate per-class, as opposed to per-instance (in other words, decorators which do not have kind `"field"` - discussed in more detail below).
 
 See the Decorator APIs section below for a detailed breakdown of each type of decorator and how it is applied.
@@ -131,8 +131,8 @@ type ClassMethodDecorator = (value: Function, context: {
   kind: "method";
   name: string | symbol;
   access: { get(): unknown };
-  isStatic: boolean;
-  isPrivate: boolean;
+  static: boolean;
+  private: boolean;
   addInitializer(initializer: () => void): void;
 }) => Function | void;
 ```
@@ -173,8 +173,8 @@ class C {
 C.prototype.m = logged(C.prototype.m, {
   kind: "method",
   name: "m",
-  isStatic: false,
-  isPrivate: false,
+  static: false,
+  private: false,
 }) ?? C.prototype.m;
 ```
 
@@ -185,8 +185,8 @@ type ClassGetterDecorator = (value: Function, context: {
   kind: "getter";
   name: string | symbol;
   access: { get(): unknown };
-  isStatic: boolean;
-  isPrivate: boolean;
+  static: boolean;
+  private: boolean;
   addInitializer(initializer: () => void): void;
 }) => Function | void;
 
@@ -194,8 +194,8 @@ type ClassSetterDecorator = (value: Function, context: {
   kind: "setter";
   name: string | symbol;
   access: { set(value: unknown): void };
-  isStatic: boolean;
-  isPrivate: boolean;
+  static: boolean;
+  private: boolean;
   addInitializer(initializer: () => void): void;
 }) => Function | void;
 ```
@@ -252,8 +252,8 @@ let { set } = Object.getOwnPropertyDescriptor(C.prototype, "x");
 set = logged(set, {
   kind: "setter",
   name: "x",
-  isStatic: false,
-  isPrivate: false,
+  static: false,
+  private: false,
 }) ?? set;
 
 Object.defineProperty(C.prototype, "x", { set });
@@ -266,8 +266,8 @@ type ClassFieldDecorator = (value: undefined, context: {
   kind: "field";
   name: string | symbol;
   access: { get(): unknown, set(value: unknown): void };
-  isStatic: boolean;
-  isPrivate: boolean;
+  static: boolean;
+  private: boolean;
 }) => (initialValue: unknown) => unknown | void;
 ```
 
@@ -301,8 +301,8 @@ This example roughly "desugars" to the following (i.e., could be transpiled as s
 let initializeX = logged(undefined, {
   kind: "field",
   name: "x",
-  isStatic: false,
-  isPrivate: false,
+  static: false,
+  private: false,
 }) ?? (initialValue) => initialValue;
 
 class C {
@@ -451,8 +451,8 @@ type ClassAutoAccessorDecorator = (
     kind: "accessor";
     name: string | symbol;
     access: { get(): unknown, set(value: unknown): void };
-    isStatic: boolean;
-    isPrivate: boolean;
+    static: boolean;
+    private: boolean;
     addInitializer(initializer: () => void): void;
   }
 ) => {
@@ -532,8 +532,8 @@ let {
   {
     kind: "accessor",
     name: "x",
-    isStatic: false,
-    isPrivate: false,
+    static: false,
+    private: false,
   }
 ) ?? {};
 
@@ -640,8 +640,8 @@ C.prototype.m = bound(
   {
     kind: "method",
     name: "m",
-    isStatic: false,
-    isPrivate: false,
+    static: false,
+    private: false,
     addInitializer(fn) {
       initializersForM.push(fn);
     },
