@@ -554,7 +554,7 @@ We can use `addInitializer` with class decorators in order to create a decorator
 
 ```js
 function customElement(name) {
-  (value, { addInitializer }) => {
+  return (value, { addInitializer }) => {
     addInitializer(function() {
       customElements.define(name, this);
     });
