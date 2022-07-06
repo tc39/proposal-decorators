@@ -458,7 +458,7 @@ type ClassAutoAccessorDecorator = (
 ) => {
   get?: () => unknown;
   set?: (value: unknown) => void;
-  initialize?: (initialValue: unknown) => unknown;
+  init?: (initialValue: unknown) => unknown;
 } | void;
 ```
 
