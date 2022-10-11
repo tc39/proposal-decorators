@@ -73,12 +73,12 @@ When decorators are called, they receive two parameters:
 Using TypeScript interfaces for brevity and clarity, this is the general shape of the API:
 
 ```ts
-type Decorator = (value: Input, context: {
+type Decorator = <Accessor, Input, Output>(value: Input, context: {
   kind: string;
   name: string | symbol;
   access: {
-    get?(): unknown;
-    set?(value: unknown): void;
+    get?(): Accessor;
+    set?(value: Accessor): void;
   };
   private?: boolean;
   static?: boolean;
