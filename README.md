@@ -118,7 +118,7 @@ Finally, static fields are executed and applied.
 This decorators proposal uses the syntax of the previous Stage 2 decorators proposal. This means that:
 - Decorator expressions are restricted to a chain of variables, property access with `.` but not `[]`, and calls `()`. To use an arbitrary expression as a decorator, `@(expression)` is an escape hatch.
 - Class expressions may be decorated, not just class declarations.
-- Class decorators may exclusively come before `export` or after `export [default]`.
+- Class decorators may exclusively come before, or after, `export`/`export default`.
 
 There is no special syntax for defining decorators; any function can be applied as a decorator.
 
