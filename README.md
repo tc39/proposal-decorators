@@ -101,7 +101,7 @@ The context object also varies depending on the value being decorated. Breaking 
 - `access`: An object containing methods to access the value. These methods also get the _final_ value of the element on the instance, not the current value passed to the decorator. This is important for most use cases involving access, such as type validators or serializers. See the section on Access below for more details.
 - `static`: Whether or not the value is a `static` class element. Only applies to class elements.
 - `private`: Whether or not the value is a private class element. Only applies to class elements.
-- `addInitializer`: Allows the user to add additional initialization logic. This is available for all decorators which operate per-class, as opposed to per-instance (in other words, decorators which do not have kind `"field"` - discussed in more detail below).
+- `addInitializer`: Allows the user to add additional initialization logic. This is available for all decorators which operate per-class, as opposed to per-instance (in other words, decorators which do not have kind `"field"` - discussed in more detail [below](#adding-initialization-logic-with-addinitializer)).
 
 See the Decorator APIs section below for a detailed breakdown of each type of decorator and how it is applied.
 
