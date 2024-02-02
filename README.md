@@ -49,6 +49,113 @@ In addition, this proposal introduces a new type of class element that can be de
 
 This new element type can be used independently, and has its own semantics separate from usage with decorators. The reason it is included in this proposal is primarily because there are a number of use cases for decorators which require its semantics, since decorators can only replace an element with a corresponding element that has the same semantics. These use cases are common in the existing decorators ecosystem, demonstrating a need for the capabilities they provide.
 
+## Motivation
+
+You might be wondering "why do we need these at all?" Decorators are a powerful metaprogramming feature that can simplify code significantly, but can also feel "magical" in the sense that they hide details from the user, making what's going on under the hood harder to understand. Like all abstractions, in some cases decorators can become more trouble than they're worth.
+
+However, one of the main reasons decorators are still being pursued today, and _specifically_ the main reason class decorators are an important language feature, is that they fill a gap that exists in the ability to metaprogram in JavaScript.
+
+Consider the following functions:
+
+```js
+function logResult(fn) {
+  return function(...args) {
+    const result = fn.call(this, ...args);
+    console.log(result);
+    return result;
+  }
+}
+
+const plusOne = logResult((x) => x + 1);
+
+plusOne(1); // 2
+```
+
+This is a common pattern used in JavaScript every day, and is a fundamental power languages that support closures. This is an example of implementing the [_decorator pattern_](https://en.wikipedia.org/wiki/Decorator_pattern) in plain JavaScript. You can use `logResult` to add logging to any function definition easily, and you can do this with any number of "decorator" functions:
+
+```js
+const foo = bar(baz(qux(() => /* do something cool */)))
+```
+
+In some other languages, like Python, decorators are syntactic sugar for this pattern - they're functions that can be applied to other functions with the `@` symbol, or by calling them directly, to add additional behavior.
+
+So, as it stands today, it is possible to use the decorator _pattern_ in JavaScript when it comes to functions, just without the nice `@` syntax. This pattern is also _declarative_, which is important - there is no step between the definition of the function and decoration of it. This means it's not possible for someone to accidentally use the undecorated version of the function, which could cause major bugs and make it very difficult to debug!
+
+However, there is a place where we _can't_ use this pattern at all - objects and classes. Consider the following class:
+
+```js
+class MyClass {
+  x = 0;
+}
+```
+
+How would we go about adding the logging functionality to `x`, so that whenever we get or set it, we log that access? You could do it manually:
+
+```js
+class MyClass {
+  #x = 0;
+
+  get x() {
+    console.log('getting x');
+    return this.#x;
+  }
+
+  set x(v) {
+    console.log('setting x');
+    this.#x = v;
+  }
+}
+```
+
+But if we're doing this a lot, it would be a pain to add all those getters and setters everywhere. We could make a helper function to do it for us _after_ we define the class:
+
+```js
+function logResult(Class, property) {
+  Object.defineProperty(Class.prototype, property, {
+    get() {
+      console.log(`getting ${property}`);
+      return this[`_${property}`];
+    },
+
+    set(v) {
+      console.log(`setting ${property}`);
+      this[`_${property}`] = v;
+    }
+  })
+}
+
+class MyClass {
+  constructor() {
+    this.x = 0;
+  }
+}
+
+logResult(MyClass, 'x');
+```
+
+This _works_, but if we use a class field it would overwrite the getter/setter we defined on the prototype, so we have to move the assignment to the constructor. It's also done in multiple statements, so the definition itself happens over time and is not declarative. Imagine debugging a class that is "defined" in multiple files, each one adding different decorations as your application boots up. That may sound like a really bad design, but it was not uncommon in the past before classes were introduced! Lastly, there's no way for us to do this with _private_ fields or methods. We can't just replace the definition.
+
+Methods are a _little_ better, we could do something like this:
+
+```js
+function logResult(fn) {
+  return function(...args) {
+    const result = fn.call(this, ...args);
+    console.log(result);
+    return result;
+  }
+}
+
+class MyClass {
+  x = 0;
+  plusOne = logResult(() => this.x + 1);
+}
+```
+
+While this _is_ declarative, it also creates a new closure for each instance of the class, which is a lot of additional overhead at scale.
+
+By making class decorators a language feature, we are plugging this gap and enabling the decorator pattern for class methods, fields, accessors, and classes themselves. This allows developers to easily write abstractions for common tasks, such as debug logging, reactive programming, dynamic type checking, and more.
+
 ## Detailed Design
 
 The three steps of decorator evaluation:
