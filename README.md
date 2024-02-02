@@ -60,8 +60,13 @@ Consider the following functions:
 ```js
 function logResult(fn) {
   return function(...args) {
-    const result = fn.call(this, ...args);
-    console.log(result);
+    try {
+      const result = fn.call(this, ...args);
+      console.log(result);
+    } catch (e) {
+      console.error(result);
+      throw e;
+    }
     return result;
   }
 }
@@ -71,7 +76,7 @@ const plusOne = logResult((x) => x + 1);
 plusOne(1); // 2
 ```
 
-This is a common pattern used in JavaScript every day, and is a fundamental power languages that support closures. This is an example of implementing the [_decorator pattern_](https://en.wikipedia.org/wiki/Decorator_pattern) in plain JavaScript. You can use `logResult` to add logging to any function definition easily, and you can do this with any number of "decorator" functions:
+This is a common pattern used in JavaScript every day, and is a fundamental power in languages that support closures. This is an example of implementing the [_decorator pattern_](https://en.wikipedia.org/wiki/Decorator_pattern) in plain JavaScript. You can use `logResult` to add logging to any function definition easily, and you can do this with any number of "decorator" functions:
 
 ```js
 const foo = bar(baz(qux(() => /* do something cool */)))
