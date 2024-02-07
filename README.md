@@ -49,6 +49,118 @@ In addition, this proposal introduces a new type of class element that can be de
 
 This new element type can be used independently, and has its own semantics separate from usage with decorators. The reason it is included in this proposal is primarily because there are a number of use cases for decorators which require its semantics, since decorators can only replace an element with a corresponding element that has the same semantics. These use cases are common in the existing decorators ecosystem, demonstrating a need for the capabilities they provide.
 
+## Motivation
+
+You might be wondering "why do we need these at all?" Decorators are a powerful metaprogramming feature that can simplify code significantly, but can also feel "magical" in the sense that they hide details from the user, making what's going on under the hood harder to understand. Like all abstractions, in some cases decorators can become more trouble than they're worth.
+
+However, one of the main reasons decorators are still being pursued today, and _specifically_ the main reason class decorators are an important language feature, is that they fill a gap that exists in the ability to metaprogram in JavaScript.
+
+Consider the following functions:
+
+```js
+function logResult(fn) {
+  return function(...args) {
+    try {
+      const result = fn.call(this, ...args);
+      console.log(result);
+    } catch (e) {
+      console.error(result);
+      throw e;
+    }
+    return result;
+  }
+}
+
+const plusOne = logResult((x) => x + 1);
+
+plusOne(1); // 2
+```
+
+This is a common pattern used in JavaScript every day, and is a fundamental power in languages that support closures. This is an example of implementing the [_decorator pattern_](https://en.wikipedia.org/wiki/Decorator_pattern) in plain JavaScript. You can use `logResult` to add logging to any function definition easily, and you can do this with any number of "decorator" functions:
+
+```js
+const foo = bar(baz(qux(() => /* do something cool */)))
+```
+
+In some other languages, like Python, decorators are syntactic sugar for this pattern - they're functions that can be applied to other functions with the `@` symbol, or by calling them directly, to add additional behavior.
+
+So, as it stands today, it is possible to use the decorator _pattern_ in JavaScript when it comes to functions, just without the nice `@` syntax. This pattern is also _declarative_, which is important - there is no step between the definition of the function and decoration of it. This means it's not possible for someone to accidentally use the undecorated version of the function, which could cause major bugs and make it very difficult to debug!
+
+However, there is a place where we _can't_ use this pattern at all - objects and classes. Consider the following class:
+
+```js
+class MyClass {
+  x = 0;
+}
+```
+
+How would we go about adding the logging functionality to `x`, so that whenever we get or set it, we log that access? You could do it manually:
+
+```js
+class MyClass {
+  #x = 0;
+
+  get x() {
+    console.log('getting x');
+    return this.#x;
+  }
+
+  set x(v) {
+    console.log('setting x');
+    this.#x = v;
+  }
+}
+```
+
+But if we're doing this a lot, it would be a pain to add all those getters and setters everywhere. We could make a helper function to do it for us _after_ we define the class:
+
+```js
+function logResult(Class, property) {
+  Object.defineProperty(Class.prototype, property, {
+    get() {
+      console.log(`getting ${property}`);
+      return this[`_${property}`];
+    },
+
+    set(v) {
+      console.log(`setting ${property}`);
+      this[`_${property}`] = v;
+    }
+  })
+}
+
+class MyClass {
+  constructor() {
+    this.x = 0;
+  }
+}
+
+logResult(MyClass, 'x');
+```
+
+This _works_, but if we use a class field it would overwrite the getter/setter we defined on the prototype, so we have to move the assignment to the constructor. It's also done in multiple statements, so the definition itself happens over time and is not declarative. Imagine debugging a class that is "defined" in multiple files, each one adding different decorations as your application boots up. That may sound like a really bad design, but it was not uncommon in the past before classes were introduced! Lastly, there's no way for us to do this with _private_ fields or methods. We can't just replace the definition.
+
+Methods are a _little_ better, we could do something like this:
+
+```js
+function logResult(fn) {
+  return function(...args) {
+    const result = fn.call(this, ...args);
+    console.log(result);
+    return result;
+  }
+}
+
+class MyClass {
+  x = 0;
+  plusOne = logResult(() => this.x + 1);
+}
+```
+
+While this _is_ declarative, it also creates a new closure for each instance of the class, which is a lot of additional overhead at scale.
+
+By making class decorators a language feature, we are plugging this gap and enabling the decorator pattern for class methods, fields, accessors, and classes themselves. This allows developers to easily write abstractions for common tasks, such as debug logging, reactive programming, dynamic type checking, and more.
+
 ## Detailed Design
 
 The three steps of decorator evaluation:
@@ -82,7 +194,7 @@ type Decorator = (value: Input, context: {
   };
   private?: boolean;
   static?: boolean;
-  addInitializer?(initializer: () => void): void;
+  addInitializer(initializer: () => void): void;
 }) => Output | void;
 ```
 
@@ -101,7 +213,7 @@ The context object also varies depending on the value being decorated. Breaking 
 - `access`: An object containing methods to access the value. These methods also get the _final_ value of the element on the instance, not the current value passed to the decorator. This is important for most use cases involving access, such as type validators or serializers. See the section on Access below for more details.
 - `static`: Whether or not the value is a `static` class element. Only applies to class elements.
 - `private`: Whether or not the value is a private class element. Only applies to class elements.
-- `addInitializer`: Allows the user to add additional initialization logic. This is available for all decorators which operate per-class, as opposed to per-instance (in other words, decorators which do not have kind `"field"` - discussed in more detail below).
+- `addInitializer`: Allows the user to add additional initialization logic to the element or class.
 
 See the Decorator APIs section below for a detailed breakdown of each type of decorator and how it is applied.
 
@@ -268,6 +380,7 @@ type ClassFieldDecorator = (value: undefined, context: {
   access: { get(): unknown, set(value: unknown): void };
   static: boolean;
   private: boolean;
+  addInitializer(initializer: () => void): void;
 }) => (initialValue: unknown) => unknown | void;
 ```
 
@@ -349,8 +462,6 @@ class Parent {
 let parent = new Parent();
 getChildren(parent); // [Child, OtherChild]
 ```
-
-Since class fields already return an initializer, they do not receive `addInitializer` and cannot add additional initialization logic.
 
 #### Classes
 
@@ -542,11 +653,15 @@ Object.defineProperty(C.prototype, "x", { get: newGet, set: newSet });
 
 ### Adding initialization logic with `addInitializer`
 
-The `addInitializer` method is available on the context object that is provided to the decorator for every type of value _except_ class fields. This method can be called to associate an initializer function with the class or class element, which can be used to run arbitrary code after the value has been defined in order to finish setting it up. The timing of these initializers depends on the type of decorator:
+The `addInitializer` method is available on the context object that is provided to the decorator for every type of value. This method can be called to associate an initializer function with the class or class element, which can be used to run arbitrary code after the value has been defined in order to finish setting it up. The timing of these initializers depends on the type of decorator:
 
-- Class decorator initializers are run _after_ the class has been fully defined, and _after_ class static fields have been assigned.
-- Class element initializers run during class construction, _before_ class fields are initialized.
-- Class _static_ element initializers run during class definition, _before_ static class fields are defined, but _after_ class elements have been defined.
+- **Class decorators**: _After_ the class has been fully defined, and _after_ class static fields have been assigned.
+- **Class static elements**
+  - **Method and Getter/Setter decorators**: During class definition, _after_ static class methods have been assigned, _before any_ static class fields are initialized
+  - **Field and Accessor decorators**: During class definition, immediately _after_ the field or accessor that they were applied to is initialized
+- **Class non-static elements**
+  - **Method and Getter/Setter decorators**: During class construction, _before any_ class fields are initialized
+  - **Field and Accessor decorators**: During class construction, immediately _after_ the field or accessor that they were applied to is initialized
 
 #### Example: `@customElement`
 
@@ -731,15 +846,14 @@ Decorators on further constructs are investigated in [EXTENSIONS.md](./EXTENSION
     - [x] Babel plugin implementation ([docs](https://babeljs.io/docs/en/babel-plugin-proposal-decorators#options))
 - [x] Collect feedback from JavaScript developers testing the transpiler implementation
 - [x] Propose for Stage 3.
+
 ## FAQ
 
 ### How should I use decorators in transpilers today?
 
-Unfortunately, we're in the classic trap of, "The old thing is deprecated, and the new thing is not ready yet!" For now, best to keep using the old thing.
+Since decorators have reached stage 3 and are approaching completion, it is now recommended that new projects use the latest transforms for stage 3 decorators. These are available in Babel, TypeScript, and other popular build tools.
 
-The decorators champion group would recommend continuing to use Babel "legacy" decorators or TypeScript "experimental" decorators. If you're using decorators today, you're probably already using one of these versions. Note that these decorators depend on "[[Set]] semantics" for field declarations (in Babel, loose mode). We recommend that these tools maintain support for [[Set]] semantics alongside legacy decorators, until it's possible to transition to the decorators of this proposal.
-
-Babel 7 supports the decorators proposal presented to TC39 in the November 2018 TC39 meeting. It's fine to use these for experimental purposes, but they face significant performance issues, are not yet widely adopted; we don't plan to continue pushing for this proposal in TC39. As such, we recommend against using this version for serious work. In follow-on proposals to add more built-in decorators, we hope to be able to recover the extra functionality that the November 2018 decorators proposal supported.
+Existing projects should begin to develop upgrade plans for their ecosystems. In the majority of cases it should be possible to support both the legacy and stage 3 versions at the same time by matching on the arguments that are passed to the decorator. In a small number of cases this may not be possible due to a difference in the capabilities between the two versions. If you run into such a case, please open an issue on this repo for discussion!
 
 ### How does this proposal compare to other versions of decorators?
 
@@ -805,13 +919,9 @@ This decorators proposal would require a separate transpiler implementation from
 
 Modules exporting decorators are able to easily check whether they are being invoked in the legacy/experimental way or in the way described in this proposal, by checking whether their second argument is an object (in this proposal, always yes; previously, always no). So it should be possible to maintain decorator libraries which work with both approaches.
 
-### What would the specification look like in detail?
-
-We are currently in the process of writing it, and will be updating the repo as progress is made.
-
 ### What makes this decorators proposal more statically analyzable than previous proposals? Is this proposal still statically analyzable even though it is based on runtime values?
 
-In this decorators proposal, each decorator position has a consistent effect on the shape of the code generated after desugaring. No calls to `Object.defineProperty` with dynamic values for property attributes are made by the system, and it is also impractical to make these sorts of calls from user-defined decorators as the "target" is not provided to decorators; only the actual contents of the functions is left until runtime.
+In this decorators proposal, each decorator position has a consistent effect on the shape of the code generated after desugaring. No calls to `Object.defineProperty` with dynamic values for property attributes are made by the system, and it is also impractical to make these sorts of calls from user-defined decorators as the "target" is not provided to decorators; only the actual contents of the functions.
 
 ### How does static analyzability help transpilers and other tooling?
 
