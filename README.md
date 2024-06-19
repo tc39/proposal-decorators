@@ -715,7 +715,7 @@ We could also use `addInitializer` with method decorators to create a `@bound` d
 ```js
 function bound(value, { name, addInitializer }) {
   addInitializer(function () {
-    this[name] = this[name].bind(this);
+    this[name] = value.bind(this);
   });
 }
 
@@ -724,6 +724,11 @@ class C {
 
   @bound
   m() {
+    console.log(this.message);
+  }
+
+  @bound
+  #p() {
     console.log(this.message);
   }
 }
