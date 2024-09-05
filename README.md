@@ -60,11 +60,12 @@ Consider the following functions:
 ```js
 function logResult(fn) {
   return function(...args) {
+    let result;
     try {
-      const result = fn.call(this, ...args);
+      result = fn.call(this, ...args);
       console.log(result);
     } catch (e) {
-      console.error(result);
+      console.error(e);
       throw e;
     }
     return result;
