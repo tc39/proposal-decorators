@@ -111,7 +111,7 @@ This example can be desugared as:
 ```js
 let { get_x, set_x, value: _x } = deprecated({value: 1, get() { return _x; }, set(v) { _x = v; }}, {kind: "let"});
 
-set_x(get_x()++);
+set_x(get_x() + 1);
 ```
 
 ## `const` decorators
