@@ -662,7 +662,7 @@ The `addInitializer` method is available on the context object that is provided 
   - **Field and Accessor decorators**: During class definition, immediately _after_ the field or accessor that they were applied to is initialized
 - **Class non-static elements**
   - **Method and Getter/Setter decorators**: During class construction, _before any_ class fields are initialized
-  - **Field and Accessor decorators**: During class construction, immediately _after_ the field or accessor that they were applied to is initialized
+  - **Field and Accessor decorators**: During class construction, immediately _after_ the non-context field or accessor initializers have executed but before the non-context initialized value is applied.
 
 #### Example: `@customElement`
 
