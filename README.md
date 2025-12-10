@@ -210,7 +210,7 @@ The context object also varies depending on the value being decorated. Breaking 
   - `"setter"`
   - `"field"`
   - `"accessor"`
-- `name`: The name of the value, or in the case of private elements the _description_ of it (e.g. the readable name).
+- `name`: The string name of the value, or in the case of `private` elements a unique symbol with a _description_ of the value (e.g. `'field'` or `Symbol('#field')`).
 - `access`: An object containing methods to access the value. These methods also get the _final_ value of the element on the instance, not the current value passed to the decorator. This is important for most use cases involving access, such as type validators or serializers. See the section on Access below for more details.
 - `static`: Whether or not the value is a `static` class element. Only applies to class elements.
 - `private`: Whether or not the value is a private class element. Only applies to class elements.
