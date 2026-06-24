@@ -557,7 +557,7 @@ Auto-accessors can be decorated, and auto-accessor decorators have the following
 type ClassAutoAccessorDecorator = (
   value: {
     get: () => unknown;
-    set(value: unknown) => void;
+    set: (value: unknown) => void;
   },
   context: {
     kind: "accessor";
