@@ -199,7 +199,7 @@ type Decorator = (value: Input, context: {
 }) => Output | void;
 ```
 
-`Input` and `Output` here represent the values passed to and returned from a given decorator. Each type of decorator has a different input and output, and these are covered below in more detail. All decorators can choose to return nothing, which defaults to using the original, undecorated value.
+`Input` and `Output` here represent the values passed to and returned from a given decorator. Each type of decorator has a different input and output, and these are covered below in more detail. All decorators can choose to return nothing (undefined, or void in TypeScript), which defaults to using the original undecorated value, or to using the latest value returned by a decorator that has already ran on the same element.
 
 The context object also varies depending on the value being decorated. Breaking down the properties:
 
